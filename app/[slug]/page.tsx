@@ -1,7 +1,10 @@
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { RunGerenteButton } from "./run-gerente-button";
+import { ImportProductsSection } from "./import-products-section";
+import { FindImagesButton } from "./find-images-button";
 
 export default async function MarketPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -31,6 +34,12 @@ export default async function MarketPage({ params }: { params: Promise<{ slug: s
     .select("id", { count: "exact", head: true })
     .eq("market_id", market.id);
 
+  const { count: pendingImageCount } = await admin
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("market_id", market.id)
+    .eq("image_status", "pendente");
+
   const { data: recentRecs } = await admin
     .from("ai_recommendations")
     .select("type, target, reason, priority, generated_at")
@@ -41,10 +50,28 @@ export default async function MarketPage({ params }: { params: Promise<{ slug: s
   return (
     <div className="min-h-screen bg-neutral-50 px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">{market.name}</h1>
-          <p className="text-sm text-neutral-500">{productCount ?? 0} produtos cadastrados</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-neutral-900">{market.name}</h1>
+            <p className="text-sm text-neutral-500">{productCount ?? 0} produtos cadastrados</p>
+          </div>
+          <Link
+            href={`/${market.slug}/tabloides/novo`}
+            className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm"
+          >
+            + Novo tabloide
+          </Link>
         </div>
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-neutral-500">Produtos</h2>
+          <p className="text-sm text-neutral-600">
+            Suba a planilha de produtos (uma vez, e reenvie quando quiser atualizar preço ou estoque). Depois é só
+            selecionar quais entram em cada tabloide, sem subir de novo.
+          </p>
+          <ImportProductsSection marketId={market.id} />
+          <FindImagesButton marketId={market.id} pendingCount={pendingImageCount ?? 0} />
+        </section>
 
         <section className="space-y-3">
           <h2 className="text-sm font-medium text-neutral-500">Gerente inteligente</h2>
