@@ -1,36 +1,46 @@
 import { redirect, notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer, canAccessMarket } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AppHeader } from "@/components/app-header";
+import { todayInSaoPaulo, addDaysISO } from "@/lib/dates";
 import { suggestThemesInRange } from "@/lib/themes";
 import { TabloidBuilder } from "./tabloid-builder";
 
 export default async function NewTabloidPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase.from("profiles").select("role, market_id").eq("id", user.id).single();
-  if (!profile) redirect("/login");
+  const who = await getViewer();
+  if (who.status === "anon") redirect("/login");
+  if (who.status !== "ok") redirect("/");
 
   const admin = createAdminClient();
   const { data: market } = await admin
     .from("markets")
     .select("id, slug, name, niche")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
   if (!market) notFound();
-  if (profile.role === "mercado" && profile.market_id !== market.id) redirect("/login");
+  if (!canAccessMarket(who.viewer, market.id)) redirect("/");
+
+  // o Supabase devolve no máximo 1.000 linhas por consulta: busca em páginas
+  async function loadProducts() {
+    const all = [];
+    for (let from = 0; from < 15000; from += 1000) {
+      const { data, error } = await admin
+        .from("products")
+        .select("id, name, brand, category, price, unit, image_url, image_status")
+        .eq("market_id", market!.id)
+        .eq("active", true)
+        .order("name")
+        .range(from, from + 999);
+      if (error || !data) break;
+      all.push(...data);
+      if (data.length < 1000) break;
+    }
+    return { data: all };
+  }
 
   const [{ data: products }, { data: themes }, { data: weeklyPromotions }] = await Promise.all([
-    admin
-      .from("products")
-      .select("id, name, brand, category, price, image_url")
-      .eq("market_id", market.id)
-      .order("name"),
+    loadProducts(),
     admin
       .from("themes")
       .select("id, name, kind, source_seasonal_title, source_weekday")
@@ -38,9 +48,8 @@ export default async function NewTabloidPage({ params }: { params: Promise<{ slu
     admin.from("weekly_promotions").select("id, market_id, weekday, name, category_hint, active").eq("market_id", market.id),
   ]);
 
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const in14days = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const today = todayInSaoPaulo();
+  const in14days = addDaysISO(today, 14);
 
   const suggestions = suggestThemesInRange({
     startISO: today,
@@ -66,12 +75,9 @@ export default async function NewTabloidPage({ params }: { params: Promise<{ slu
   });
 
   return (
-    <div className="min-h-screen bg-neutral-50 px-6 py-10">
+    <div className="min-h-screen bg-neutral-50 px-4 sm:px-6 py-8">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Novo tabloide</h1>
-          <p className="text-sm text-neutral-500">{market.name}</p>
-        </div>
+        <AppHeader title="Novo tabloide" subtitle={market.name} back={{ href: `/${market.slug}`, label: market.name }} />
 
         <TabloidBuilder
           marketId={market.id}

@@ -10,7 +10,9 @@ type Product = {
   brand: string | null;
   category: string | null;
   price: number | null;
+  unit: string | null;
   image_url: string | null;
+  image_status: string;
 };
 
 type ThemeOption = {
@@ -44,6 +46,8 @@ export function TabloidBuilder({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [tabloidId, setTabloidId] = useState<string | null>(null);
+  const [savedKey, setSavedKey] = useState("");
   const [creatingImage, setCreatingImage] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +56,8 @@ export function TabloidBuilder({
     const q = search.toLowerCase();
     return products.filter((p) => p.name.toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q));
   }, [products, search]);
+
+  const formKey = JSON.stringify([name, category, themeId, validFrom, validUntil, Array.from(selected).sort()]);
 
   function toggleProduct(id: string) {
     setSelected((prev) => {
@@ -62,13 +68,30 @@ export function TabloidBuilder({
     });
   }
 
+  async function renderTabloid(id: string) {
+    const renderRes = await fetch(`/api/tabloides/${id}/render`);
+    const renderData = await renderRes.json().catch(() => ({}));
+    if (!renderRes.ok || !renderData.html) {
+      setError(renderData.error || "O tabloide foi salvo, mas não consegui montar a arte. Tente gerar de novo.");
+      return;
+    }
+    setPreviewHtml(renderData.html);
+  }
+
   async function handleCreate() {
     setError("");
     if (!name.trim()) return setError("Dê um nome pro tabloide.");
+    if (!themeId) return setError("Escolha um tema.");
     if (selected.size === 0) return setError("Selecione ao menos um produto.");
+    if (validFrom && validUntil && validFrom > validUntil) return setError("A data final vem antes da inicial.");
 
     setSaving(true);
     try {
+      // se a arte falhou antes e nada mudou, só monta de novo, sem criar outro
+      if (tabloidId && savedKey === formKey) {
+        await renderTabloid(tabloidId);
+        return;
+      }
       const res = await fetch("/api/tabloides/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -82,19 +105,16 @@ export function TabloidBuilder({
           productIds: Array.from(selected),
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Erro ao criar o tabloide.");
+        setError(data.error || "Não consegui criar o tabloide.");
         return;
       }
-
-      const renderRes = await fetch(`/api/tabloides/${data.id}/render`);
-      const renderData = await renderRes.json();
-      if (renderRes.ok) {
-        setPreviewHtml(renderData.html);
-      }
+      setTabloidId(data.id);
+      setSavedKey(formKey);
+      await renderTabloid(data.id);
     } catch {
-      setError("Falha de conexão ao criar o tabloide.");
+      setError("Sem conexão agora. Confira a internet e tente de novo.");
     } finally {
       setSaving(false);
     }
@@ -103,16 +123,33 @@ export function TabloidBuilder({
   async function handleDownloadImage() {
     if (!previewRef.current) return;
     setCreatingImage(true);
+    setError("");
     try {
       const { default: html2canvas } = await import("html2canvas-pro");
-      const canvas = await html2canvas(previewRef.current, { backgroundColor: "#ffffff", scale: 2 });
-      const url = canvas.toDataURL("image/png");
+      const canvas = await html2canvas(previewRef.current, { backgroundColor: "#ffffff", scale: 2, useCORS: true });
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("sem imagem");
+      const fileName = `${(name || "tabloide").replace(/[^\p{L}\p{N} _-]/gu, "").trim() || "tabloide"}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+      // no celular, abre o compartilhar (WhatsApp, Instagram); no computador, baixa
+      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: name });
+          return;
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${name || "tabloide"}.png`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      setError("Não consegui gerar a imagem. Tente de novo.");
     } finally {
       setCreatingImage(false);
     }
@@ -121,16 +158,17 @@ export function TabloidBuilder({
   if (previewHtml) {
     return (
       <div className="space-y-4">
-        <div className="overflow-x-auto border border-neutral-200 rounded-lg bg-white p-4">
-          <div ref={previewRef} dangerouslySetInnerHTML={{ __html: previewHtml }} />
+        <div className="overflow-x-auto border border-neutral-200 rounded-lg bg-white p-2 sm:p-4">
+          <div ref={previewRef} className="w-fit" dangerouslySetInnerHTML={{ __html: previewHtml }} />
         </div>
-        <div className="flex gap-2">
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={handleDownloadImage}
             disabled={creatingImage}
             className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
           >
-            {creatingImage ? "Gerando imagem..." : "Baixar imagem"}
+            {creatingImage ? "Gerando imagem..." : "Baixar ou compartilhar imagem"}
           </button>
           <button
             onClick={() => router.push(`/${marketSlug}`)}
@@ -152,7 +190,7 @@ export function TabloidBuilder({
             {suggestions.slice(0, 5).map((s, i) => (
               <li key={i} className="text-sm text-neutral-600">
                 <span className="text-neutral-400">{new Date(`${s.date}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}:</span>{" "}
-                {s.label} — {s.reason}
+                {s.label}: {s.reason}
               </li>
             ))}
           </ul>
@@ -160,7 +198,7 @@ export function TabloidBuilder({
       )}
 
       <div className="bg-white border border-neutral-200 rounded-lg p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-sm text-neutral-600">Nome do tabloide</label>
             <input
@@ -180,7 +218,7 @@ export function TabloidBuilder({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1">
             <label className="text-sm text-neutral-600">Tema</label>
             <select
@@ -217,7 +255,7 @@ export function TabloidBuilder({
       </div>
 
       <div className="bg-white border border-neutral-200 rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-medium text-neutral-700">Produtos ({selected.size} selecionado(s))</p>
           <input
             value={search}
@@ -233,10 +271,14 @@ export function TabloidBuilder({
           {filteredProducts.map((p) => (
             <label key={p.id} className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-neutral-50">
               <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleProduct(p.id)} />
-              <span className="flex-1">{p.name}</span>
+              <span className="flex-1 min-w-0">
+                {p.name}
+                {p.image_status !== "encontrada" && <span className="ml-2 text-xs text-amber-700">sem foto</span>}
+              </span>
               {p.category && <span className="text-neutral-400 text-xs">{p.category}</span>}
               <span className="text-neutral-700 font-medium">
                 {p.price != null ? p.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "-"}
+                {p.unit && p.unit !== "un" ? `/${p.unit}` : ""}
               </span>
             </label>
           ))}
@@ -250,7 +292,7 @@ export function TabloidBuilder({
         disabled={saving}
         className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
       >
-        {saving ? "Gerando..." : "Gerar tabloide"}
+        {saving ? "Gerando..." : tabloidId && savedKey === formKey ? "Tentar montar a arte de novo" : "Gerar tabloide"}
       </button>
     </div>
   );

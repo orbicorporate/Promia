@@ -1,92 +1,134 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { readJson, requireMarketAccess } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { anthropic, GERENTE_MODEL } from "@/lib/ai/models";
 import {
-  gerenteClient,
-  GERENTE_MODEL,
   GERENTE_ANALYSIS_SYSTEM_PROMPT,
   GERENTE_STRUCTURE_SYSTEM_PROMPT,
+  RECOMMENDATIONS_TOOL,
   extractText,
-  parseRecommendations,
+  normalizeRecommendations,
+  promptSafe,
+  toolInput,
+  weekdayName,
 } from "@/lib/ai/gerente";
+import { recordUsage, remainingToday } from "@/lib/ai/usage";
 import { seasonalDatesInRange } from "@/lib/seasonalDates";
+import { todayInSaoPaulo, addDaysISO } from "@/lib/dates";
 
 export const maxDuration = 120;
 
-async function requireMarketAccess(marketId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+const MAX_PRODUCTS = 500;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, market_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) return null;
-  // dono do mercado só acessa o próprio mercado; time interno acessa qualquer um
-  if (profile.role === "mercado" && profile.market_id !== marketId) return null;
-
-  return user;
+// Catálogo grande: em vez dos primeiros 500 em ordem alfabética, pega um
+// pouco de cada categoria (os com custo e estoque informados primeiro).
+function sampleByCategory<T extends { category: string | null; cost: number | null; stock: number | null; price: number | null }>(
+  rows: T[],
+  max: number
+): T[] {
+  if (rows.length <= max) return rows;
+  const groups = new Map<string, T[]>();
+  for (const r of rows) {
+    const key = r.category ?? "";
+    groups.set(key, [...(groups.get(key) ?? []), r]);
+  }
+  const score = (r: T) => (r.cost != null ? 2 : 0) + (r.stock != null ? 1 : 0);
+  const queues = [...groups.values()].map((g) => g.sort((a, b) => score(b) - score(a) || (b.price ?? 0) - (a.price ?? 0)));
+  const out: T[] = [];
+  for (let i = 0; out.length < max; i++) {
+    let added = false;
+    for (const q of queues) {
+      if (i < q.length && out.length < max) {
+        out.push(q[i]);
+        added = true;
+      }
+    }
+    if (!added) break;
+  }
+  return out;
 }
 
-// Roda o gerente inteligente pro mercado: etapa 1 analisa o catálogo em
-// texto livre, etapa 2 estrutura em recomendações, e o resultado é
-// persistido em ai_recommendations pra aparecer no painel sem precisar
-// rodar de novo a cada carregamento de tela.
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
-  const marketId = String(body?.marketId || "").trim();
-  if (!marketId) {
-    return NextResponse.json({ error: "Informe o mercado." }, { status: 400 });
-  }
+  const body = await readJson(req);
+  const access = await requireMarketAccess(body.marketId);
+  if (!access.ok) return access.response;
+  const marketId = body.marketId as string;
 
-  const user = await requireMarketAccess(marketId);
-  if (!user) {
-    return NextResponse.json({ error: "Sem permissão." }, { status: 401 });
-  }
-
-  const client = gerenteClient();
+  const client = anthropic();
   if (!client) {
-    return NextResponse.json({ error: "Gerente ainda não configurado (falta ANTHROPIC_API_KEY)." }, { status: 500 });
+    console.error("[gerente] ANTHROPIC_API_KEY ausente");
+    return NextResponse.json({ error: "O gerente ainda não está configurado. Avise o time Promia." }, { status: 503 });
+  }
+
+  if ((await remainingToday(marketId, "gerente")) <= 0) {
+    return NextResponse.json(
+      { error: "O gerente já rodou o máximo de vezes hoje pra esse mercado. Amanhã ele libera de novo." },
+      { status: 429 }
+    );
   }
 
   const admin = createAdminClient();
 
-  const { data: market } = await admin.from("markets").select("name, niche").eq("id", marketId).single();
-  if (!market) {
-    return NextResponse.json({ error: "Mercado não encontrado." }, { status: 404 });
+  type Row = { name: string; brand: string | null; category: string | null; price: number | null; cost: number | null; stock: number | null; unit: string | null };
+  async function loadCatalog() {
+    const all: Row[] = [];
+    for (let from = 0; from < 5000; from += 1000) {
+      const { data, error } = await admin
+        .from("products")
+        .select("name, brand, category, price, cost, stock, unit")
+        .eq("market_id", marketId)
+        .eq("active", true)
+        .order("name")
+        .range(from, from + 999);
+      if (error || !data) break;
+      all.push(...data);
+      if (data.length < 1000) break;
+    }
+    return all;
   }
 
-  const { data: products } = await admin
-    .from("products")
-    .select("name, brand, category, price, cost, stock")
-    .eq("market_id", marketId)
-    .limit(500);
+  const [{ data: market }, catalog, { data: weekly }] = await Promise.all([
+    admin.from("markets").select("name, niche").eq("id", marketId).single(),
+    loadCatalog(),
+    admin.from("weekly_promotions").select("weekday, name, category_hint").eq("market_id", marketId).eq("active", true),
+  ]);
+  const count = catalog.length;
+  const products = sampleByCategory(catalog, MAX_PRODUCTS);
 
-  if (!products || products.length === 0) {
-    return NextResponse.json({ error: "Esse mercado ainda não tem produtos cadastrados." }, { status: 400 });
+  if (!market) return NextResponse.json({ error: "Mercado não encontrado." }, { status: 404 });
+  if (products.length === 0) {
+    return NextResponse.json({ error: "Esse mercado ainda não tem produtos. Importe a planilha primeiro." }, { status: 400 });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  const in30days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const upcomingDates = seasonalDatesInRange(today, in30days)
+  const today = todayInSaoPaulo();
+  const upcomingDates = seasonalDatesInRange(today, addDaysISO(today, 30))
     .map((d) => `${d.date}: ${d.title}`)
+    .join("\n");
+  const weeklyText = (weekly ?? [])
+    .map((w) => `${weekdayName(w.weekday)}: ${promptSafe(w.name)}${w.category_hint ? ` (${promptSafe(w.category_hint)})` : ""}`)
     .join("\n");
 
   const catalogText = products
-    .map(
-      (p) =>
-        `- ${p.name}${p.brand ? ` (${p.brand})` : ""} | categoria: ${p.category || "sem categoria"} | preço: R$ ${p.price ?? "?"}${
-          p.cost != null ? ` | custo: R$ ${p.cost}` : ""
-        }${p.stock != null ? ` | estoque: ${p.stock}` : ""}`
+    .map((p) =>
+      [
+        `- ${promptSafe(p.name)}${p.brand ? ` (${promptSafe(p.brand)})` : ""}`,
+        `categoria: ${promptSafe(p.category) || "sem categoria"}`,
+        `preço: ${p.price != null ? `R$ ${p.price}` : "?"}${p.unit ? `/${p.unit}` : ""}`,
+        p.cost != null ? `custo: R$ ${p.cost}` : null,
+        p.stock != null ? `estoque: ${p.stock}` : null,
+      ]
+        .filter(Boolean)
+        .join(" | ")
     )
     .join("\n");
 
-  const analysisPrompt = `Mercado: ${market.name}${market.niche ? ` (nicho: ${market.niche})` : ""}.\n\nDatas comemorativas nos próximos 30 dias:\n${upcomingDates || "nenhuma relevante"}\n\nCatálogo (até 500 produtos):\n${catalogText}`;
+  const total = count ?? products.length;
+  const analysisPrompt = [
+    `Mercado: ${promptSafe(market.name)}${market.niche ? ` (nicho: ${promptSafe(market.niche)})` : ""}. Hoje: ${today}.`,
+    `<datas>\n${upcomingDates || "nenhuma data relevante nos próximos 30 dias"}\n</datas>`,
+    `<promocoes_fixas>\n${weeklyText || "nenhuma cadastrada"}\n</promocoes_fixas>`,
+    `<catalogo total="${total}" enviados="${products.length}">\n${catalogText}\n</catalogo>`,
+  ].join("\n\n");
 
   try {
     const analysisResponse = await client.messages.create({
@@ -99,31 +141,38 @@ export async function POST(req: NextRequest) {
 
     const structureResponse = await client.messages.create({
       model: GERENTE_MODEL,
-      max_tokens: 4000,
+      max_tokens: 3000,
       system: GERENTE_STRUCTURE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `Análise:\n${analysis}\n\nContexto de época:\n${upcomingDates || "nenhuma data relevante nos próximos 30 dias"}` }],
+      tools: [RECOMMENDATIONS_TOOL],
+      tool_choice: { type: "tool", name: RECOMMENDATIONS_TOOL.name },
+      messages: [
+        {
+          role: "user",
+          content: `<analise>\n${analysis}\n</analise>\n\n<datas>\n${upcomingDates || "nenhuma"}\n</datas>\n\n<promocoes_fixas>\n${weeklyText || "nenhuma"}\n</promocoes_fixas>`,
+        },
+      ],
     });
-    const raw = extractText(structureResponse.content);
-    const recommendations = parseRecommendations(raw);
 
-    if (!recommendations || recommendations.length === 0) {
-      return NextResponse.json({ error: "O gerente não conseguiu gerar recomendações dessa vez." }, { status: 422 });
+    await recordUsage(marketId, access.viewer.userId, "gerente", 1);
+
+    const recommendations = normalizeRecommendations(toolInput(structureResponse.content));
+    if (recommendations.length === 0) {
+      return NextResponse.json({ error: "O gerente não conseguiu montar recomendações dessa vez. Tente de novo." }, { status: 422 });
     }
 
-    const rows = recommendations.map((r) => ({
-      market_id: marketId,
-      type: r.type,
-      target: r.target,
-      reason: r.reason,
-      priority: r.priority,
-      generated_at: new Date().toISOString(),
-    }));
+    const runId = crypto.randomUUID();
+    const generatedAt = new Date().toISOString();
+    const { error: insertError } = await admin.from("ai_recommendations").insert(
+      recommendations.map((r) => ({ ...r, market_id: marketId, run_id: runId, generated_at: generatedAt }))
+    );
+    if (insertError) {
+      console.error("[gerente] gravar", insertError);
+      return NextResponse.json({ recommendations, warning: "As recomendações não ficaram salvas. Elas somem ao recarregar a página." });
+    }
 
-    await admin.from("ai_recommendations").insert(rows);
-
-    return NextResponse.json({ recommendations });
+    return NextResponse.json({ recommendations, runId });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Erro desconhecido.";
-    return NextResponse.json({ error: `Erro ao rodar o gerente: ${message}` }, { status: 500 });
+    console.error("[gerente]", err);
+    return NextResponse.json({ error: "O gerente não respondeu agora. Tente de novo em alguns minutos." }, { status: 502 });
   }
 }

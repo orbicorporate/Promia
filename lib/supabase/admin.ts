@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 // Client de servidor usando a service_role key. Ignora RLS.
 // Nunca importar isso de um Client Component.
@@ -12,7 +13,7 @@ export function createAdminClient() {
     );
   }
 
-  return createClient(url, serviceKey, {
+  return createClient<Database>(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

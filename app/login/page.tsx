@@ -16,17 +16,21 @@ export default function LoginPage() {
     setErro("");
     setCarregando(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: senha,
-    });
-
-    setCarregando(false);
-
-    if (error) {
-      setErro("Email ou senha incorretos.");
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
+      if (error) {
+        setErro("Email ou senha incorretos.");
+        return;
+      }
+    } catch {
+      setErro("Sem conexão agora. Confira a internet e tente de novo.");
       return;
+    } finally {
+      setCarregando(false);
     }
 
     router.push("/");
@@ -45,9 +49,11 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm text-neutral-600">Email</label>
+          <label htmlFor="email" className="text-sm text-neutral-600">Email</label>
           <input
+            id="email"
             type="email"
+            autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -56,9 +62,11 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm text-neutral-600">Senha</label>
+          <label htmlFor="senha" className="text-sm text-neutral-600">Senha</label>
           <input
+            id="senha"
             type="password"
+            autoComplete="current-password"
             required
             value={senha}
             onChange={(e) => setSenha(e.target.value)}

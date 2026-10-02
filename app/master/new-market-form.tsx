@@ -15,28 +15,30 @@ export function NewMarketForm() {
     setCarregando(true);
 
     const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/master/markets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: form.get("name"),
-        niche: form.get("niche"),
-        ownerName: form.get("ownerName"),
-        ownerEmail: form.get("ownerEmail"),
-        ownerPassword: form.get("ownerPassword"),
-      }),
-    });
-
-    const data = await res.json();
-    setCarregando(false);
-
-    if (!res.ok) {
-      setErro(data.error || "Erro ao criar mercado.");
-      return;
+    try {
+      const res = await fetch("/api/master/markets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.get("name"),
+          niche: form.get("niche"),
+          ownerName: form.get("ownerName"),
+          ownerEmail: form.get("ownerEmail"),
+          ownerPassword: form.get("ownerPassword"),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErro(data.error || "Não consegui criar o mercado. Tente de novo.");
+        return;
+      }
+      setOpen(false);
+      router.refresh();
+    } catch {
+      setErro("Sem conexão agora. Confira a internet e tente de novo.");
+    } finally {
+      setCarregando(false);
     }
-
-    setOpen(false);
-    router.refresh();
   }
 
   if (!open) {
@@ -90,12 +92,12 @@ export function NewMarketForm() {
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm text-neutral-600">Senha</label>
+        <label className="text-sm text-neutral-600">Senha (mínimo 8 caracteres)</label>
         <input
           name="ownerPassword"
           type="password"
           required
-          minLength={6}
+          minLength={8}
           className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm"
         />
       </div>
