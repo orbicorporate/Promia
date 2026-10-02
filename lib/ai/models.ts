@@ -17,7 +17,12 @@ export function anthropic(): Anthropic | null {
   if (!client) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return null;
-    client = new Anthropic({ apiKey });
+    // chaves que não pertencem a um workspace exigem dizer qual usar
+    const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
+    client = new Anthropic({
+      apiKey,
+      defaultHeaders: workspaceId ? { "anthropic-workspace-id": workspaceId } : undefined,
+    });
   }
   return client;
 }
