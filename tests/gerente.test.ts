@@ -22,3 +22,11 @@ describe("normalizeRecommendations", () => {
     expect(normalizeRecommendations({ recommendations: "x" })).toEqual([]);
   });
 });
+
+import { jsonFromText } from "@/lib/ai/gerente";
+describe("jsonFromText", () => {
+  it("aproveita JSON no meio do texto", () => {
+    expect(normalizeRecommendations(jsonFromText('Segue:\n{"recommendations":[{"type":"destacar","target":"Café","reason":"Margem de 29%.","priority":"alta"}]}'))).toHaveLength(1);
+    expect(jsonFromText("sem json")).toBeNull();
+  });
+});
