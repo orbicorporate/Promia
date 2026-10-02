@@ -7,6 +7,7 @@ import {
   GERENTE_STRUCTURE_SYSTEM_PROMPT,
   RECOMMENDATIONS_TOOL,
   extractText,
+  jsonFromText,
   normalizeRecommendations,
   promptSafe,
   toolInput,
@@ -144,7 +145,8 @@ export async function POST(req: NextRequest) {
       max_tokens: 3000,
       system: GERENTE_STRUCTURE_SYSTEM_PROMPT,
       tools: [RECOMMENDATIONS_TOOL],
-      tool_choice: { type: "tool", name: RECOMMENDATIONS_TOOL.name },
+      // o modelo atual não aceita tool_choice forçado; o prompt pede a ferramenta
+      tool_choice: { type: "auto" },
       messages: [
         {
           role: "user",
@@ -155,7 +157,9 @@ export async function POST(req: NextRequest) {
 
     await recordUsage(marketId, access.viewer.userId, "gerente", 1);
 
-    const recommendations = normalizeRecommendations(toolInput(structureResponse.content));
+    const recommendations = normalizeRecommendations(
+      toolInput(structureResponse.content) ?? jsonFromText(extractText(structureResponse.content))
+    );
     if (recommendations.length === 0) {
       return NextResponse.json({ error: "O gerente não conseguiu montar recomendações dessa vez. Tente de novo." }, { status: 422 });
     }
