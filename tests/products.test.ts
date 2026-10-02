@@ -169,3 +169,49 @@ describe("pequenas regras", () => {
     expect(out[1]).toMatchObject({ sku: "2", price: null });
   });
 });
+
+describe("casos de ERP apontados na revisão", () => {
+  it("aspas no meio do nome (polegadas) não engolem as linhas seguintes", async () => {
+    const csv = 'codigo;descricao;preco\n1;MANGUEIRA 1/2" 10M;25,90\n2;ARROZ 5KG;27,90\n3;TV 32" LED;999,00\n';
+    const r = await parseProductSpreadsheet(enc(csv), "x.csv");
+    expect(r.products.map((p) => p.name)).toEqual(['MANGUEIRA 1/2" 10M', "ARROZ 5KG", 'TV 32" LED']);
+    expect(r.products[0].price).toBe(25.9);
+  });
+
+  it("EAN em notação científica não vira código", async () => {
+    const csv = "descricao;ean;preco\nArroz;7,89612E+12;27,90\nFeijão;7,89612E+12;8,49\n";
+    const r = await parseProductSpreadsheet(enc(csv), "x.csv");
+    expect(r.products).toHaveLength(2);
+    expect(r.products.every((p) => p.ean === null)).toBe(true);
+  });
+
+  it("coluna Produto com código e Descrição com o nome", async () => {
+    const csv = "Produto;Descrição;Preço\n1001;Feijão Carioca;8,49\n1002;Arroz;27,90\n";
+    const r = await parseProductSpreadsheet(enc(csv), "x.csv");
+    expect(r.products.map((p) => p.name)).toEqual(["Feijão Carioca", "Arroz"]);
+  });
+
+  it("Desc. % não vira nome; Valor Estoque não vira preço", async () => {
+    const csv = "Código;Desc. %;Descrição;Valor Estoque;Preço Venda;Qtd Vendida;Estoque\n1;0;Leite;259,00;4,99;30;52\n";
+    const r = await parseProductSpreadsheet(enc(csv), "x.csv");
+    expect(r.products[0]).toMatchObject({ name: "Leite", price: 4.99, stock: 52 });
+  });
+
+  it("coluna com ponto decimal: 69.990 em kg é 69,99", async () => {
+    const csv = "descricao,preco\nPicanha kg,69.990\nAlcatra kg,49.90\n";
+    const r = await parseProductSpreadsheet(enc(csv), "x.csv");
+    expect(r.products.map((p) => p.price)).toEqual([69.99, 49.9]);
+  });
+
+  it("título antes do cabeçalho em CSV com vírgula e rodapé de total", async () => {
+    const csv = "Relatório de estoque\ncodigo,descricao,preco\n1,Leite,4.99\n2,Café,19.90\nTOTAL GERAL,,24.89\n";
+    const r = await parseProductSpreadsheet(enc(csv), "x.csv");
+    expect(r.products.map((p) => p.name)).toEqual(["Leite", "Café"]);
+  });
+
+  it("código 001234 e 1234 são o mesmo produto", async () => {
+    const r = await parseProductSpreadsheet(enc("codigo;descricao\n001234;Leite\n1234;Leite 1L\n"), "x.csv");
+    expect(r.products).toHaveLength(1);
+    expect(r.products[0]).toMatchObject({ sku: "1234", name: "Leite 1L" });
+  });
+});

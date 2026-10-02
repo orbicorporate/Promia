@@ -50,6 +50,11 @@ export async function POST(req: NextRequest) {
 
   const results = await mapWithConcurrency(claimed, CONCURRENCY, async (p) => {
     const result = await findProductImage({ name: p.name, brand: p.brand, ean: p.ean });
+    if (result.status === "erro") {
+      // falha temporária da IA: o produto volta pra fila, sem perder a vez
+      await admin.from("products").update({ image_claimed_at: null }).eq("id", p.id).eq("market_id", marketId);
+      return result.status;
+    }
     const { error: updateError } = await admin
       .from("products")
       .update({
@@ -64,10 +69,19 @@ export async function POST(req: NextRequest) {
     return result.status;
   });
 
-  await recordUsage(marketId, access.viewer.userId, "busca_imagem", claimed.length);
+  const failed = results.filter((s) => s === "erro").length;
+  const processed = claimed.length - failed;
+  await recordUsage(marketId, access.viewer.userId, "busca_imagem", processed);
+
+  if (processed === 0) {
+    return NextResponse.json(
+      { error: "A busca de fotos está indisponível agora. Tente de novo em alguns minutos.", remaining: await countPending() },
+      { status: 503 }
+    );
+  }
 
   return NextResponse.json({
-    processed: claimed.length,
+    processed,
     found: results.filter((s) => s === "encontrada").length,
     remaining: await countPending(),
   });

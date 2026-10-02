@@ -37,16 +37,19 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-export function safeImageUrl(url: string | null | undefined): string {
+export function safeImageUrl(url: string | null | undefined, proxy?: (url: string) => string): string {
   if (!url) return EMPTY_IMAGE;
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") return EMPTY_IMAGE;
-    return escapeHtml(parsed.toString());
+    return escapeHtml(proxy ? proxy(parsed.toString()) : parsed.toString());
   } catch {
     return EMPTY_IMAGE;
   }
 }
+
+// fotos de terceiros passam pelo próprio Promia, pra não sumirem do PNG
+export const sameOriginImage = (url: string) => `/api/imagem?u=${encodeURIComponent(url)}`;
 
 export function safeColor(color: string | null | undefined, fallback: string): string {
   return color && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color.trim()) ? color.trim() : fallback;
@@ -64,13 +67,18 @@ export function formatPrice(price: number | null, unit?: string | null): string 
 const PRODUCT_BLOCK_START = "<!--PRODUTOS_INICIO-->";
 const PRODUCT_BLOCK_END = "<!--PRODUTOS_FIM-->";
 
-export function renderTabloidHtml(templateHtml: string, market: TabloidMarketData, products: TabloidProductData[]): string {
+export function renderTabloidHtml(
+  templateHtml: string,
+  market: TabloidMarketData,
+  products: TabloidProductData[],
+  opts: { imageProxy?: (url: string) => string } = {}
+): string {
   const primary = safeColor(market.colorPrimary, DEFAULT_PRIMARY);
   const secondary = safeColor(market.colorSecondary, DEFAULT_SECONDARY);
 
   const marketTokens: Record<string, string> = {
     "%%NOME_MERCADO%%": escapeHtml(market.name),
-    "%%LOGO_URL%%": safeImageUrl(market.logoUrl),
+    "%%LOGO_URL%%": safeImageUrl(market.logoUrl, opts.imageProxy),
     "%%COR_PRIMARIA%%": primary,
     "%%COR_SECUNDARIA%%": secondary,
     "%%NOME_TABLOIDE%%": escapeHtml(market.tabloidName),
@@ -80,7 +88,7 @@ export function renderTabloidHtml(templateHtml: string, market: TabloidMarketDat
   const productTokens = (p: TabloidProductData): Record<string, string> => ({
     "%%PRODUTO_NOME%%": escapeHtml(p.name),
     "%%PRODUTO_PRECO%%": escapeHtml(formatPrice(p.price, p.unit)),
-    "%%PRODUTO_IMAGEM_URL%%": safeImageUrl(p.imageUrl),
+    "%%PRODUTO_IMAGEM_URL%%": safeImageUrl(p.imageUrl, opts.imageProxy),
     "%%PRODUTO_CATEGORIA%%": escapeHtml(p.category || ""),
   });
 

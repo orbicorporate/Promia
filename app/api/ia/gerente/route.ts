@@ -20,6 +20,34 @@ export const maxDuration = 120;
 
 const MAX_PRODUCTS = 500;
 
+// Catálogo grande: em vez dos primeiros 500 em ordem alfabética, pega um
+// pouco de cada categoria (os com custo e estoque informados primeiro).
+function sampleByCategory<T extends { category: string | null; cost: number | null; stock: number | null; price: number | null }>(
+  rows: T[],
+  max: number
+): T[] {
+  if (rows.length <= max) return rows;
+  const groups = new Map<string, T[]>();
+  for (const r of rows) {
+    const key = r.category ?? "";
+    groups.set(key, [...(groups.get(key) ?? []), r]);
+  }
+  const score = (r: T) => (r.cost != null ? 2 : 0) + (r.stock != null ? 1 : 0);
+  const queues = [...groups.values()].map((g) => g.sort((a, b) => score(b) - score(a) || (b.price ?? 0) - (a.price ?? 0)));
+  const out: T[] = [];
+  for (let i = 0; out.length < max; i++) {
+    let added = false;
+    for (const q of queues) {
+      if (i < q.length && out.length < max) {
+        out.push(q[i]);
+        added = true;
+      }
+    }
+    if (!added) break;
+  }
+  return out;
+}
+
 export async function POST(req: NextRequest) {
   const body = await readJson(req);
   const access = await requireMarketAccess(body.marketId);
@@ -40,21 +68,35 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const [{ data: market }, { data: products, count }, { data: weekly }] = await Promise.all([
+
+  type Row = { name: string; brand: string | null; category: string | null; price: number | null; cost: number | null; stock: number | null; unit: string | null };
+  async function loadCatalog() {
+    const all: Row[] = [];
+    for (let from = 0; from < 5000; from += 1000) {
+      const { data, error } = await admin
+        .from("products")
+        .select("name, brand, category, price, cost, stock, unit")
+        .eq("market_id", marketId)
+        .eq("active", true)
+        .order("name")
+        .range(from, from + 999);
+      if (error || !data) break;
+      all.push(...data);
+      if (data.length < 1000) break;
+    }
+    return all;
+  }
+
+  const [{ data: market }, catalog, { data: weekly }] = await Promise.all([
     admin.from("markets").select("name, niche").eq("id", marketId).single(),
-    admin
-      .from("products")
-      .select("name, brand, category, price, cost, stock, unit", { count: "exact" })
-      .eq("market_id", marketId)
-      .eq("active", true)
-      .order("category", { ascending: true, nullsFirst: false })
-      .order("name", { ascending: true })
-      .limit(MAX_PRODUCTS),
+    loadCatalog(),
     admin.from("weekly_promotions").select("weekday, name, category_hint").eq("market_id", marketId).eq("active", true),
   ]);
+  const count = catalog.length;
+  const products = sampleByCategory(catalog, MAX_PRODUCTS);
 
   if (!market) return NextResponse.json({ error: "Mercado não encontrado." }, { status: 404 });
-  if (!products || products.length === 0) {
+  if (products.length === 0) {
     return NextResponse.json({ error: "Esse mercado ainda não tem produtos. Importe a planilha primeiro." }, { status: 400 });
   }
 

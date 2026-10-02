@@ -34,6 +34,7 @@ export function RunGerenteButton({ marketId }: { marketId: string }) {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
+  const [unsaved, setUnsaved] = useState<GerenteRecommendation[] | null>(null);
 
   async function handleClick() {
     setLoading(true);
@@ -52,7 +53,13 @@ export function RunGerenteButton({ marketId }: { marketId: string }) {
         );
         return;
       }
-      if (data.warning) setAviso(data.warning);
+      if (data.warning) {
+        // não ficou salvo: mostra aqui mesmo, senão a tela exibiria a rodada antiga
+        setAviso(data.warning);
+        setUnsaved(data.recommendations ?? null);
+        return;
+      }
+      setUnsaved(null);
       // a lista "Última análise" vem do servidor, já com a rodada nova
       router.refresh();
     } catch {
@@ -73,6 +80,7 @@ export function RunGerenteButton({ marketId }: { marketId: string }) {
       </button>
       {erro && <p className="text-sm text-red-600">{erro}</p>}
       {aviso && <p className="text-sm text-amber-700">{aviso}</p>}
+      {unsaved && unsaved.length > 0 && <RecommendationList items={unsaved} />}
     </div>
   );
 }

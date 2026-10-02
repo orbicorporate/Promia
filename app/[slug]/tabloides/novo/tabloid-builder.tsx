@@ -47,6 +47,7 @@ export function TabloidBuilder({
   const [error, setError] = useState("");
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [tabloidId, setTabloidId] = useState<string | null>(null);
+  const [savedKey, setSavedKey] = useState("");
   const [creatingImage, setCreatingImage] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +56,8 @@ export function TabloidBuilder({
     const q = search.toLowerCase();
     return products.filter((p) => p.name.toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q));
   }, [products, search]);
+
+  const formKey = JSON.stringify([name, category, themeId, validFrom, validUntil, Array.from(selected).sort()]);
 
   function toggleProduct(id: string) {
     setSelected((prev) => {
@@ -84,8 +87,8 @@ export function TabloidBuilder({
 
     setSaving(true);
     try {
-      // se a arte falhou antes, tenta só montar de novo, sem criar outro tabloide
-      if (tabloidId) {
+      // se a arte falhou antes e nada mudou, só monta de novo, sem criar outro
+      if (tabloidId && savedKey === formKey) {
         await renderTabloid(tabloidId);
         return;
       }
@@ -108,6 +111,7 @@ export function TabloidBuilder({
         return;
       }
       setTabloidId(data.id);
+      setSavedKey(formKey);
       await renderTabloid(data.id);
     } catch {
       setError("Sem conexão agora. Confira a internet e tente de novo.");
@@ -288,7 +292,7 @@ export function TabloidBuilder({
         disabled={saving}
         className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
       >
-        {saving ? "Gerando..." : tabloidId ? "Tentar montar a arte de novo" : "Gerar tabloide"}
+        {saving ? "Gerando..." : tabloidId && savedKey === formKey ? "Tentar montar a arte de novo" : "Gerar tabloide"}
       </button>
     </div>
   );

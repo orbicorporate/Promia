@@ -21,14 +21,26 @@ export default async function NewTabloidPage({ params }: { params: Promise<{ slu
   if (!market) notFound();
   if (!canAccessMarket(who.viewer, market.id)) redirect("/");
 
+  // o Supabase devolve no máximo 1.000 linhas por consulta: busca em páginas
+  async function loadProducts() {
+    const all = [];
+    for (let from = 0; from < 15000; from += 1000) {
+      const { data, error } = await admin
+        .from("products")
+        .select("id, name, brand, category, price, unit, image_url, image_status")
+        .eq("market_id", market!.id)
+        .eq("active", true)
+        .order("name")
+        .range(from, from + 999);
+      if (error || !data) break;
+      all.push(...data);
+      if (data.length < 1000) break;
+    }
+    return { data: all };
+  }
+
   const [{ data: products }, { data: themes }, { data: weeklyPromotions }] = await Promise.all([
-    admin
-      .from("products")
-      .select("id, name, brand, category, price, unit, image_url, image_status")
-      .eq("market_id", market.id)
-      .eq("active", true)
-      .order("name")
-      .limit(5000),
+    loadProducts(),
     admin
       .from("themes")
       .select("id, name, kind, source_seasonal_title, source_weekday")

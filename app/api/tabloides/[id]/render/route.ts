@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getViewer, canAccessMarket, isUuid } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { renderTabloidHtml } from "@/lib/renderTabloid";
+import { renderTabloidHtml, sameOriginImage } from "@/lib/renderTabloid";
 import { formatBR } from "@/lib/dates";
 
 export const runtime = "nodejs";
@@ -74,7 +74,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       tabloidName: tabloid.name,
       validityLabel: formatValidity(tabloid.valid_from, tabloid.valid_until),
     },
-    products
+    products,
+    { imageProxy: sameOriginImage }
   );
 
   if (tabloid.status === "rascunho") {

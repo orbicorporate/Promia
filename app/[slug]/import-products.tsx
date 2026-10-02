@@ -101,18 +101,28 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
     setSaving(true);
     setError(null);
     try {
-      const res = await postJson("/api/produtos/importar/gravar", {
-        marketId,
-        products: toCreate,
-        fileName,
-        columns: meta.columns,
-        skippedRows: meta.skippedRows,
-      });
-      if (!res.ok) {
-        setError(res.data.error || "Não consegui gravar os produtos.");
-        return;
+      // em lotes, pra cada requisição ficar bem abaixo do limite da Vercel
+      const CHUNK = 2000;
+      let imported = 0;
+      for (let i = 0; i < toCreate.length; i += CHUNK) {
+        const last = i + CHUNK >= toCreate.length;
+        const res = await postJson("/api/produtos/importar/gravar", {
+          marketId,
+          products: toCreate.slice(i, i + CHUNK),
+          columns: meta.columns,
+          final: last,
+          ...(last ? { fileName, skippedRows: meta.skippedRows, totalImported: imported + Math.min(CHUNK, toCreate.length - i) } : {}),
+        });
+        if (!res.ok) {
+          setError(
+            (res.data.error || "Não consegui gravar os produtos.") +
+              (imported > 0 ? ` ${imported} já foram gravados; confirmar de novo não duplica nada.` : "")
+          );
+          return;
+        }
+        imported += res.data.imported ?? 0;
       }
-      setDoneCount(res.data.imported);
+      setDoneCount(imported);
       setProducts(null);
       setMeta(null);
       onImported?.();
