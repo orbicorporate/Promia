@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { readJson, requireMaster, serverError } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-async function requireMaster() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || profile.role !== "master") return null;
-  return user;
-}
 
 function slugify(name: string) {
   return name
@@ -19,38 +8,39 @@ function slugify(name: string) {
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 48);
 }
 
-// Cria um novo mercado, e já cria o primeiro login (dono/responsável) pra
-// ele, no mesmo padrão do painel master do Nume Calendar: login simples
-// (nome, email, senha), sem verificação de email.
-export async function POST(req: NextRequest) {
-  const user = await requireMaster();
-  if (!user) {
-    return NextResponse.json({ error: "Sem permissão." }, { status: 401 });
-  }
+const RESERVED_SLUGS = new Set(["api", "login", "master", "sair", "conta", "_next"]);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const body = await req.json().catch(() => null);
-  const name = String(body?.name || "").trim();
-  const niche = String(body?.niche || "").trim() || null;
-  const ownerEmail = String(body?.ownerEmail || "").trim();
-  const ownerPassword = String(body?.ownerPassword || "").trim();
-  const ownerName = String(body?.ownerName || "").trim() || null;
+// Cria um mercado e o login do responsável. Se qualquer passo falhar, o que
+// já foi criado é desfeito (antes sobravam mercado e login órfãos).
+export async function POST(req: NextRequest) {
+  const access = await requireMaster();
+  if (!access.ok) return access.response;
+
+  const body = await readJson(req);
+  const name = String(body.name ?? "").trim().slice(0, 120);
+  const niche = String(body.niche ?? "").trim().slice(0, 120) || null;
+  const ownerEmail = String(body.ownerEmail ?? "").trim().toLowerCase();
+  const ownerPassword = String(body.ownerPassword ?? "");
+  const ownerName = String(body.ownerName ?? "").trim().slice(0, 120) || null;
 
   if (!name) return NextResponse.json({ error: "Informe o nome do mercado." }, { status: 400 });
-  if (!ownerEmail || !ownerPassword) {
-    return NextResponse.json({ error: "Informe email e senha do responsável pelo mercado." }, { status: 400 });
+  if (!EMAIL_RE.test(ownerEmail)) return NextResponse.json({ error: "Email do responsável inválido." }, { status: 400 });
+  if (ownerPassword.length < 8) {
+    return NextResponse.json({ error: "A senha do responsável precisa ter pelo menos 8 caracteres." }, { status: 400 });
   }
 
   const admin = createAdminClient();
   const baseSlug = slugify(name) || "mercado";
-
-  let slug = baseSlug;
-  for (let i = 1; i < 50; i++) {
+  let slug = RESERVED_SLUGS.has(baseSlug) ? `${baseSlug}-mercado` : baseSlug;
+  for (let i = 2; i < 60; i++) {
     const { data: existing } = await admin.from("markets").select("id").eq("slug", slug).maybeSingle();
     if (!existing) break;
-    slug = `${baseSlug}-${i + 1}`;
+    slug = `${baseSlug}-${i}`;
   }
 
   const { data: market, error: marketError } = await admin
@@ -58,20 +48,22 @@ export async function POST(req: NextRequest) {
     .insert({ name, slug, niche })
     .select("id, slug")
     .single();
-
-  if (marketError || !market) {
-    return NextResponse.json({ error: `Erro ao criar mercado: ${marketError?.message}` }, { status: 500 });
-  }
+  if (marketError || !market) return serverError("markets", marketError, "Não consegui criar o mercado. Tente de novo.");
 
   const { data: authUser, error: authError } = await admin.auth.admin.createUser({
     email: ownerEmail,
     password: ownerPassword,
     email_confirm: true,
+    user_metadata: ownerName ? { full_name: ownerName } : undefined,
   });
-
   if (authError || !authUser.user) {
     await admin.from("markets").delete().eq("id", market.id);
-    return NextResponse.json({ error: `Erro ao criar login do responsável: ${authError?.message}` }, { status: 500 });
+    const exists = authError?.message?.toLowerCase().includes("already");
+    console.error("[markets] auth", authError);
+    return NextResponse.json(
+      { error: exists ? "Já existe um login com esse email." : "Não consegui criar o login do responsável." },
+      { status: exists ? 409 : 500 }
+    );
   }
 
   const { error: profileError } = await admin.from("profiles").insert({
@@ -81,9 +73,10 @@ export async function POST(req: NextRequest) {
     full_name: ownerName,
     email: ownerEmail,
   });
-
   if (profileError) {
-    return NextResponse.json({ error: `Erro ao criar perfil do responsável: ${profileError.message}` }, { status: 500 });
+    await admin.auth.admin.deleteUser(authUser.user.id);
+    await admin.from("markets").delete().eq("id", market.id);
+    return serverError("markets", profileError, "Não consegui criar o perfil do responsável. Nada foi salvo, tente de novo.");
   }
 
   return NextResponse.json({ market });

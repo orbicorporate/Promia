@@ -2,72 +2,84 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { ParsedProduct } from "@/lib/products";
+import type { ParsedProduct, ParseResult, ProductField } from "@/lib/products";
 
 type DraftProduct = ParsedProduct & { include: boolean };
 
-function toDraft(products: ParsedProduct[]): DraftProduct[] {
-  return products.map((p) => ({ ...p, include: true }));
+const FIELD_LABEL: Record<ProductField, string> = {
+  sku: "código",
+  ean: "código de barras",
+  name: "nome",
+  brand: "marca",
+  category: "categoria",
+  price: "preço",
+  cost: "custo",
+  stock: "estoque",
+  unit: "unidade",
+};
+
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+
+async function postJson(url: string, body: unknown) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
 }
 
 export function ImportProducts({ marketId, onImported }: { marketId: string; onImported?: () => void }) {
   const [products, setProducts] = useState<DraftProduct[] | null>(null);
-  const [skippedCount, setSkippedCount] = useState(0);
+  const [meta, setMeta] = useState<Omit<ParseResult, "products"> | null>(null);
+  const [fileName, setFileName] = useState("");
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doneCount, setDoneCount] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
-
   async function handleFile(file: File) {
     setError(null);
     setDoneCount(null);
 
     if (file.size > MAX_UPLOAD_BYTES) {
-      setError(`Esse arquivo tem ${(file.size / (1024 * 1024)).toFixed(1)}MB e o limite é 20MB.`);
+      setError(`Esse arquivo tem ${(file.size / (1024 * 1024)).toFixed(1)} MB e o limite é 20 MB.`);
       if (fileRef.current) fileRef.current.value = "";
       return;
     }
 
     setReading(true);
     setProducts(null);
+    setMeta(null);
+    setFileName(file.name);
     try {
-      const urlRes = await fetch("/api/master/import-products/upload-url", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, fileName: file.name }),
-      });
-      const urlData = await urlRes.json();
-      if (!urlRes.ok) {
-        setError(urlData.error || "Erro ao preparar o envio da planilha.");
+      const upload = await postJson("/api/produtos/importar/upload-url", { marketId, fileName: file.name });
+      if (!upload.ok) {
+        setError(upload.data.error || "Não consegui preparar o envio da planilha.");
         return;
       }
 
       const supabase = createClient();
       const { error: uploadError } = await supabase.storage
         .from("imports")
-        .uploadToSignedUrl(urlData.path, urlData.token, file);
+        .uploadToSignedUrl(upload.data.path, upload.data.token, file);
       if (uploadError) {
-        setError(`Erro ao enviar a planilha: ${uploadError.message}`);
+        setError("Não consegui enviar a planilha. Tente de novo.");
         return;
       }
 
-      const res = await fetch("/api/master/import-products/parse", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, path: urlData.path }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Erro ao ler a planilha.");
-      } else {
-        setProducts(toDraft(data.products));
-        setSkippedCount(data.skippedRows?.length ?? 0);
+      const read = await postJson("/api/produtos/importar/ler", { marketId, path: upload.data.path });
+      if (!read.ok) {
+        setError(read.data.error || "Não consegui ler a planilha.");
+        return;
       }
+      const { products: parsed, ...rest } = read.data as ParseResult;
+      setProducts(parsed.map((p) => ({ ...p, include: true })));
+      setMeta(rest);
     } catch {
-      setError("Falha de conexão ao enviar a planilha.");
+      setError("Sem conexão agora. Confira a internet e tente de novo.");
     } finally {
       setReading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -78,119 +90,158 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
     setProducts((prev) => (prev ? prev.map((p, i) => (i === idx ? { ...p, ...patch } : p)) : prev));
   }
 
-  function removeProduct(idx: number) {
-    setProducts((prev) => (prev ? prev.filter((_, i) => i !== idx) : prev));
-  }
-
   async function handleConfirm() {
-    if (!products) return;
-    const toCreate = products.filter((p) => p.include);
+    if (!products || !meta) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const toCreate = products.filter((p) => p.include).map(({ include, ...p }) => p);
     if (toCreate.length === 0) {
-      setError("Marque pelo menos um produto pra importar.");
+      setError("Marque pelo menos um produto para importar.");
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/master/import-products/create", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, products: toCreate }),
+      const res = await postJson("/api/produtos/importar/gravar", {
+        marketId,
+        products: toCreate,
+        fileName,
+        columns: meta.columns,
+        skippedRows: meta.skippedRows,
       });
-      const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Erro ao gravar os produtos.");
-      } else {
-        setDoneCount(data.imported);
-        setProducts(null);
-        onImported?.();
+        setError(res.data.error || "Não consegui gravar os produtos.");
+        return;
       }
+      setDoneCount(res.data.imported);
+      setProducts(null);
+      setMeta(null);
+      onImported?.();
     } catch {
-      setError("Falha de conexão ao gravar os produtos.");
+      setError("Sem conexão agora. Nada foi perdido: confirme de novo.");
     } finally {
       setSaving(false);
     }
   }
 
+  const included = products?.filter((p) => p.include).length ?? 0;
+  const understood = meta
+    ? (Object.entries(meta.columns) as [ProductField, string][]).map(([field, col]) => `${FIELD_LABEL[field]} (${col})`)
+    : [];
+
   return (
     <div className="space-y-4">
       {!products && (
-        <div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xlsx,.csv,.xls"
-            disabled={reading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFile(file);
-            }}
-            className="text-sm"
-          />
-          {reading && <p className="text-sm text-neutral-500 mt-2">Lendo a planilha...</p>}
+        <div className="space-y-2">
+          <label className="inline-flex items-center gap-2 bg-white border border-neutral-300 rounded-lg px-4 py-2 text-sm cursor-pointer hover:border-neutral-400">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".xlsx,.csv"
+              disabled={reading}
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
+            />
+            {reading ? "Lendo a planilha..." : "Escolher planilha (.xlsx ou .csv)"}
+          </label>
+          <p className="text-xs text-neutral-500">
+            Precisa de uma coluna com o nome do produto. Código, código de barras, preço, custo, categoria, marca,
+            estoque e unidade são lidos quando existirem.
+          </p>
         </div>
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {doneCount != null && <p className="text-sm text-green-700">{doneCount} produto(s) importado(s).</p>}
 
-      {doneCount != null && (
-        <p className="text-sm text-green-700">{doneCount} produto(s) importado(s) com sucesso.</p>
-      )}
-
-      {products && (
+      {products && meta && (
         <div className="space-y-3">
-          <p className="text-sm text-neutral-600">
-            {products.length} produto(s) identificado(s){skippedCount > 0 ? `, ${skippedCount} linha(s) ignorada(s)` : ""}.
-            Confira antes de confirmar (você pode desmarcar ou remover o que não fizer sentido).
-          </p>
+          <div className="bg-white border border-neutral-200 rounded-lg px-4 py-3 text-sm text-neutral-700 space-y-1">
+            <p>
+              Entendi: {products.length} produto(s) a partir da linha {meta.headerRow + 1} de {fileName}.
+            </p>
+            <p className="text-neutral-500">Colunas lidas: {understood.join(", ")}.</p>
+            {meta.generatedSkus > 0 && (
+              <p className="text-amber-700">
+                {meta.generatedSkus} produto(s) sem código: o código foi criado pelo nome. Se o nome mudar numa próxima
+                planilha, ele entra como produto novo.
+              </p>
+            )}
+            {meta.skippedRows.length > 0 && (
+              <details className="text-neutral-500">
+                <summary className="cursor-pointer">{meta.skippedRows.length} linha(s) ignorada(s)</summary>
+                <ul className="mt-1 space-y-0.5 max-h-40 overflow-y-auto">
+                  {meta.skippedRows.slice(0, 200).map((s, i) => (
+                    <li key={i}>
+                      Linha {s.rowIndex}: {s.reason}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
 
-          <div className="border border-neutral-200 rounded-lg divide-y divide-neutral-100 max-h-96 overflow-y-auto">
-            {products.map((p, i) => (
-              <div key={i} className="flex items-center gap-3 px-3 py-2 text-sm">
+          <div className="border border-neutral-200 rounded-lg divide-y divide-neutral-100 max-h-[28rem] overflow-y-auto bg-white">
+            {products.slice(0, 1000).map((p, i) => (
+              <div key={p.sku} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
                 <input
                   type="checkbox"
+                  aria-label={`Importar ${p.name}`}
                   checked={p.include}
                   onChange={(e) => updateProduct(i, { include: e.target.checked })}
                 />
                 <input
                   value={p.name}
+                  aria-label="Nome"
                   onChange={(e) => updateProduct(i, { name: e.target.value })}
-                  className="flex-1 border border-transparent hover:border-neutral-200 rounded px-2 py-1"
+                  className="flex-1 min-w-[10rem] border border-transparent hover:border-neutral-200 rounded px-2 py-1"
                 />
+                <span className="text-xs text-neutral-400 w-24 truncate" title={p.sku}>
+                  {p.sku.startsWith("n:") ? "sem código" : p.sku}
+                </span>
                 <input
                   value={p.category ?? ""}
                   placeholder="categoria"
+                  aria-label="Categoria"
                   onChange={(e) => updateProduct(i, { category: e.target.value || null })}
-                  className="w-32 border border-transparent hover:border-neutral-200 rounded px-2 py-1 text-neutral-500"
+                  className="w-28 border border-transparent hover:border-neutral-200 rounded px-2 py-1 text-neutral-500"
                 />
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
+                  inputMode="decimal"
                   value={p.price ?? ""}
                   placeholder="preço"
+                  aria-label="Preço"
                   onChange={(e) => updateProduct(i, { price: e.target.value ? Number(e.target.value) : null })}
                   className="w-24 border border-transparent hover:border-neutral-200 rounded px-2 py-1"
                 />
-                <button
-                  onClick={() => removeProduct(i)}
-                  className="text-neutral-400 hover:text-red-600 text-xs"
-                >
-                  remover
-                </button>
+                <span className="text-xs text-neutral-400 w-8">{p.unit ?? ""}</span>
               </div>
             ))}
+            {products.length > 1000 && (
+              <p className="px-3 py-2 text-xs text-neutral-500">
+                Mostrando os primeiros 1.000 de {products.length}. Todos serão importados.
+              </p>
+            )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={handleConfirm}
               disabled={saving}
               className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
             >
-              {saving ? "Importando..." : `Confirmar importação (${products.filter((p) => p.include).length})`}
+              {saving ? "Importando..." : `Confirmar importação (${included})`}
             </button>
             <button
-              onClick={() => setProducts(null)}
+              onClick={() => {
+                setProducts(null);
+                setMeta(null);
+              }}
               className="text-sm text-neutral-500 px-3 py-2"
             >
               Cancelar

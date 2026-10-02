@@ -1,86 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer, canAccessMarket, isUuid } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderTabloidHtml } from "@/lib/renderTabloid";
+import { formatBR } from "@/lib/dates";
 
 export const runtime = "nodejs";
 
 function formatValidity(from: string | null, until: string | null): string {
-  const fmt = (d: string) =>
-    new Date(`${d}T00:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
-  if (from && until) return `Válido de ${fmt(from)} a ${fmt(until)}`;
-  if (from) return `A partir de ${fmt(from)}`;
+  if (from && until) return `Ofertas válidas de ${formatBR(from)} a ${formatBR(until)}`;
+  if (from) return `Ofertas a partir de ${formatBR(from)}`;
+  if (until) return `Ofertas válidas até ${formatBR(until)}`;
   return "";
 }
 
-// Monta o HTML final do tabloide (template + produtos selecionados), pra
-// ser inserido no navegador (dangerouslySetInnerHTML) e capturado em
-// imagem com html2canvas-pro do lado do cliente.
+// Monta o HTML final do tabloide (template + produtos). Quando dá certo, o
+// tabloide sai de "rascunho" e vira "pronto".
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: "Tabloide não encontrado." }, { status: 404 });
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Sem permissão." }, { status: 401 });
+  const who = await getViewer();
+  if (who.status !== "ok") return NextResponse.json({ error: "Sua sessão expirou. Entre de novo." }, { status: 401 });
 
   const admin = createAdminClient();
-
   const { data: tabloid } = await admin
     .from("tabloids")
-    .select("id, name, market_id, theme_id, valid_from, valid_until")
+    .select("id, name, market_id, theme_id, status, valid_from, valid_until")
     .eq("id", id)
-    .single();
-  if (!tabloid) return NextResponse.json({ error: "Tabloide não encontrado." }, { status: 404 });
-
-  const { data: profile } = await supabase.from("profiles").select("role, market_id").eq("id", user.id).single();
-  if (!profile) return NextResponse.json({ error: "Sem permissão." }, { status: 401 });
-  if (profile.role === "mercado" && profile.market_id !== tabloid.market_id) {
-    return NextResponse.json({ error: "Sem permissão." }, { status: 401 });
+    .maybeSingle();
+  if (!tabloid || !canAccessMarket(who.viewer, tabloid.market_id)) {
+    return NextResponse.json({ error: "Tabloide não encontrado." }, { status: 404 });
   }
+  if (!tabloid.theme_id) return NextResponse.json({ error: "Esse tabloide ainda não tem um tema." }, { status: 400 });
 
-  const { data: market } = await admin
-    .from("markets")
-    .select("name, logo_url, color_primary, color_secondary")
-    .eq("id", tabloid.market_id)
-    .single();
+  const [{ data: market }, { data: theme }, { data: tabloidProducts }] = await Promise.all([
+    admin.from("markets").select("name, logo_url, color_primary, color_secondary").eq("id", tabloid.market_id).single(),
+    admin.from("themes").select("template_path, market_id").eq("id", tabloid.theme_id).maybeSingle(),
+    admin
+      .from("tabloid_products")
+      .select("position, products(name, price, unit, image_url, category, market_id)")
+      .eq("tabloid_id", id)
+      .order("position", { ascending: true }),
+  ]);
   if (!market) return NextResponse.json({ error: "Mercado não encontrado." }, { status: 404 });
-
-  if (!tabloid.theme_id) {
-    return NextResponse.json({ error: "Esse tabloide ainda não tem um tema escolhido." }, { status: 400 });
+  if (!theme || (theme.market_id !== null && theme.market_id !== tabloid.market_id)) {
+    return NextResponse.json({ error: "Tema não encontrado." }, { status: 404 });
   }
 
-  const { data: theme } = await admin.from("themes").select("template_path").eq("id", tabloid.theme_id).single();
-  if (!theme) return NextResponse.json({ error: "Tema não encontrado." }, { status: 404 });
+  const products = (tabloidProducts ?? [])
+    .map((tp) => (Array.isArray(tp.products) ? tp.products[0] : tp.products))
+    .filter((p): p is NonNullable<typeof p> => !!p && p.market_id === tabloid.market_id)
+    .map((p) => ({ name: p.name, price: p.price, unit: p.unit, imageUrl: p.image_url, category: p.category }));
 
-  const { data: tabloidProducts } = await admin
-    .from("tabloid_products")
-    .select("position, products(name, price, image_url, category)")
-    .eq("tabloid_id", id)
-    .order("position", { ascending: true });
-
-  const products = (tabloidProducts || [])
-    .map((tp) => {
-      const p = Array.isArray(tp.products) ? tp.products[0] : tp.products;
-      if (!p) return null;
-      return {
-        name: p.name as string,
-        price: p.price as number | null,
-        imageUrl: p.image_url as string | null,
-        category: p.category as string | null,
-      };
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
-
+  // o nome do arquivo vem do banco, mas não sai da pasta de templates
+  const templateName = path.basename(theme.template_path);
   let templateHtml: string;
   try {
-    const templatePath = path.join(process.cwd(), "lib", "tabloidTemplates", theme.template_path);
-    templateHtml = await readFile(templatePath, "utf-8");
-  } catch {
-    return NextResponse.json({ error: "Não consegui carregar o template desse tema." }, { status: 500 });
+    templateHtml = await readFile(path.join(process.cwd(), "lib", "tabloidTemplates", templateName), "utf-8");
+  } catch (err) {
+    console.error("[render] template", err);
+    return NextResponse.json({ error: "Não consegui carregar o modelo desse tema." }, { status: 500 });
   }
 
   const html = renderTabloidHtml(
@@ -88,13 +69,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     {
       name: market.name,
       logoUrl: market.logo_url,
-      colorPrimary: market.color_primary || "#16a34a",
-      colorSecondary: market.color_secondary || "#111827",
+      colorPrimary: market.color_primary,
+      colorSecondary: market.color_secondary,
       tabloidName: tabloid.name,
       validityLabel: formatValidity(tabloid.valid_from, tabloid.valid_until),
     },
     products
   );
+
+  if (tabloid.status === "rascunho") {
+    const { error } = await admin.from("tabloids").update({ status: "pronto" }).eq("id", id);
+    if (error) console.error("[render] status", error);
+  }
 
   return NextResponse.json({ html });
 }
