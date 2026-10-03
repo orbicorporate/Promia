@@ -138,7 +138,8 @@ export function EncarteBuilder({
     setItems((prev) =>
       prev.some((i) => i.productId === p.id)
         ? prev.filter((i) => i.productId !== p.id)
-        : [...prev, { productId: p.id, promoPrice: p.price, oldPrice: null, highlight: false, limitQty: null, label: null }]
+        : // sem preço de oferta próprio, o encarte usa o preço atual do catálogo
+          [...prev, { productId: p.id, promoPrice: null, oldPrice: null, highlight: false, limitQty: null, label: null }]
     );
   }
 
