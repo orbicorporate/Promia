@@ -123,7 +123,7 @@ export default async function ProdutosPage({ params, searchParams }: PageProps<"
                 scroll={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ring-1 transition",
+                  "flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ring-1 transition",
                   active ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "vidro text-[var(--ink-2)] ring-transparent hover:text-[var(--ink)]"
                 )}
               >
@@ -141,7 +141,7 @@ export default async function ProdutosPage({ params, searchParams }: PageProps<"
                 href={href({ cat: cat === c ? null : c, pagina: null })}
                 scroll={false}
                 className={cn(
-                  "h-8 shrink-0 rounded-full px-3 text-[13px] leading-8 transition",
+                  "h-10 shrink-0 rounded-full px-3.5 text-[13px] leading-10 transition",
                   cat === c ? "bg-[var(--folha)] text-white" : "text-[var(--ink-2)] hover:bg-[var(--line)]"
                 )}
               >

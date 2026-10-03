@@ -21,6 +21,8 @@ import {
   LayoutGrid,
   Rows3,
   Sparkle,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
@@ -136,8 +138,21 @@ export function EncarteBuilder({
     setItems((prev) =>
       prev.some((i) => i.productId === p.id)
         ? prev.filter((i) => i.productId !== p.id)
-        : [...prev, { productId: p.id, promoPrice: p.price, oldPrice: null, highlight: false, limitQty: null, label: null }]
+        : // sem preço de oferta próprio, o encarte usa o preço atual do catálogo
+          [...prev, { productId: p.id, promoPrice: null, oldPrice: null, highlight: false, limitQty: null, label: null }]
     );
+  }
+
+  // alternativa ao arrastar, para teclado e leitor de tela
+  function move(id: string, delta: number) {
+    setItems((prev) => {
+      const i = prev.findIndex((x) => x.productId === id);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
   }
 
   function patch(id: string, change: Partial<BuilderItem>) {
@@ -312,7 +327,7 @@ export function EncarteBuilder({
                   type="button"
                   onClick={() => toggle(p)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition",
+                    "flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition active:scale-[0.99]",
                     on ? "bg-[var(--folha-soft)]" : "hover:bg-[var(--line)]"
                   )}
                   aria-pressed={on}
@@ -382,7 +397,7 @@ export function EncarteBuilder({
                     <button
                       type="button"
                       onClick={() => patch(it.productId, { highlight: !it.highlight })}
-                      className={cn("grid size-9 place-items-center rounded-xl transition", it.highlight ? "text-[#e0a500]" : "text-[var(--ink-3)] hover:bg-[var(--line)]")}
+                      className={cn("grid size-11 place-items-center rounded-xl transition", it.highlight ? "text-[#e0a500]" : "text-[var(--ink-3)] hover:bg-[var(--line)]")}
                       aria-pressed={it.highlight}
                       aria-label={it.highlight ? "Tirar destaque" : "Destacar"}
                     >
@@ -391,7 +406,7 @@ export function EncarteBuilder({
                     <button
                       type="button"
                       onClick={() => toggle(p)}
-                      className="grid size-9 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--perigo)]"
+                      className="grid size-11 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--perigo)]"
                       aria-label={`Tirar ${p.name}`}
                     >
                       <X className="size-5" />
@@ -406,6 +421,15 @@ export function EncarteBuilder({
                         className="overflow-hidden"
                       >
                         <div className="grid grid-cols-2 gap-3 border-t border-[var(--line)] p-3 sm:grid-cols-4">
+                          <div className="col-span-full flex items-center gap-2 text-sm text-[var(--ink-2)]">
+                            <span className="flex-1">Ordem no encarte: {items.indexOf(it) + 1} de {items.length}</span>
+                            <button type="button" onClick={() => move(it.productId, -1)} disabled={items.indexOf(it) === 0} className="grid size-11 place-items-center rounded-xl hover:bg-[var(--line)] disabled:opacity-35" aria-label="Subir uma posição">
+                              <ArrowUp className="size-5" />
+                            </button>
+                            <button type="button" onClick={() => move(it.productId, 1)} disabled={items.indexOf(it) === items.length - 1} className="grid size-11 place-items-center rounded-xl hover:bg-[var(--line)] disabled:opacity-35" aria-label="Descer uma posição">
+                              <ArrowDown className="size-5" />
+                            </button>
+                          </div>
                           <Field label="Preço de oferta">
                             <MoneyInput value={it.promoPrice} onChange={(v) => patch(it.productId, { promoPrice: v })} placeholder={money(p.price) || "0,00"} />
                           </Field>
@@ -531,7 +555,7 @@ export function EncarteBuilder({
                 </span>
               </span>
               {idx < 2 && suggestedThemeKeys.includes(t.key) && t.key !== "ofertas" && (
-                <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-[#1d2420]">sugerido</span>
+                <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-[#1d2420]">sugerido</span>
               )}
             </button>
           ))}
@@ -580,10 +604,10 @@ export function EncarteBuilder({
               src={previewUrl}
               alt="Prévia do encarte"
               className="absolute inset-0 h-full w-full object-cover"
-              initial={reduce ? false : { opacity: 0, scale: 1.015 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
+              initial={reduce ? false : { opacity: 0, scale: 1.01, filter: "blur(6px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, transition: { duration: 0.2, delay: 0.1 } }}
+              transition={{ type: "spring", duration: 0.45, bounce: 0 }}
             />
           )}
         </AnimatePresence>
@@ -602,6 +626,7 @@ export function EncarteBuilder({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              role="status"
               className="vidro-forte absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
             >
               <Loader2 className="size-3.5 animate-spin" /> Atualizando
@@ -613,7 +638,7 @@ export function EncarteBuilder({
         <button
           onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
           disabled={previewPage <= 1}
-          className="vidro grid size-10 place-items-center rounded-full disabled:opacity-40"
+          className="vidro grid size-11 place-items-center rounded-full disabled:opacity-40"
           aria-label="Página anterior"
         >
           <ChevronLeft className="size-5" />
@@ -624,7 +649,7 @@ export function EncarteBuilder({
         <button
           onClick={() => setPreviewPage((p) => Math.min(previewPages, p + 1))}
           disabled={previewPage >= previewPages}
-          className="vidro grid size-10 place-items-center rounded-full disabled:opacity-40"
+          className="vidro grid size-11 place-items-center rounded-full disabled:opacity-40"
           aria-label="Próxima página"
         >
           <ChevronRight className="size-5" />
@@ -634,7 +659,7 @@ export function EncarteBuilder({
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-24 lg:pb-0">
       {/* abas no celular */}
       <div className="lg:hidden sticky top-[76px] z-20">
         <Segmented
@@ -652,9 +677,10 @@ export function EncarteBuilder({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">
         <div className="space-y-5">
-          <div className={cn(tab !== "produtos" && "hidden lg:block")}>{productsPanel}</div>
-          <div className={cn(tab !== "estilo" && "hidden lg:block")}>{stylePanel}</div>
-          <div className={cn("lg:hidden", tab !== "previa" && "hidden")}>{previewPanel}</div>
+          {/* no celular a aba escolhida entra com a mesma subida curta das telas */}
+          <div key={`p-${tab === "produtos"}`} className={cn(tab !== "produtos" ? "hidden lg:block" : "surgir lg:animate-none")}>{productsPanel}</div>
+          <div key={`e-${tab === "estilo"}`} className={cn(tab !== "estilo" ? "hidden lg:block" : "surgir lg:animate-none")}>{stylePanel}</div>
+          <div className={cn("lg:hidden", tab !== "previa" ? "hidden" : "surgir")}>{previewPanel}</div>
         </div>
         <aside className="hidden lg:block">
           <div className="sticky top-8 space-y-4">
@@ -688,7 +714,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       onClick={onClick}
       aria-pressed={on}
       className={cn(
-        "h-8 shrink-0 rounded-full px-3 text-[13px] font-medium ring-1 transition",
+        "h-10 shrink-0 rounded-full px-3.5 text-[13px] font-medium ring-1 transition",
         on ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-[var(--glass-strong)] text-[var(--ink-2)] ring-[var(--line)] hover:text-[var(--ink)]"
       )}
     >

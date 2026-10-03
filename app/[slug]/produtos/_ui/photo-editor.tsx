@@ -2,8 +2,10 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Camera, Link2, RotateCw, ImageOff, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button, Input, cn } from "@/components/ui";
 
@@ -60,6 +62,7 @@ export function PhotoEditor({
   onChange: (patch: Partial<PhotoProduct>) => void;
   compact?: boolean;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [showUrl, setShowUrl] = useState(false);
@@ -138,7 +141,8 @@ export function PhotoEditor({
               run("buscar", async () => {
                 await postFoto(product.id, { acao: "buscar" });
                 onChange({ image_status: "pendente", image_candidates: null });
-                toast.success("Na fila de busca. Toque em Buscar fotos para rodar.");
+                toast.success("Na fila. Toque em Buscar fotos no topo da lista.");
+                router.refresh();
               })
             }
           >
@@ -163,8 +167,12 @@ export function PhotoEditor({
         </div>
       </div>
 
+      <AnimatePresence initial={false}>
       {showUrl && (
-        <form
+        <motion.form
+          initial={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
@@ -175,8 +183,9 @@ export function PhotoEditor({
           <Button type="submit" loading={busy === "url"}>
             Usar
           </Button>
-        </form>
+        </motion.form>
       )}
+      </AnimatePresence>
 
       {candidates.length > 0 && (
         <div>

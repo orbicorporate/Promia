@@ -45,7 +45,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
   if (produtos.length) {
     initial.items = produtos
       .filter((id) => byId.has(id))
-      .map<BuilderItem>((id) => ({ productId: id, promoPrice: byId.get(id)!.price, oldPrice: null, highlight: false, limitQty: null, label: null }));
+      .map<BuilderItem>((id) => ({ productId: id, promoPrice: null, oldPrice: null, highlight: false, limitQty: null, label: null }));
   }
 
   if (isUuid(copiar)) {

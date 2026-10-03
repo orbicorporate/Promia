@@ -40,6 +40,9 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh lg:pl-[272px]">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-[var(--ink)] focus:px-4 focus:py-3 focus:text-[var(--bg)]">
+        Pular para o conteúdo
+      </a>
       {/* barra lateral no computador */}
       <aside className="hidden lg:flex fixed inset-y-4 left-4 w-[248px] flex-col vidro rounded-[28px] p-4 z-30">
         <div className="px-2 pt-1 pb-5">
@@ -54,7 +57,7 @@ export function AppShell({
         </Link>
         <Link
           href={`/${market.slug}/encartes/novo`}
-          className="mt-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--tomate)] font-semibold text-white shadow-[0_14px_30px_-14px_var(--tomate)] transition hover:-translate-y-px active:scale-[0.98]"
+          className="mt-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--tomate)] font-semibold text-white shadow-[0_14px_30px_-14px_var(--tomate)] transition hover:-translate-y-px active:scale-[0.97]"
         >
           <Plus className="size-5" /> Novo encarte
         </Link>
@@ -99,21 +102,21 @@ export function AppShell({
       <header className="lg:hidden sticky top-0 z-30 px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2">
         <div className="vidro flex items-center gap-3 rounded-2xl px-3 py-2">
           {isMaster ? (
-            <Link href="/master" className="grid size-8 place-items-center rounded-lg hover:bg-[var(--line)]" aria-label="Voltar ao painel Promia">
+            <Link href="/master" className="grid size-11 place-items-center rounded-lg hover:bg-[var(--line)]" aria-label="Voltar ao painel Promia">
               <ChevronLeft className="size-5" />
             </Link>
           ) : null}
           <MarketMark name={market.name} logoUrl={market.logoUrl} color={market.colorPrimary} size={32} />
           <span className="min-w-0 flex-1 truncate font-semibold">{market.name}</span>
           <form action="/sair" method="post">
-            <button className="grid size-9 place-items-center rounded-lg text-[var(--ink-2)] hover:bg-[var(--line)]" aria-label="Sair">
+            <button className="grid size-11 place-items-center rounded-lg text-[var(--ink-2)] hover:bg-[var(--line)]" aria-label="Sair">
               <LogOut className="size-[18px]" />
             </button>
           </form>
         </div>
       </header>
 
-      <main className="pb-nav px-4 sm:px-6 lg:px-10 pt-2 lg:pt-8">
+      <main id="conteudo" tabIndex={-1} className="outline-none pb-nav px-4 sm:px-6 lg:px-10 pt-2 lg:pt-8">
         <div className="mx-auto max-w-[1120px]">{children}</div>
       </main>
 
@@ -148,7 +151,7 @@ function NavItem({ item, slug, on }: { item: (typeof NAV)[number]; slug: string;
     <Link
       href={item.href(slug)}
       aria-current={on ? "page" : undefined}
-      className={cn("relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-[20px] text-[11px] font-medium transition-colors", on ? "text-[var(--ink)]" : "text-[var(--ink-3)]")}
+      className={cn("relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-[20px] text-xs font-medium transition-colors active:scale-95", on ? "text-[var(--ink)]" : "text-[var(--ink-3)]")}
     >
       {on && <motion.span layoutId="nav-baixo" className="absolute inset-0 rounded-[20px] bg-[var(--line)]" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
       <Icon className="relative size-[22px]" strokeWidth={on ? 2.3 : 1.9} />

@@ -75,7 +75,7 @@ export function GerenteCard({
     : null;
 
   return (
-    <Glass as="section" className={cn("borda-ia flex flex-col p-5 sm:p-6 min-h-[300px]", running && "varredura")} aria-labelledby="gerente">
+    <Glass as="section" data-trabalhando={running} className={cn("borda-ia flex flex-col p-5 sm:p-6 min-h-[300px]", running && "varredura")} aria-labelledby="gerente">
       <div className="flex items-center justify-between gap-3">
         <h2 id="gerente" className="flex items-center gap-2 text-lg font-bold">
           <Sparkles className="size-5 text-[var(--uva)]" />
@@ -106,10 +106,10 @@ export function GerenteCard({
             <AnimatePresence mode="wait">
               <motion.div
                 key={rec.id}
-                initial={{ opacity: 0, x: 18 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -18 }}
-                transition={{ duration: 0.22 }}
+                initial={{ opacity: 0, x: 12, filter: "blur(4px)" }}
+                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, x: -6, filter: "blur(2px)", transition: { duration: 0.15 } }}
+                transition={{ type: "spring", duration: 0.35, bounce: 0 }}
                 className="space-y-2"
               >
                 <p className="flex items-center gap-2 text-sm font-medium" style={{ color: TYPE[rec.type]?.tone }}>
@@ -140,21 +140,24 @@ export function GerenteCard({
                 Próxima <ChevronRight className="size-4" />
               </button>
             )}
-            <span className="ml-auto flex items-center gap-1.5" aria-label={`Sugestão ${i + 1} de ${recs.length}`}>
+            <span className="ml-auto flex items-center" aria-label={`Sugestão ${i + 1} de ${recs.length}`}>
               {recs.map((r, idx) => (
                 <button
                   key={r.id}
                   onClick={() => setI(idx)}
-                  className={cn("h-1.5 rounded-full transition-all", idx === i ? "w-5 bg-[var(--ink)]" : "w-1.5 bg-[var(--line-strong)]")}
+                  className="grid h-11 w-6 place-items-center"
                   aria-label={`Ver sugestão ${idx + 1}`}
-                />
+                  aria-current={idx === i ? "true" : undefined}
+                >
+                  <span className={cn("h-1.5 w-5 rounded-full transition-[transform,background-color]", idx === i ? "scale-x-100 bg-[var(--ink)]" : "scale-x-[0.3] bg-[var(--line-strong)]")} />
+                </button>
               ))}
             </span>
           </div>
           <button
             onClick={run}
             disabled={running}
-            className="mt-4 inline-flex items-center gap-2 self-start text-sm text-[var(--ink-3)] hover:text-[var(--ink)] disabled:opacity-60"
+            className="mt-2 inline-flex h-11 items-center gap-2 self-start text-sm text-[var(--ink-3)] hover:text-[var(--ink)] disabled:opacity-60"
           >
             <RotateCw className={cn("size-3.5", running && "animate-spin")} />
             {running ? "Analisando o catálogo, cerca de um minuto" : "Analisar de novo"}

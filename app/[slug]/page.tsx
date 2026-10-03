@@ -156,7 +156,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
             </span>
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-            <div className="h-full rounded-full bg-[var(--folha)] transition-all" style={{ width: `${(stepsDone / steps.length) * 100}%` }} />
+            <div className="h-full w-full origin-left rounded-full bg-[var(--folha)] transition-transform duration-500" style={{ transform: `scaleX(${stepsDone / steps.length})` }} />
           </div>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {steps.map((s) => (

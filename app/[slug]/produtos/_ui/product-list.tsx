@@ -50,9 +50,9 @@ export function ProductList({ rows, review, categories }: { rows: Row[]; review:
             <motion.div
               key={r.id}
               layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.25 } }}
+              initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
+              exit={{ opacity: 0, scale: 0.96, filter: "blur(4px)", transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               className="vidro rounded-[22px] p-4"
             >
               <div className="mb-3 flex items-start justify-between gap-3">
@@ -92,7 +92,7 @@ export function ProductList({ rows, review, categories }: { rows: Row[]; review:
             <button
               type="button"
               onClick={() => setOpenId(r.id)}
-              className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-[var(--glass-strong)] sm:px-4", !r.active && "opacity-50")}
+              className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-[var(--glass-strong)] active:bg-[var(--line)] sm:px-4", !r.active && "opacity-50")}
             >
               <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white ring-1 ring-[var(--line)]">
                 {r.image_url ? <img src={r.image_url} alt="" loading="lazy" className="h-full w-full object-contain" /> : <ImageOff className="size-5 text-[#9aa8a0]" />}
