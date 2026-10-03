@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { Button, Field, Input, Sheet } from "@/components/ui";
 
 export function NewMarketForm() {
   const router = useRouter();
@@ -13,7 +16,6 @@ export function NewMarketForm() {
     e.preventDefault();
     setErro("");
     setCarregando(true);
-
     const form = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/master/markets", {
@@ -32,6 +34,7 @@ export function NewMarketForm() {
         setErro(data.error || "Não consegui criar o mercado. Tente de novo.");
         return;
       }
+      toast.success("Mercado criado. Envie o email e a senha para o responsável.");
       setOpen(false);
       router.refresh();
     } catch {
@@ -41,85 +44,35 @@ export function NewMarketForm() {
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm"
-      >
-        + Novo mercado
-      </button>
-    );
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white border border-neutral-200 rounded-xl p-6 space-y-4 max-w-md"
-    >
-      <h2 className="text-sm font-medium text-neutral-900">Novo mercado</h2>
-
-      <div className="space-y-1">
-        <label className="text-sm text-neutral-600">Nome do mercado</label>
-        <input
-          name="name"
-          required
-          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm text-neutral-600">Nicho (opcional, ex.: supermercado de bairro)</label>
-        <input name="niche" className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
-      </div>
-
-      <hr className="border-neutral-100" />
-      <p className="text-xs text-neutral-500">Login do responsável pelo mercado</p>
-
-      <div className="space-y-1">
-        <label className="text-sm text-neutral-600">Nome</label>
-        <input name="ownerName" className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm text-neutral-600">Email</label>
-        <input
-          name="ownerEmail"
-          type="email"
-          required
-          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm text-neutral-600">Senha (mínimo 8 caracteres)</label>
-        <input
-          name="ownerPassword"
-          type="password"
-          required
-          minLength={8}
-          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm"
-        />
-      </div>
-
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
-
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={carregando}
-          className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-        >
-          {carregando ? "Criando..." : "Criar mercado"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-sm text-neutral-500 px-3 py-2"
-        >
-          Cancelar
-        </button>
-      </div>
-    </form>
+    <>
+      <Button icon={<Plus className="size-5" />} onClick={() => setOpen(true)}>
+        Novo mercado
+      </Button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Novo mercado" description="Cria o mercado e o acesso do responsável.">
+        <form id="novo-mercado" onSubmit={handleSubmit} className="space-y-4">
+          <Field label="Nome do mercado">
+            <Input name="name" required maxLength={80} />
+          </Field>
+          <Field label="Tipo de loja" hint="Opcional, ex. supermercado de bairro">
+            <Input name="niche" maxLength={80} />
+          </Field>
+          <div className="border-t border-[var(--line)] pt-4 text-sm font-semibold">Acesso do responsável</div>
+          <Field label="Nome">
+            <Input name="ownerName" maxLength={80} />
+          </Field>
+          <Field label="Email">
+            <Input name="ownerEmail" type="email" required autoComplete="off" />
+          </Field>
+          <Field label="Senha" hint="Mínimo de 8 caracteres">
+            <Input name="ownerPassword" type="password" required minLength={8} autoComplete="new-password" />
+          </Field>
+          {erro && <p className="text-sm text-[var(--perigo)]">{erro}</p>}
+          <Button type="submit" className="w-full" loading={carregando}>
+            Criar mercado
+          </Button>
+        </form>
+      </Sheet>
+    </>
   );
 }

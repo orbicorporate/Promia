@@ -2,8 +2,8 @@
 // (supermercados) no Brasil. Datas fixas ficam com mês/dia; datas móveis
 // (Páscoa, Dia das Mães/Pais, Black Friday etc.) são calculadas por ano,
 // assim não ficam erradas de um ano pro outro. É a base do motor de temas
-// sugeridos automaticamente pro tabloide (ver lib/themes.ts), junto com o
-// motor de promoções recorrentes por dia da semana (lib/weeklyPromotions.ts).
+// sugeridos automaticamente pro tabloide (ver lib/encarte/themes.ts), junto com o
+// motor de promoções recorrentes por dia da semana (lib/occasions.ts).
 
 export type SeasonalDate = {
   date: string; // YYYY-MM-DD

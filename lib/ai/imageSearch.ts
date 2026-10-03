@@ -14,6 +14,7 @@ const IMAGE_EXT_RE = /\.(jpe?g|png|webp|avif)(\?.*)?$/i;
 
 export type ImageSearchResult = {
   imageUrl: string | null;
+  candidates: string[]; // outras imagens conferidas, para a tela de revisão
   sourceUrl: string | null;
   status: "encontrada" | "nao_encontrada" | "revisar" | "erro";
 };
@@ -57,7 +58,7 @@ export async function findProductImage(product: ImageSearchProduct): Promise<Ima
   const client = anthropic();
   if (!client) {
     console.error("[imageSearch] ANTHROPIC_API_KEY ausente");
-    return { imageUrl: null, sourceUrl: null, status: "erro" };
+    return { imageUrl: null, candidates: [], sourceUrl: null, status: "erro" };
   }
 
   let response: Anthropic.Message;
@@ -70,7 +71,7 @@ export async function findProductImage(product: ImageSearchProduct): Promise<Ima
       response = await search(client, IMAGE_SEARCH_FALLBACK_MODEL, product);
     } catch (err2) {
       console.error("[imageSearch] erro ao buscar imagem:", err2);
-      return { imageUrl: null, sourceUrl: null, status: "erro" };
+      return { imageUrl: null, candidates: [], sourceUrl: null, status: "erro" };
     }
   }
 
@@ -91,19 +92,16 @@ export async function findProductImage(product: ImageSearchProduct): Promise<Ima
   // já terminam em extensão de imagem; cada um é conferido de verdade
   const candidates = Array.from(
     new Set([...urlsAfter(text, "IMAGEM"), ...(text.match(URL_RE) ?? []).filter((u) => IMAGE_EXT_RE.test(u)), ...results.filter((u) => IMAGE_EXT_RE.test(u))])
-  ).slice(0, 4);
+  ).slice(0, 5);
 
-  for (const candidate of candidates) {
-    const checked = await fetchPublicImage(candidate, { headOnly: true, timeoutMs: 6000 });
-    if (checked) {
-      const page = urlsAfter(text, "PAGINA")[0] ?? results[0] ?? null;
-      return { imageUrl: checked.finalUrl, sourceUrl: page, status: "encontrada" };
-    }
-  }
-
+  const checked = await Promise.all(candidates.map((c) => fetchPublicImage(c, { headOnly: true, timeoutMs: 6000 })));
+  const verified = Array.from(new Set(checked.filter((c): c is NonNullable<typeof c> => !!c).map((c) => c.finalUrl)));
   const page = urlsAfter(text, "PAGINA")[0] ?? results[0] ?? null;
-  if (page) return { imageUrl: null, sourceUrl: page, status: "revisar" };
-  return { imageUrl: null, sourceUrl: null, status: "nao_encontrada" };
+  if (verified.length > 0) {
+    return { imageUrl: verified[0], candidates: verified.slice(1), sourceUrl: page, status: "encontrada" };
+  }
+  if (page) return { imageUrl: null, candidates: [], sourceUrl: page, status: "revisar" };
+  return { imageUrl: null, candidates: [], sourceUrl: null, status: "nao_encontrada" };
 }
 
 // Roda várias buscas ao mesmo tempo, com limite, pra um lote de 10 caber

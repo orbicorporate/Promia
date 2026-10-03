@@ -23,9 +23,15 @@ export type Database = {
         Relationships: [{ foreignKeyName: "ai_usage_market_id_fkey"; columns: ["market_id"]; isOneToOne: false; referencedRelation: "markets"; referencedColumns: ["id"] }];
       };
       markets: {
-        Row: { color_primary: string | null; color_secondary: string | null; created_at: string; id: string; logo_url: string | null; name: string; niche: string | null; slug: string };
-        Insert: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name: string; niche?: string | null; slug: string };
-        Update: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name?: string; niche?: string | null; slug?: string };
+        Row: { color_primary: string | null; color_secondary: string | null; created_at: string; id: string; logo_url: string | null; name: string; niche: string | null; slug: string; address: string | null; city: string | null; instagram: string | null; legal_note: string | null; onboarded_at: string | null; opening_hours: string | null; phone: string | null; tagline: string | null; whatsapp: string | null };
+        Insert: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name: string; niche?: string | null; slug: string; address?: string | null; city?: string | null; instagram?: string | null; legal_note?: string | null; onboarded_at?: string | null; opening_hours?: string | null; phone?: string | null; tagline?: string | null; whatsapp?: string | null };
+        Update: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name?: string; niche?: string | null; slug?: string; address?: string | null; city?: string | null; instagram?: string | null; legal_note?: string | null; onboarded_at?: string | null; opening_hours?: string | null; phone?: string | null; tagline?: string | null; whatsapp?: string | null };
+        Relationships: [];
+      };
+      photo_bank: {
+        Row: { approvals: number; ean: string; image_url: string; source: string; storage_path: string | null; updated_at: string };
+        Insert: { approvals?: number; ean: string; image_url: string; source?: string; storage_path?: string | null; updated_at?: string };
+        Update: { approvals?: number; ean?: string; image_url?: string; source?: string; storage_path?: string | null; updated_at?: string };
         Relationships: [];
       };
       product_imports: {
@@ -44,9 +50,9 @@ export type Database = {
         ];
       };
       products: {
-        Row: { active: boolean; brand: string | null; category: string | null; cost: number | null; created_at: string; ean: string | null; id: string; image_claimed_at: string | null; image_source_url: string | null; image_status: string; image_url: string | null; market_id: string; name: string; price: number | null; sku: string; stock: number | null; unit: string | null; updated_at: string };
-        Insert: { active?: boolean; brand?: string | null; category?: string | null; cost?: number | null; created_at?: string; ean?: string | null; id?: string; image_claimed_at?: string | null; image_source_url?: string | null; image_status?: string; image_url?: string | null; market_id: string; name: string; price?: number | null; sku: string; stock?: number | null; unit?: string | null; updated_at?: string };
-        Update: { active?: boolean; brand?: string | null; category?: string | null; cost?: number | null; created_at?: string; ean?: string | null; id?: string; image_claimed_at?: string | null; image_source_url?: string | null; image_status?: string; image_url?: string | null; market_id?: string; name?: string; price?: number | null; sku?: string; stock?: number | null; unit?: string | null; updated_at?: string };
+        Row: { active: boolean; brand: string | null; category: string | null; cost: number | null; created_at: string; ean: string | null; id: string; image_claimed_at: string | null; image_source_url: string | null; image_status: string; image_url: string | null; market_id: string; name: string; price: number | null; sku: string; stock: number | null; unit: string | null; updated_at: string; image_candidates: Json | null; image_origin: string | null };
+        Insert: { active?: boolean; brand?: string | null; category?: string | null; cost?: number | null; created_at?: string; ean?: string | null; id?: string; image_claimed_at?: string | null; image_source_url?: string | null; image_status?: string; image_url?: string | null; market_id: string; name: string; price?: number | null; sku: string; stock?: number | null; unit?: string | null; updated_at?: string; image_candidates?: Json | null; image_origin?: string | null };
+        Update: { active?: boolean; brand?: string | null; category?: string | null; cost?: number | null; created_at?: string; ean?: string | null; id?: string; image_claimed_at?: string | null; image_source_url?: string | null; image_status?: string; image_url?: string | null; market_id?: string; name?: string; price?: number | null; sku?: string; stock?: number | null; unit?: string | null; updated_at?: string; image_candidates?: Json | null; image_origin?: string | null };
         Relationships: [{ foreignKeyName: "products_market_id_fkey"; columns: ["market_id"]; isOneToOne: false; referencedRelation: "markets"; referencedColumns: ["id"] }];
       };
       profiles: {
@@ -56,18 +62,18 @@ export type Database = {
         Relationships: [{ foreignKeyName: "profiles_market_id_fkey"; columns: ["market_id"]; isOneToOne: false; referencedRelation: "markets"; referencedColumns: ["id"] }];
       };
       tabloid_products: {
-        Row: { position: number; product_id: string; tabloid_id: string };
-        Insert: { position?: number; product_id: string; tabloid_id: string };
-        Update: { position?: number; product_id?: string; tabloid_id?: string };
+        Row: { position: number; product_id: string; tabloid_id: string; highlight: boolean; label: string | null; limit_qty: number | null; old_price: number | null; promo_price: number | null };
+        Insert: { position?: number; product_id: string; tabloid_id: string; highlight?: boolean; label?: string | null; limit_qty?: number | null; old_price?: number | null; promo_price?: number | null };
+        Update: { position?: number; product_id?: string; tabloid_id?: string; highlight?: boolean; label?: string | null; limit_qty?: number | null; old_price?: number | null; promo_price?: number | null };
         Relationships: [
           { foreignKeyName: "tabloid_products_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
           { foreignKeyName: "tabloid_products_tabloid_id_fkey"; columns: ["tabloid_id"]; isOneToOne: false; referencedRelation: "tabloids"; referencedColumns: ["id"] },
         ];
       };
       tabloids: {
-        Row: { category: string | null; created_at: string; id: string; market_id: string; name: string; status: string; theme_id: string | null; updated_at: string; valid_from: string | null; valid_until: string | null };
-        Insert: { category?: string | null; created_at?: string; id?: string; market_id: string; name: string; status?: string; theme_id?: string | null; updated_at?: string; valid_from?: string | null; valid_until?: string | null };
-        Update: { category?: string | null; created_at?: string; id?: string; market_id?: string; name?: string; status?: string; theme_id?: string | null; updated_at?: string; valid_from?: string | null; valid_until?: string | null };
+        Row: { category: string | null; created_at: string; id: string; market_id: string; name: string; status: string; theme_id: string | null; updated_at: string; valid_from: string | null; valid_until: string | null; created_by: string | null; format: string; headline: string | null; layout: string; subheadline: string | null; theme_key: string };
+        Insert: { category?: string | null; created_at?: string; id?: string; market_id: string; name: string; status?: string; theme_id?: string | null; updated_at?: string; valid_from?: string | null; valid_until?: string | null; created_by?: string | null; format?: string; headline?: string | null; layout?: string; subheadline?: string | null; theme_key?: string };
+        Update: { category?: string | null; created_at?: string; id?: string; market_id?: string; name?: string; status?: string; theme_id?: string | null; updated_at?: string; valid_from?: string | null; valid_until?: string | null; created_by?: string | null; format?: string; headline?: string | null; layout?: string; subheadline?: string | null; theme_key?: string };
         Relationships: [
           { foreignKeyName: "tabloids_market_id_fkey"; columns: ["market_id"]; isOneToOne: false; referencedRelation: "markets"; referencedColumns: ["id"] },
           { foreignKeyName: "tabloids_theme_id_fkey"; columns: ["theme_id"]; isOneToOne: false; referencedRelation: "themes"; referencedColumns: ["id"] },
@@ -99,6 +105,7 @@ export type Database = {
 };
 
 export type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
+export type TablesUpdate<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Update"];
 export type TablesInsert<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Insert"];
 
 // mantém o tipo auxiliar referenciado (útil se alguém precisar descrever relações à mão)
