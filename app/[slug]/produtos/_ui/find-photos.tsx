@@ -55,7 +55,7 @@ export function FindPhotos({ marketId, pending }: { marketId: string; pending: n
   const pct = total ? Math.round((done / total) * 100) : 0;
 
   return (
-    <div className="borda-ia vidro flex flex-wrap items-center gap-4 rounded-[22px] p-4">
+    <div data-trabalhando={running} className="borda-ia vidro flex flex-wrap items-center gap-4 rounded-[22px] p-4">
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
           {running ? `Buscando fotos: ${done} de ${total}` : `${pending} produto(s) esperando foto`}

@@ -138,14 +138,15 @@ export function EncarteViewer({
               custom={dir}
               initial={reduce ? false : { opacity: 0, x: dir * 60 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, x: dir * -60 }}
-              transition={{ type: "spring", stiffness: 260, damping: 30 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, x: dir * -24, transition: { duration: 0.2 } }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0 }}
               drag={pages > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.25}
               onDragEnd={(_, info) => {
-                if (info.offset.x < -60) go(1);
-                else if (info.offset.x > 60) go(-1);
+                // distância ou velocidade: um peteleco rápido também troca de página
+                if (info.offset.x < -60 || info.velocity.x < -400) go(1);
+                else if (info.offset.x > 60 || info.velocity.x > 400) go(-1);
               }}
               className="absolute inset-0 h-full w-full cursor-grab select-none object-cover active:cursor-grabbing"
               draggable={false}
@@ -157,7 +158,7 @@ export function EncarteViewer({
             <button onClick={() => go(-1)} disabled={page <= 1} className="vidro grid size-11 place-items-center rounded-full disabled:opacity-40" aria-label="Página anterior">
               <ChevronLeft className="size-5" />
             </button>
-            <div className="flex items-center gap-1.5" role="tablist" aria-label="Páginas">
+            <div className="flex items-center" role="tablist" aria-label="Páginas">
               {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
@@ -168,8 +169,10 @@ export function EncarteViewer({
                     setDir(p > page ? 1 : -1);
                     setPage(p);
                   }}
-                  className={cn("h-2 rounded-full transition-all", p === page ? "w-6 bg-[var(--ink)]" : "w-2 bg-[var(--line-strong)]")}
-                />
+                  className="grid h-11 w-7 place-items-center"
+                >
+                  <span className={cn("h-2 w-6 rounded-full transition-[transform,background-color]", p === page ? "scale-x-100 bg-[var(--ink)]" : "scale-x-[0.34] bg-[var(--line-strong)]")} />
+                </button>
               ))}
             </div>
             <button onClick={() => go(1)} disabled={page >= pages} className="vidro grid size-11 place-items-center rounded-full disabled:opacity-40" aria-label="Próxima página">

@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Camera, Link2, RotateCw, ImageOff, Check } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -163,8 +164,12 @@ export function PhotoEditor({
         </div>
       </div>
 
+      <AnimatePresence initial={false}>
       {showUrl && (
-        <form
+        <motion.form
+          initial={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
@@ -175,8 +180,9 @@ export function PhotoEditor({
           <Button type="submit" loading={busy === "url"}>
             Usar
           </Button>
-        </form>
+        </motion.form>
       )}
+      </AnimatePresence>
 
       {candidates.length > 0 && (
         <div>

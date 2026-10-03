@@ -8,7 +8,7 @@ type Variant = "primario" | "vidro" | "fantasma" | "perigo" | "ia";
 type Size = "md" | "lg" | "sm";
 
 const base =
-  "relative inline-flex items-center justify-center gap-2 font-medium select-none whitespace-nowrap transition-[transform,background,box-shadow,opacity] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
+  "relative inline-flex items-center justify-center gap-2 font-medium select-none whitespace-nowrap transition-[transform,background,box-shadow,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
 
 const variants: Record<Variant, string> = {
   primario:
@@ -16,11 +16,11 @@ const variants: Record<Variant, string> = {
   vidro: "vidro text-[var(--ink)] hover:bg-[var(--glass-strong)]",
   fantasma: "text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--line)]",
   perigo: "bg-[var(--perigo)] text-white hover:brightness-110",
-  ia: "text-white bg-[length:200%_200%] [background-image:var(--ai)] animate-[ia-gira_6s_linear_infinite] shadow-[0_12px_30px_-12px_rgba(107,77,255,0.7)] hover:-translate-y-px",
+  ia: "text-white [background-image:var(--ai)] shadow-[0_12px_30px_-12px_rgba(107,77,255,0.7)] hover:-translate-y-px",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3.5 text-sm rounded-xl",
+  sm: "h-10 px-3.5 text-sm rounded-xl",
   md: "h-11 px-5 text-[15px] rounded-[14px]",
   lg: "h-13 px-6 text-base rounded-2xl min-h-[52px]",
 };

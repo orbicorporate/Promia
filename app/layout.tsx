@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { MotionProvider } from "@/components/motion-provider";
 
 // Fontes empacotadas no repositório (assets/fonts): o build não depende
 // do Google Fonts e o encarte desenhado no servidor usa as mesmas.
@@ -54,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mancha m4" />
           <div className="grao" />
         </div>
-        {children}
+        <MotionProvider>{children}</MotionProvider>
         <Toaster
           position="top-center"
           richColors

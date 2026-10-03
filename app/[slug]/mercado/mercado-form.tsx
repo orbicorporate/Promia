@@ -201,7 +201,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
   const contato = [f.whatsapp && `WhatsApp ${f.whatsapp}`, f.instagram && (f.instagram.startsWith("@") ? f.instagram : `@${f.instagram}`)].filter(Boolean).join("  ·  ");
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="grid gap-6 pb-20 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
         <Glass className="space-y-5 p-5 sm:p-6">
           <h2 className="text-xl font-bold">Identidade</h2>
@@ -310,7 +310,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
                   >
                     <span className="w-16 text-sm text-[var(--ink-3)]">{DIAS[p.weekday]}</span>
                     <span className="flex-1 font-medium">{p.name}</span>
-                    <button onClick={() => removePromo(p.id)} className="grid size-8 place-items-center rounded-full text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--perigo)]" aria-label={`Remover ${p.name}`}>
+                    <button onClick={() => removePromo(p.id)} className="grid size-11 place-items-center rounded-full text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--perigo)]" aria-label={`Remover ${p.name}`}>
                       <X className="size-4" />
                     </button>
                   </motion.li>
@@ -320,7 +320,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
           {promos.length === 0 && (
             <div className="flex flex-wrap gap-2">
               {SUGESTOES.map(([d, n, c]) => (
-                <button key={n} onClick={() => addPromo({ weekday: d, name: n, categoryHint: c })} className="vidro flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm hover:bg-[var(--glass-strong)]">
+                <button key={n} onClick={() => addPromo({ weekday: d, name: n, categoryHint: c })} className="vidro flex h-10 items-center gap-1.5 rounded-full px-3.5 text-sm hover:bg-[var(--glass-strong)]">
                   <Plus className="size-4" /> {n}
                 </button>
               ))}
@@ -390,10 +390,10 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
       <AnimatePresence>
         {dirty && (
           <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            initial={{ y: 24, opacity: 0, filter: "blur(4px)" }}
+            animate={{ y: 0, opacity: 1, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
+            exit={{ y: 12, opacity: 0, transition: { duration: 0.18 } }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0 }}
             className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4 lg:bottom-6 lg:left-[260px]"
           >
             <div className="vidro-forte mx-auto flex max-w-md items-center gap-3 rounded-2xl p-2 pl-4">

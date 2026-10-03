@@ -41,7 +41,7 @@ export default async function MasterPage() {
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-[var(--ink-3)] sm:inline">{who.viewer.email}</span>
           <form action="/sair" method="post">
-            <button className="vidro h-9 rounded-xl px-3.5 text-sm">Sair</button>
+            <button className="vidro h-11 rounded-xl px-3.5 text-sm">Sair</button>
           </form>
         </div>
       </header>

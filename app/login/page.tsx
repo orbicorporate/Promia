@@ -59,7 +59,7 @@ export default function LoginPage() {
             <Field label="Senha" htmlFor="senha">
               <div className="relative">
                 <Input id="senha" type={ver ? "text" : "password"} autoComplete="current-password" required value={senha} onChange={(e) => setSenha(e.target.value)} className="pr-11" />
-                <button type="button" onClick={() => setVer((v) => !v)} className="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)]" aria-label={ver ? "Esconder senha" : "Mostrar senha"}>
+                <button type="button" onClick={() => setVer((v) => !v)} className="absolute right-1.5 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)]" aria-label={ver ? "Esconder senha" : "Mostrar senha"}>
                   {ver ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
@@ -93,8 +93,8 @@ export default function LoginPage() {
               className="absolute w-44 rounded-2xl bg-white p-3 shadow-[0_24px_40px_-20px_rgba(0,0,0,0.55)]"
               style={{ left: t.x, top: t.y }}
               initial={reduce ? false : { opacity: 0, y: 40, rotate: 0, scale: 0.9 }}
-              animate={reduce ? { rotate: t.rot } : { opacity: 1, y: [0, -8, 0], rotate: t.rot, scale: 1 }}
-              transition={reduce ? undefined : { opacity: { delay: t.delay, duration: 0.5 }, scale: { delay: t.delay, type: "spring" }, rotate: { delay: t.delay, type: "spring" }, y: { delay: t.delay + 0.6, duration: 5 + t.delay * 3, repeat: Infinity, ease: "easeInOut" } }}
+              animate={{ opacity: 1, y: 0, rotate: t.rot, scale: 1 }}
+              transition={reduce ? { duration: 0 } : { delay: t.delay, type: "spring", stiffness: 160, damping: 18 }}
             >
               <p className="text-sm font-semibold text-[#1d2420]">{t.name}</p>
               <span className="mt-2 inline-flex items-start gap-0.5 rounded-xl bg-[#ffcf3a] px-2.5 py-1 font-display font-extrabold leading-none text-[#b8240f] shadow-[0_3px_0_#c99a00]">
