@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJson, requireMarketAccess } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { findProductImage, mapWithConcurrency } from "@/lib/ai/imageSearch";
+import { mapWithConcurrency } from "@/lib/ai/imageSearch";
+import { outcomeToUpdate, resolveProductPhoto } from "@/lib/server/photos";
 import { recordUsage, remainingToday } from "@/lib/ai/usage";
 
 export const maxDuration = 180;
@@ -49,29 +50,21 @@ export async function POST(req: NextRequest) {
   }
 
   const results = await mapWithConcurrency(claimed, CONCURRENCY, async (p) => {
-    const result = await findProductImage({ name: p.name, brand: p.brand, ean: p.ean });
-    if (result.status === "erro") {
+    const outcome = await resolveProductPhoto(admin, marketId, { id: p.id, name: p.name, brand: p.brand, ean: p.ean });
+    if (outcome.status === "erro") {
       // falha temporária da IA: o produto volta pra fila, sem perder a vez
       await admin.from("products").update({ image_claimed_at: null }).eq("id", p.id).eq("market_id", marketId);
-      return result.status;
+      return { status: "erro" as const, usedAi: false };
     }
-    const { error: updateError } = await admin
-      .from("products")
-      .update({
-        image_url: result.imageUrl,
-        image_source_url: result.sourceUrl,
-        image_status: result.status,
-        image_claimed_at: null,
-      })
-      .eq("id", p.id)
-      .eq("market_id", marketId);
+    const { error: updateError } = await admin.from("products").update(outcomeToUpdate(outcome)).eq("id", p.id).eq("market_id", marketId);
     if (updateError) console.error("[buscar-imagens] gravar", updateError);
-    return result.status;
+    return { status: outcome.status, usedAi: outcome.usedAi };
   });
 
-  const failed = results.filter((s) => s === "erro").length;
+  const failed = results.filter((r) => r.status === "erro").length;
   const processed = claimed.length - failed;
-  await recordUsage(marketId, access.viewer.userId, "busca_imagem", processed);
+  // só conta no limite o que de fato usou IA (banco e catálogo são de graça)
+  await recordUsage(marketId, access.viewer.userId, "busca_imagem", results.filter((r) => r.usedAi).length);
 
   if (processed === 0) {
     return NextResponse.json(
@@ -82,7 +75,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     processed,
-    found: results.filter((s) => s === "encontrada").length,
+    found: results.filter((r) => r.status === "encontrada").length,
     remaining: await countPending(),
   });
 }

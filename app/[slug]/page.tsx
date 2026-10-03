@@ -1,128 +1,228 @@
-import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { getViewer, canAccessMarket } from "@/lib/auth";
+import { ArrowUpRight, Camera, Palette, Phone, FileSpreadsheet, Sparkles, CheckCircle2, Circle } from "lucide-react";
+import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AppHeader } from "@/components/app-header";
-import { RunGerenteButton, RecommendationList } from "./run-gerente-button";
-import { ImportProductsSection } from "./import-products-section";
-import { FindImagesButton } from "./find-images-button";
-import type { GerenteRecommendation } from "@/lib/ai/gerente";
+import { todayInSaoPaulo, formatBR } from "@/lib/dates";
+import { upcomingOccasions, themeAccent } from "@/lib/occasions";
+import { Glass, ButtonLink } from "@/components/ui";
+import { GerenteCard, type Rec } from "./_ui/gerente-card";
+import { EncarteThumb } from "./_ui/encarte-thumb";
 
-export default async function MarketPage({ params }: { params: Promise<{ slug: string }> }) {
+export const metadata = { title: "Início" };
+
+function saudacao() {
+  const h = Number(new Intl.DateTimeFormat("pt-BR", { hour: "numeric", hour12: false, timeZone: "America/Sao_Paulo" }).format(new Date()));
+  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+}
+
+const WEEKDAY = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+export default async function InicioPage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
-  const who = await getViewer();
-  if (who.status === "anon") redirect("/login");
-  if (who.status !== "ok") redirect("/");
-
+  const { market } = await requireMarketPage(slug);
   const admin = createAdminClient();
-  const { data: market } = await admin.from("markets").select("id, name, niche, slug").eq("slug", slug).maybeSingle();
-  if (!market) notFound();
-  // dono de mercado só entra no próprio; ao tentar outro, volta pro dele
-  if (!canAccessMarket(who.viewer, market.id)) redirect("/");
+  const today = todayInSaoPaulo();
 
-  const countWhere = (status?: string) => {
-    let q = admin.from("products").select("id", { count: "exact", head: true }).eq("market_id", market.id);
+  const count = (status?: string) => {
+    let q = admin.from("products").select("id", { count: "exact", head: true }).eq("market_id", market.id).eq("active", true);
     if (status) q = q.eq("image_status", status);
     return q;
   };
 
-  const [total, pending, found, review, notFoundCount, { data: lastRec }, { data: lastImport }] = await Promise.all([
-    countWhere(),
-    countWhere("pendente"),
-    countWhere("encontrada"),
-    countWhere("revisar"),
-    countWhere("nao_encontrada"),
+  const [total, revisar, pendente, semPreco, { data: weekly }, { data: encartes, count: encarteCount }, { data: lastRec }] = await Promise.all([
+    count(),
+    count("revisar"),
+    count("pendente"),
+    admin.from("products").select("id", { count: "exact", head: true }).eq("market_id", market.id).eq("active", true).is("price", null),
+    admin.from("weekly_promotions").select("weekday, name, category_hint, active").eq("market_id", market.id),
     admin
-      .from("ai_recommendations")
-      .select("run_id, generated_at")
+      .from("tabloids")
+      .select("id, name, format, theme_key, valid_from, valid_until, updated_at", { count: "exact" })
       .eq("market_id", market.id)
-      .order("generated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    admin
-      .from("product_imports")
-      .select("created_at, rows_imported, file_name")
-      .eq("market_id", market.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .order("updated_at", { ascending: false })
+      .limit(3),
+    admin.from("ai_recommendations").select("run_id, generated_at").eq("market_id", market.id).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
 
-  let lastRun: GerenteRecommendation[] = [];
+  let recs: Rec[] = [];
   if (lastRec) {
-    let q = admin.from("ai_recommendations").select("type, target, reason, priority").eq("market_id", market.id);
+    let q = admin.from("ai_recommendations").select("id, type, target, reason, priority").eq("market_id", market.id);
     q = lastRec.run_id ? q.eq("run_id", lastRec.run_id) : q.eq("generated_at", lastRec.generated_at);
     const { data } = await q.limit(8);
-    lastRun = (data ?? []) as GerenteRecommendation[];
+    // liga cada recomendação aos produtos do catálogo que ela cita
+    const { data: products } = await admin.from("products").select("id, name, category").eq("market_id", market.id).eq("active", true).limit(3000);
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    recs = (data ?? []).map((r) => {
+      const t = norm(r.target);
+      const matches = (products ?? []).filter((p) => {
+        const n = norm(p.name);
+        return n.includes(t) || t.includes(n) || (p.category && norm(p.category) === t);
+      });
+      return { ...r, productIds: matches.slice(0, 12).map((p) => p.id) } as Rec;
+    });
   }
 
   const productCount = total.count ?? 0;
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const occasions = upcomingOccasions(today, weekly ?? [], 21).slice(0, 4);
+  const next = occasions[0];
+
+  const steps = [
+    { done: !!market.logo_url || !!market.color_primary, label: "Logo e cores do mercado", href: `/${slug}/mercado`, icon: Palette },
+    { done: !!(market.whatsapp || market.address), label: "Endereço e WhatsApp no rodapé", href: `/${slug}/mercado#contatos`, icon: Phone },
+    { done: productCount > 0, label: "Planilha de produtos", href: `/${slug}/produtos?importar=1`, icon: FileSpreadsheet },
+    { done: productCount > 0 && (pendente.count ?? 0) === 0, label: "Fotos dos produtos", href: `/${slug}/produtos?fotos=1`, icon: Camera },
+    { done: (encarteCount ?? 0) > 0, label: "Primeiro encarte", href: `/${slug}/encartes/novo`, icon: Sparkles },
+  ];
+  const stepsDone = steps.filter((s) => s.done).length;
 
   return (
-    <div className="min-h-screen bg-neutral-50 px-4 sm:px-6 py-8">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <AppHeader
-          title={market.name}
-          subtitle={`${productCount} produto(s) cadastrado(s)`}
-          back={who.viewer.role === "master" ? { href: "/master", label: "Painel Promia" } : undefined}
-        />
-
-        <Link
-          href={`/${market.slug}/tabloides/novo`}
-          className={`inline-block rounded-lg px-4 py-2 text-sm ${
-            productCount > 0 ? "bg-neutral-900 text-white" : "bg-neutral-200 text-neutral-500 pointer-events-none"
-          }`}
-          aria-disabled={productCount === 0}
-        >
-          + Novo tabloide
-        </Link>
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-neutral-500">Produtos</h2>
-          <p className="text-sm text-neutral-600">
-            Suba a planilha uma vez e reenvie quando quiser atualizar preço ou estoque. As fotos já encontradas são
-            mantidas.
-            {lastImport && (
-              <span className="text-neutral-500">
-                {" "}
-                Última importação: {fmtDate(lastImport.created_at)}, {lastImport.rows_imported} produto(s).
-              </span>
-            )}
-          </p>
-          <ImportProductsSection marketId={market.id} />
-
-          {productCount > 0 && (
-            <div className="bg-white border border-neutral-200 rounded-lg px-4 py-3 space-y-3">
-              <p className="text-sm text-neutral-700">
-                Fotos: {found.count ?? 0} encontrada(s) · {review.count ?? 0} para revisar ·{" "}
-                {notFoundCount.count ?? 0} sem foto · {pending.count ?? 0} na fila
-              </p>
-              <FindImagesButton marketId={market.id} pendingCount={pending.count ?? 0} />
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-neutral-500">Gerente inteligente</h2>
-          <p className="text-sm text-neutral-600">
-            Analisa o catálogo (preço, custo, estoque quando houver), as datas próximas e as promoções fixas, e
-            recomenda o que destacar, promover, repor ou revisar.
-          </p>
-          {productCount > 0 ? (
-            <RunGerenteButton marketId={market.id} />
+    <div className="space-y-8 pt-2">
+      <header className="space-y-1">
+        <p className="text-[var(--ink-2)]">
+          {saudacao()}. Hoje é {WEEKDAY[new Date(`${today}T12:00:00Z`).getUTCDay()]}, {formatBR(today)}.
+        </p>
+        <h1 className="font-display text-[clamp(2rem,5vw,3.4rem)] font-extrabold leading-[1.02]">
+          {next ? (
+            <>
+              {next.date === today ? "Hoje" : `Dia ${formatBR(next.date)}`} tem {next.title}.
+            </>
           ) : (
-            <p className="text-sm text-neutral-500">Importe a planilha de produtos para liberar o gerente.</p>
+            <>O que vai pro encarte esta semana?</>
           )}
-          {lastRun.length > 0 && lastRec && (
-            <div className="pt-2 space-y-2">
-              <p className="text-xs text-neutral-500">Última análise: {fmtDate(lastRec.generated_at)}</p>
-              <RecommendationList items={lastRun} />
-            </div>
+        </h1>
+      </header>
+
+      <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+        {/* ocasiões */}
+        <Glass as="section" className="p-5 sm:p-6 space-y-4" aria-labelledby="ocasioes">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="ocasioes" className="text-lg font-bold">
+              Próximas ocasiões
+            </h2>
+            <Link href={`/${slug}/mercado#promocoes`} className="text-sm text-[var(--ink-2)] hover:text-[var(--ink)]">
+              Promoções fixas
+            </Link>
+          </div>
+          {occasions.length === 0 ? (
+            <p className="text-sm text-[var(--ink-2)]">
+              Nenhuma data especial nas próximas 3 semanas. Cadastre as promoções fixas do mercado, como a terça da carne,
+              para elas aparecerem aqui.
+            </p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {occasions.map((o) => {
+                const c = themeAccent(o.themeKey);
+                const href = `/${slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${o.date}&ate=${o.date}`;
+                return (
+                  <li key={`${o.date}-${o.title}`}>
+                    <Link
+                      href={href}
+                      className="group relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-4 text-left transition hover:-translate-y-0.5"
+                      style={{ background: c.bg, color: c.text }}
+                    >
+                      <span
+                        className="absolute -right-6 -top-6 size-24 rounded-full opacity-25 transition group-hover:scale-110"
+                        style={{ background: c.tag }}
+                        aria-hidden
+                      />
+                      <span className="relative text-sm opacity-90">
+                        {o.date === today ? "Hoje" : `${WEEKDAY[new Date(`${o.date}T12:00:00Z`).getUTCDay()]}, ${formatBR(o.date)}`}
+                        {o.kind === "semana" ? " · promoção fixa" : ""}
+                      </span>
+                      <span className="relative flex items-end justify-between gap-2">
+                        <span className="font-display text-xl font-extrabold leading-tight">{o.title}</span>
+                        <ArrowUpRight className="size-5 shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </section>
+        </Glass>
+
+        {/* gerente */}
+        <GerenteCard marketId={market.id} slug={slug} recs={recs} generatedAt={lastRec?.generated_at ?? null} hasProducts={productCount > 0} />
       </div>
+
+      {stepsDone < steps.length && (
+        <Glass as="section" className="p-5 sm:p-6" aria-labelledby="comeco">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="comeco" className="text-lg font-bold">
+              Deixe o mercado pronto
+            </h2>
+            <span className="text-sm text-[var(--ink-2)] tabular">
+              {stepsDone} de {steps.length}
+            </span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
+            <div className="h-full rounded-full bg-[var(--folha)] transition-all" style={{ width: `${(stepsDone / steps.length) * 100}%` }} />
+          </div>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {steps.map((s) => (
+              <li key={s.label}>
+                <Link
+                  href={s.href}
+                  className={`flex h-full items-center gap-3 rounded-2xl p-3 text-sm transition ${s.done ? "text-[var(--ink-3)]" : "bg-[var(--glass-strong)] ring-1 ring-[var(--line)] hover:-translate-y-0.5"}`}
+                >
+                  {s.done ? <CheckCircle2 className="size-5 shrink-0 text-[var(--folha)]" /> : <Circle className="size-5 shrink-0 text-[var(--ink-3)]" />}
+                  <span className={s.done ? "line-through decoration-[var(--line-strong)]" : "font-medium"}>{s.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Glass>
+      )}
+
+      <section className="space-y-4" aria-labelledby="recentes">
+        <div className="flex items-end justify-between gap-3">
+          <h2 id="recentes" className="text-xl font-bold">
+            Encartes recentes
+          </h2>
+          {(encarteCount ?? 0) > 0 && (
+            <Link href={`/${slug}/encartes`} className="text-sm text-[var(--ink-2)] hover:text-[var(--ink)]">
+              Ver todos ({encarteCount})
+            </Link>
+          )}
+        </div>
+        {encartes && encartes.length > 0 ? (
+          <ul className="grid gap-4 grid-cols-2 md:grid-cols-3">
+            {encartes.map((e) => (
+              <li key={e.id}>
+                <EncarteThumb slug={slug} encarte={e} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Glass className="flex flex-col items-center gap-3 p-8 text-center">
+            <p className="max-w-sm text-[var(--ink-2)]">
+              {productCount > 0
+                ? "Escolha os produtos, o tema e o formato. O Promia monta a arte com as cores do mercado."
+                : "Importe a planilha de produtos e monte o primeiro encarte em poucos minutos."}
+            </p>
+            <ButtonLink href={productCount > 0 ? `/${slug}/encartes/novo` : `/${slug}/produtos?importar=1`}>
+              {productCount > 0 ? "Montar encarte" : "Importar planilha"}
+            </ButtonLink>
+          </Glass>
+        )}
+      </section>
+
+      {(revisar.count ?? 0) + (semPreco.count ?? 0) > 0 && (
+        <p className="text-sm text-[var(--ink-2)]">
+          {(revisar.count ?? 0) > 0 && (
+            <Link href={`/${slug}/produtos?fotos=1`} className="underline decoration-[var(--line-strong)] underline-offset-4 hover:text-[var(--ink)]">
+              {revisar.count} foto(s) esperando sua escolha
+            </Link>
+          )}
+          {(revisar.count ?? 0) > 0 && (semPreco.count ?? 0) > 0 && " e "}
+          {(semPreco.count ?? 0) > 0 && (
+            <Link href={`/${slug}/produtos?filtro=sem-preco`} className="underline decoration-[var(--line-strong)] underline-offset-4 hover:text-[var(--ink)]">
+              {semPreco.count} produto(s) sem preço
+            </Link>
+          )}
+          .
+        </p>
+      )}
     </div>
   );
 }

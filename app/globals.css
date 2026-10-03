@@ -1,26 +1,256 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ------------------------------------------------------------------
+   Promia: vidro sobre uma feira.
+   Fundo claro esverdeado (gelo), manchas de cor de hortifruti que se
+   movem devagar atrás de painéis de vidro, e um só elemento forte: a
+   etiqueta de preço amarela e vermelha, a mesma do encarte.
+   ------------------------------------------------------------------ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --bg: #e8efe9;
+  --bg-deep: #dbe6de;
+  --ink: #12201a;
+  --ink-2: #44564d;
+  --ink-3: #6f8178;
+  --line: rgba(18, 32, 26, 0.09);
+  --line-strong: rgba(18, 32, 26, 0.16);
+  --glass: rgba(255, 255, 255, 0.56);
+  --glass-strong: rgba(255, 255, 255, 0.8);
+  --glass-edge: rgba(255, 255, 255, 0.85);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 18px 40px -22px rgba(23, 61, 44, 0.35);
+  --tomate: #ef4127;
+  --tomate-ink: #b8240f;
+  --banana: #ffcf3a;
+  --banana-ink: #5a3f00;
+  --folha: #138a4c;
+  --folha-soft: rgba(19, 138, 76, 0.12);
+  --uva: #6b4dff;
+  --perigo: #c42b1c;
+  --blob-1: #ffb4a3;
+  --blob-2: #ffe08a;
+  --blob-3: #9fe0b7;
+  --blob-4: #c9bcff;
+  --ai: linear-gradient(115deg, #6b4dff 0%, #ef4127 55%, #ffcf3a 100%);
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #0c1511;
+    --bg-deep: #08100c;
+    --ink: #e9f2ec;
+    --ink-2: #a9bbb1;
+    --ink-3: #7d9187;
+    --line: rgba(233, 242, 236, 0.09);
+    --line-strong: rgba(233, 242, 236, 0.18);
+    --glass: rgba(24, 38, 31, 0.55);
+    --glass-strong: rgba(28, 44, 36, 0.86);
+    --glass-edge: rgba(255, 255, 255, 0.12);
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 22px 50px -24px rgba(0, 0, 0, 0.7);
+    --folha: #3ccb7f;
+    --folha-soft: rgba(60, 203, 127, 0.14);
+    --tomate: #ff5a3d;
+    --perigo: #ff6b5b;
+    --blob-1: #7a2416;
+    --blob-2: #6b5208;
+    --blob-3: #0f5a34;
+    --blob-4: #31237a;
+    color-scheme: dark;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-tomate: var(--tomate);
+  --color-banana: var(--banana);
+  --color-folha: var(--folha);
+  --color-uva: var(--uva);
+  --color-perigo: var(--perigo);
+  --font-sans: var(--font-texto);
+  --font-display: var(--font-titulo);
+  --radius-panel: 24px;
+  --radius-control: 14px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-texto), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-titulo), var(--font-texto), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--uva);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+::selection {
+  background: var(--banana);
+  color: #1d1400;
+}
+
+/* ---------------------------- fundo vivo ---------------------------- */
+
+.ambiente {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--bg) 0%, var(--bg-deep) 100%);
+}
+
+.ambiente .mancha {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.75;
+  will-change: transform;
+}
+
+.ambiente .m1 { width: 46vmax; height: 46vmax; left: -12vmax; top: -14vmax; background: var(--blob-1); animation: deriva-1 38s ease-in-out infinite alternate; }
+.ambiente .m2 { width: 40vmax; height: 40vmax; right: -14vmax; top: 4vmax; background: var(--blob-2); animation: deriva-2 44s ease-in-out infinite alternate; }
+.ambiente .m3 { width: 50vmax; height: 50vmax; left: 10vmax; bottom: -26vmax; background: var(--blob-3); animation: deriva-3 50s ease-in-out infinite alternate; }
+.ambiente .m4 { width: 30vmax; height: 30vmax; right: 6vmax; bottom: -6vmax; background: var(--blob-4); opacity: 0.55; animation: deriva-2 56s ease-in-out infinite alternate-reverse; }
+
+.ambiente .grao {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes deriva-1 { to { transform: translate(14vmax, 10vmax) scale(1.12); } }
+@keyframes deriva-2 { to { transform: translate(-12vmax, 14vmax) scale(0.92); } }
+@keyframes deriva-3 { to { transform: translate(10vmax, -12vmax) scale(1.08); } }
+
+/* ------------------------------ vidro ------------------------------ */
+
+.vidro {
+  background: var(--glass);
+  backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.vidro::before {
+  /* fio de luz na borda de cima */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-edge), transparent 42%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.vidro-forte {
+  background: var(--glass-strong);
+  backdrop-filter: blur(28px) saturate(1.7);
+  -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+/* contorno animado só onde a IA está trabalhando ou falando */
+.borda-ia {
+  position: relative;
+  isolation: isolate;
+}
+.borda-ia::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--ai);
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ia-gira 6s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+.texto-ia {
+  background: var(--ai);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@keyframes ia-gira {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* linha que varre enquanto algo está sendo lido ou gerado */
+.varredura {
+  position: relative;
+  overflow: hidden;
+}
+.varredura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: varrer 1.6s ease-in-out infinite;
+}
+@keyframes varrer { to { transform: translateX(100%); } }
+
+.esqueleto {
+  background: linear-gradient(90deg, var(--line) 0%, var(--line-strong) 50%, var(--line) 100%);
+  background-size: 200% 100%;
+  animation: brilho 1.4s ease-in-out infinite;
+  border-radius: 12px;
+}
+@keyframes brilho { to { background-position: -200% 0; } }
+
+/* barra de rolagem discreta */
+.rolagem::-webkit-scrollbar { width: 8px; height: 8px; }
+.rolagem::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; }
+
+/* espaço para a barra de navegação flutuante no celular */
+.pb-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 112px);
+}
+@media (min-width: 1024px) {
+  .pb-nav { padding-bottom: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .ambiente .mancha { animation: none; }
 }
