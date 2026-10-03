@@ -83,6 +83,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 

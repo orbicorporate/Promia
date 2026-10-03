@@ -626,6 +626,7 @@ export function EncarteBuilder({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              role="status"
               className="vidro-forte absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
             >
               <Loader2 className="size-3.5 animate-spin" /> Atualizando

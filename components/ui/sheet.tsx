@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "./cn";
@@ -26,18 +26,45 @@ export function Sheet({
 }) {
   const id = useId();
   const reduce = useReducedMotion();
+  const panel = useRef<HTMLDivElement>(null);
+  // onClose costuma vir como função nova a cada render; o efeito não pode depender dela
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    // foco entra na folha e volta para quem a abriu ao fechar
+    const opener = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => {
+      const first = panel.current?.querySelector<HTMLElement>("input:not([type=hidden]):not([disabled]), textarea, select, button:not([aria-label='Fechar'])");
+      (first ?? panel.current)?.focus({ preventScroll: true });
+    });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeRef.current();
+      if (e.key !== "Tab" || !panel.current) return;
+      // Tab circula dentro da folha
+      const items = [...panel.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex='-1'])")];
+      if (!items.length) return;
+      const [first, last] = [items[0], items[items.length - 1]];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      opener?.focus?.({ preventScroll: true });
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>
@@ -51,8 +78,10 @@ export function Sheet({
             onClick={onClose}
           />
           <motion.div
+            ref={panel}
+            tabIndex={-1}
             className={cn(
-              "vidro-forte relative w-full sm:mx-4 max-h-[92dvh] flex flex-col rounded-t-[28px] sm:rounded-[28px]",
+              "vidro-forte relative outline-none w-full sm:mx-4 max-h-[92dvh] flex flex-col rounded-t-[28px] sm:rounded-[28px]",
               wide ? "sm:max-w-3xl" : "sm:max-w-lg"
             )}
             initial={reduce ? { opacity: 0 } : { y: 48, opacity: 0, scale: 0.98, filter: "blur(4px)" }}

@@ -40,6 +40,9 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh lg:pl-[272px]">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-[var(--ink)] focus:px-4 focus:py-3 focus:text-[var(--bg)]">
+        Pular para o conteúdo
+      </a>
       {/* barra lateral no computador */}
       <aside className="hidden lg:flex fixed inset-y-4 left-4 w-[248px] flex-col vidro rounded-[28px] p-4 z-30">
         <div className="px-2 pt-1 pb-5">
@@ -113,7 +116,7 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="pb-nav px-4 sm:px-6 lg:px-10 pt-2 lg:pt-8">
+      <main id="conteudo" tabIndex={-1} className="outline-none pb-nav px-4 sm:px-6 lg:px-10 pt-2 lg:pt-8">
         <div className="mx-auto max-w-[1120px]">{children}</div>
       </main>
 
