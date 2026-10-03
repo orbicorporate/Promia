@@ -2,34 +2,34 @@
 
 SaaS pra supermercados montarem tabloides e artes promocionais no tema que quiserem, com um gerente inteligente de produto, preço, promoção e estoque. Stack e padrões herdados do Nume Calendar (orbicorporate/nume-master): Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, Supabase (auth, banco e Storage) e SDK da Anthropic.
 
-## O que já está montado (ponta a ponta, funcional)
+## O que está no ar
 
-- **Auth e multi-tenant**: login simples (Supabase Auth), tabela `profiles` com papel (`master` = time Promia, `mercado` = dono do mercado) e `market_id`, RLS isolando os dados de cada mercado.
-- **Painel master** (`/master`): cria mercados e já gera o primeiro login do responsável.
-- **Painel do mercado** (`/[slug]`): produtos, busca de imagem, gerente inteligente e atalho pra montar um tabloide novo.
-- **Upload e revisão de planilha de produtos**: `lib/products.ts` normaliza colunas em português livre (nome de coluna varia, preço em formatos diferentes) e a UI em `app/[slug]/import-products.tsx` deixa revisar/editar antes de confirmar, seguindo o padrão upload direto pro Storage (URL assinada) → processa no servidor → revisão → grava.
-- **Busca automática de imagem de produto**: `lib/ai/imageSearch.ts` usa a busca na web da Anthropic pra achar uma foto de cada produto. Só marca como "encontrada" quando a URL aponta direto pra um arquivo de imagem (evita link inventado); o resto cai em "revisar" (com a página de referência salva) ou "não encontrada". Roda em lote pelo botão no painel (`app/[slug]/find-images-button.tsx` + `app/api/produtos/buscar-imagens`).
-- **Motor de temas**: `lib/seasonalDates.ts` (portado do Nume Calendar, datas comemorativas brasileiras calculadas por ano) + `lib/weeklyPromotions.ts` (promoções recorrentes por dia da semana, tipo "toda terça é dia da carne") combinados em `lib/themes.ts`, que sugere temas automaticamente pros próximos dias.
-- **Gerente inteligente**: `lib/ai/gerente.ts` + `app/api/ia/gerente`, no mesmo desenho em duas etapas da Orbi (análise livre do catálogo, depois estruturação em JSON), com prompts próprios de gerente de produto/preço/promoção/estoque.
-- **Motor de renderização do tabloide**: `lib/renderTabloid.ts` preenche um template HTML (tokens tipo `%%NOME_MERCADO%%`, bloco repetido de produto entre `<!--PRODUTOS_INICIO-->`/`<!--PRODUTOS_FIM-->`) com os dados do mercado e os produtos escolhidos; a captura em imagem final é feita no navegador com `html2canvas-pro`, no mesmo espírito do `template.html` do Nume Calendar (só style inline com hex/rgba puro, nada de classe Tailwind pra cor).
-- **2 templates de tabloide reais**: `lib/tabloidTemplates/grade-classica.html` e `faixa-promocional.html` (ponto de partida; ainda não são os ~40 da visão final).
-- **Tela de montagem de tabloide** (`/[slug]/tabloides/novo`): mostra sugestões de tema pros próximos dias, escolhe nome/categoria/tema/vigência, seleciona produtos com busca, gera o tabloide e baixa a imagem.
-- **Schema do banco**: `supabase/migrations/` (markets, profiles, products, weekly_promotions, themes, tabloids, tabloid_products, ai_recommendations, com RLS, mais o seed dos 2 temas globais).
+- **Auth e multi-tenant**: `lib/auth.ts` é o ponto único de acesso; papéis `master` (time Promia) e `mercado`. Painel master em `/master` cria mercados e o login do responsável.
+- **Início** (`/[slug]`): próximas ocasiões (datas do varejo e promoções fixas da semana) com atalho para o encarte, gerente inteligente, lista do que falta para o mercado ficar pronto.
+- **Encartes** (`/[slug]/encartes`): montagem com prévia ao vivo (`/novo`, aceita `?tema`, `?titulo`, `?de`, `?ate`, `?produtos`, `?copiar`), visualizador com páginas, baixar PNG e PDF, compartilhar, editar, duplicar e apagar.
+- **Motor do encarte** (`lib/encarte/*`): desenhado no servidor com next/og. Formatos Feed, Story, Quadrado e A4; layouts grade, destaque e lista; 15 temas como dados em `themes.ts`. Rotas `GET /api/encartes/{id}/imagem?pagina=N`, `GET /api/encartes/{id}/pdf`, `POST /api/encartes/previa`.
+- **Produtos** (`/[slug]/produtos`): busca, filtros, edição rápida, envio de planilha (`?importar=1`) e revisão de fotos (`?fotos=1`) com opções, link colado ou câmera.
+- **Fotos** (`lib/server/photos.ts`): banco próprio por código de barras, Open Food Facts, depois busca na web com IA, que lê a foto declarada pela página do produto (JSON-LD e og:image). Imagens copiadas para o Storage `midia`.
+- **Mercado** (`/[slug]/mercado`): logo com cores extraídas, contatos do rodapé, promoções fixas e aviso legal.
+- **Interface**: vidro sobre fundo vivo, Bricolage Grotesque e Instrument Sans, componentes em `components/ui`, navegação em `components/shell`. Movimento com `motion`, sempre respeitando reduzir movimento.
 
 ## Fase 1 (base segura), concluída
 
-- Acesso: `lib/auth.ts` é o ponto único de identidade. Toda rota confere se o usuário pode mexer no mercado informado; as rotas do dono do mercado saíram de `/api/master` e ficam em `/api/produtos`, `/api/tabloides` e `/api/ia`.
+- Acesso: `lib/auth.ts` é o ponto único de identidade. Toda rota confere se o usuário pode mexer no mercado informado; as rotas do dono do mercado ficam em `/api/produtos`, `/api/encartes`, `/api/mercado` e `/api/ia`.
 - Importação (`lib/products.ts`): CSV com ponto e vírgula ou vírgula, acentos em Windows-1252, cabeçalho em qualquer uma das 20 primeiras linhas, colunas com nomes livres, células com fórmula, número brasileiro, código de barras, custo e unidade. Código repetido e linha sem nome viram aviso, não erro. Reimportar não apaga fotos.
 - Fotos: fila no banco (`claim_pending_images`) sem processar o mesmo produto duas vezes, 5 buscas em paralelo, modelo rápido com reserva.
 - Gerente: saída estruturada por ferramenta (sem JSON quebrado), recebe as promoções fixas, recomendações agrupadas por rodada.
 - Limite diário de IA por mercado (`lib/ai/usage.ts`).
-- Tabloide: produtos e tema conferidos no servidor, render com escape de texto, URL e cor, rascunho até a arte dar certo, compartilhar no celular.
 - Banco: migrations 0004 (aplicada) e 0005 (políticas somente leitura, aplicar no SQL Editor), histórico de preço, registro de importações, tipos gerados em `lib/supabase/database.types.ts`.
 - Testes (`npm test`) e CI no GitHub (tipos, lint, testes).
 
+## Fase 2 (encarte vendável), concluída
+
+Migration 0006 (formato, layout, tema, preço de/por, selo, banco de fotos, bucket `midia`), motor de encarte no servidor, interface nova. Removidos o renderizador HTML antigo e o html2canvas.
+
 ## Próximas fases
 
-Ver o plano "Promia: diagnóstico e plano para virar produto": encarte vendável (formatos, preço de/por, fotos por EAN), gerente e autonomia, escala e receita.
+Ver o plano "Promia: diagnóstico e plano para virar produto": gerente e autonomia, escala e receita.
 
 ## Rodando localmente
 
