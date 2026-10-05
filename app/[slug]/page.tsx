@@ -82,7 +82,9 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
           {saudacao()}. Hoje é {WEEKDAY[new Date(`${today}T12:00:00Z`).getUTCDay()]}, {formatBR(today)}.
         </p>
         <h1 className="font-display text-[clamp(2rem,5vw,3.4rem)] font-extrabold leading-[1.02]">
-          {next ? (
+          {productCount === 0 ? (
+            <>Vamos montar o primeiro encarte do {market.name}.</>
+          ) : next ? (
             <>
               {next.date === today ? "Hoje" : `Dia ${formatBR(next.date)}`} tem {next.title}.
             </>
@@ -90,9 +92,17 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
             <>O que vai pro encarte esta semana?</>
           )}
         </h1>
+        {productCount === 0 && (
+          <div className="flex flex-wrap items-center gap-3 pt-3">
+            <ButtonLink href={`/${slug}/produtos?importar=1`} size="lg">
+              Enviar planilha de produtos
+            </ButtonLink>
+            <span className="text-sm text-[var(--ink-2)]">Excel ou CSV exportado do sistema do caixa.</span>
+          </div>
+        )}
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr] lg:items-start">
         {/* ocasiões */}
         <Glass as="section" className="p-5 sm:p-6 space-y-4" aria-labelledby="ocasioes">
           <div className="flex items-center justify-between gap-3">
@@ -109,7 +119,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
               para elas aparecerem aqui.
             </p>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(210px,1fr))]">
               {occasions.map((o) => {
                 const c = themeAccent(o.themeKey);
                 const href = `/${slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${o.date}&ate=${o.date}`;

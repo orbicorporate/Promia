@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Sparkles, ChevronRight, RotateCw, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
-import { Glass, Button, cn } from "@/components/ui";
+import { Glass, Button, ButtonLink, cn } from "@/components/ui";
 
 export type Rec = {
   id: string;
@@ -75,23 +75,26 @@ export function GerenteCard({
     : null;
 
   return (
-    <Glass as="section" data-trabalhando={running} className={cn("borda-ia flex flex-col p-5 sm:p-6 min-h-[300px]", running && "varredura")} aria-labelledby="gerente">
+    <Glass as="section" data-trabalhando={running} className={cn("borda-ia flex flex-col p-5 sm:p-6", running && "varredura")} aria-labelledby="gerente">
       <div className="flex items-center justify-between gap-3">
         <h2 id="gerente" className="flex items-center gap-2 text-lg font-bold">
           <Sparkles className="size-5 text-[var(--uva)]" />
-          <span className="texto-ia">Gerente</span>
+          <span className="text-[var(--uva)]">Gerente</span>
         </h2>
         {when && <span className="text-xs text-[var(--ink-3)]">Análise de {when}</span>}
       </div>
 
       {!hasProducts ? (
-        <div className="flex flex-1 flex-col justify-center gap-3">
+        <div className="mt-3 flex flex-col items-start gap-4">
           <p className="text-[var(--ink-2)]">
             Com a planilha importada, o gerente lê preço, custo e estoque e diz o que destacar, promover ou repor.
           </p>
+          <ButtonLink href={`/${slug}/produtos?importar=1`} variant="vidro">
+            Enviar planilha
+          </ButtonLink>
         </div>
       ) : recs.length === 0 ? (
-        <div className="flex flex-1 flex-col justify-center gap-4">
+        <div className="mt-3 flex flex-col items-start gap-4">
           <p className="text-[var(--ink-2)]">
             O gerente analisa o catálogo, as datas próximas e as promoções fixas, e aponta onde está a margem e o que precisa
             girar. Leva cerca de um minuto.

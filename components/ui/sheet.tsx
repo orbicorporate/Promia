@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "./cn";
 
 // Folha que sobe de baixo no celular e vira um painel central no
-// computador. Fecha com Esc, clique fora ou o botão.
+// computador. Fecha com Esc, clique fora ou o botão. Vai num portal direto no
+// <body>: nenhum ancestral (animação, vidro, texto centralizado) a afeta.
+const noop = () => () => {};
 export function Sheet({
   open,
   onClose,
@@ -25,6 +28,7 @@ export function Sheet({
   wide?: boolean;
 }) {
   const id = useId();
+  const mounted = useSyncExternalStore(noop, () => true, () => false);
   const reduce = useReducedMotion();
   const panel = useRef<HTMLDivElement>(null);
   // onClose costuma vir como função nova a cada render; o efeito não pode depender dela
@@ -66,10 +70,11 @@ export function Sheet({
     };
   }, [open]);
 
-  return (
+  if (!mounted) return null;
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby={id}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center text-left sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby={id}>
           <motion.div
             className="absolute inset-0 bg-[rgba(10,20,15,0.42)] backdrop-blur-[3px]"
             initial={{ opacity: 0 }}
@@ -81,7 +86,7 @@ export function Sheet({
             ref={panel}
             tabIndex={-1}
             className={cn(
-              "vidro-forte relative outline-none w-full sm:mx-4 max-h-[92dvh] flex flex-col rounded-t-[28px] sm:rounded-[28px]",
+              "vidro-forte relative outline-none w-full max-h-[92dvh] sm:max-h-[calc(100dvh-48px)] flex flex-col overflow-hidden rounded-t-[28px] sm:rounded-[28px]",
               wide ? "sm:max-w-3xl" : "sm:max-w-lg"
             )}
             initial={reduce ? { opacity: 0 } : { y: 48, opacity: 0, scale: 0.98, filter: "blur(4px)" }}
@@ -90,7 +95,7 @@ export function Sheet({
             transition={{ type: "spring", duration: 0.42, bounce: 0 }}
           >
             <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-[var(--line-strong)] sm:hidden" aria-hidden />
-            <div className="flex items-start justify-between gap-4 px-6 pt-4 sm:pt-6">
+            <div className="flex shrink-0 items-start justify-between gap-4 px-6 pt-4 sm:pt-6">
               <div>
                 <h2 id={id} className="text-xl font-bold">
                   {title}
@@ -101,11 +106,12 @@ export function Sheet({
                 <X className="size-5" />
               </button>
             </div>
-            <div className="rolagem overflow-y-auto px-6 py-5">{children}</div>
-            {footer && <div className="border-t border-[var(--line)] px-6 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-4">{footer}</div>}
+            <div className="rolagem min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">{children}</div>
+            {footer && <div className="shrink-0 border-t border-[var(--line)] px-6 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-4">{footer}</div>}
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

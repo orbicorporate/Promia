@@ -218,53 +218,70 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
             )}
           </div>
 
-          <div className="rolagem max-h-[26rem] divide-y divide-[var(--line)] overflow-y-auto rounded-2xl bg-[var(--glass-strong)] ring-1 ring-[var(--line)]">
-            {products.slice(0, 1000).map((p, i) => (
-              <div key={p.sku} className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm", !p.include && "opacity-45")}>
-                <input
-                  type="checkbox"
-                  aria-label={`Importar ${p.name}`}
-                  checked={p.include}
-                  onChange={(e) => updateProduct(i, { include: e.target.checked })}
-                  className="size-4 accent-[var(--folha)]"
-                />
-                <input
-                  value={p.name}
-                  aria-label="Nome"
-                  onChange={(e) => updateProduct(i, { name: e.target.value })}
-                  className="min-w-[10rem] flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 hover:border-[var(--line-strong)] focus:border-[var(--uva)] outline-none"
-                />
-                <span className="w-24 truncate text-xs text-[var(--ink-3)]" title={p.sku}>
-                  {p.sku.startsWith("n:") ? "sem código" : p.sku}
-                </span>
-                <input
-                  value={p.category ?? ""}
-                  placeholder="categoria"
-                  aria-label="Categoria"
-                  onChange={(e) => updateProduct(i, { category: e.target.value || null })}
-                  className="w-28 rounded-lg border border-transparent bg-transparent px-2 py-1 text-[var(--ink-2)] hover:border-[var(--line-strong)] outline-none"
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  inputMode="decimal"
-                  value={p.price ?? ""}
-                  placeholder="preço"
-                  aria-label="Preço"
-                  onChange={(e) => updateProduct(i, { price: e.target.value ? Number(e.target.value) : null })}
-                  className="w-24 rounded-lg border border-transparent bg-transparent px-2 py-1 tabular hover:border-[var(--line-strong)] outline-none"
-                />
-                <span className="w-8 text-xs text-[var(--ink-3)]">{p.unit ?? ""}</span>
-              </div>
-            ))}
+          <div className="overflow-hidden rounded-2xl bg-[var(--glass-strong)] ring-1 ring-[var(--line)]">
+            <div className="grid grid-cols-[20px_minmax(0,1fr)_88px] items-center gap-x-3 border-b border-[var(--line)] px-3 py-2 text-xs font-medium text-[var(--ink-3)] sm:grid-cols-[20px_minmax(0,1fr)_96px_140px_96px]">
+              <input
+                type="checkbox"
+                aria-label="Marcar ou desmarcar todos"
+                checked={included === products.length}
+                ref={(el) => {
+                  if (el) el.indeterminate = included > 0 && included < products.length;
+                }}
+                onChange={(e) => setProducts((prev) => (prev ? prev.map((p) => ({ ...p, include: e.target.checked })) : prev))}
+                className="size-4 accent-[var(--folha)]"
+              />
+              <span>Produto</span>
+              <span className="hidden sm:block">Código</span>
+              <span className="hidden sm:block">Categoria</span>
+              <span className="text-right">Preço</span>
+            </div>
+            <ul className="divide-y divide-[var(--line)]">
+              {products.slice(0, 1000).map((p, i) => (
+                <li
+                  key={p.sku}
+                  className={cn(
+                    "grid grid-cols-[20px_minmax(0,1fr)_88px] items-center gap-x-3 px-3 py-1.5 text-sm transition-opacity sm:grid-cols-[20px_minmax(0,1fr)_96px_140px_96px]",
+                    !p.include && "opacity-45"
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    aria-label={`Importar ${p.name}`}
+                    checked={p.include}
+                    onChange={(e) => updateProduct(i, { include: e.target.checked })}
+                    className="size-4 accent-[var(--folha)]"
+                  />
+                  <input
+                    value={p.name}
+                    aria-label="Nome"
+                    onChange={(e) => updateProduct(i, { name: e.target.value })}
+                    className="h-10 min-w-0 rounded-lg border border-transparent bg-transparent px-2 outline-none hover:border-[var(--line-strong)] focus:border-[var(--uva)]"
+                  />
+                  <span className="hidden truncate text-xs text-[var(--ink-3)] sm:block" title={p.sku}>
+                    {p.sku.startsWith("n:") ? "pelo nome" : p.sku}
+                  </span>
+                  <input
+                    value={p.category ?? ""}
+                    placeholder="sem categoria"
+                    aria-label="Categoria"
+                    onChange={(e) => updateProduct(i, { category: e.target.value || null })}
+                    className="hidden h-10 min-w-0 rounded-lg border border-transparent bg-transparent px-2 text-[var(--ink-2)] outline-none placeholder:text-[var(--ink-3)] placeholder:opacity-60 hover:border-[var(--line-strong)] focus:border-[var(--uva)] sm:block"
+                  />
+                  <PriceCell value={p.price} unit={p.unit} onChange={(v) => updateProduct(i, { price: v })} />
+                </li>
+              ))}
+            </ul>
             {products.length > 1000 && (
-              <p className="px-3 py-2 text-xs text-[var(--ink-3)]">Mostrando os primeiros 1.000 de {products.length}. Todos serão importados.</p>
+              <p className="border-t border-[var(--line)] px-3 py-2 text-xs text-[var(--ink-3)]">Mostrando os primeiros 1.000 de {products.length}. Todos serão importados.</p>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleConfirm} loading={saving}>
+          {/* fica preso no rodapé da janela enquanto a lista rola */}
+          <div className="sticky -bottom-5 z-10 -mx-6 flex flex-wrap items-center gap-2 border-t border-[var(--line)] bg-[var(--glass-strong)] px-6 py-3 backdrop-blur-xl">
+            <span className="mr-auto text-sm text-[var(--ink-2)]">
+              {included} de {products.length} marcados
+            </span>
+            <Button onClick={handleConfirm} loading={saving} disabled={included === 0}>
               {saving ? "Importando" : `Importar ${included} produto(s)`}
             </Button>
             <Button
@@ -280,5 +297,29 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
         </div>
       )}
     </div>
+  );
+}
+
+// Preço editável no formato brasileiro, sem as setinhas do campo numérico.
+function PriceCell({ value, unit, onChange }: { value: number | null; unit: string | null; onChange: (v: number | null) => void }) {
+  const fmt = (n: number | null) => (n == null ? "" : n.toFixed(2).replace(".", ","));
+  const [text, setText] = useState(fmt(value));
+  return (
+    <span className="flex items-center justify-end gap-1">
+      <input
+        inputMode="decimal"
+        value={text}
+        placeholder="sem preço"
+        aria-label="Preço"
+        onChange={(e) => {
+          setText(e.target.value);
+          const n = Number(e.target.value.replace(/[^\d,.]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", "."));
+          onChange(e.target.value.trim() && Number.isFinite(n) ? Math.round(n * 100) / 100 : null);
+        }}
+        onBlur={() => setText(fmt(value))}
+        className="h-10 w-full min-w-0 rounded-lg border border-transparent bg-transparent px-2 text-right tabular outline-none placeholder:text-[var(--perigo)] placeholder:opacity-70 hover:border-[var(--line-strong)] focus:border-[var(--uva)]"
+      />
+      {unit && unit !== "un" && <span className="text-xs text-[var(--ink-3)]">/{unit}</span>}
+    </span>
   );
 }
