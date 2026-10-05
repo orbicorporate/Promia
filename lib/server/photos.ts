@@ -65,19 +65,32 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
 export const AUTO_APPLY_CONFIDENCE = 0.7;
 
 async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan): Promise<PhotoOutcome | null> {
-  const raw = await searchImages(plan.query);
-  if (raw === null) return null; // Serper fora do ar: segue para a busca antiga
+  const first = await searchOnce(admin, marketId, p, plan, plan.query);
+  if (first === null) return null; // Serper fora do ar: segue para a busca antiga
+  if (first.status === "encontrada" || !plan.alt) return first;
+  // a primeira busca não trouxe a foto certa: tenta a busca alternativa
+  const second = await searchOnce(admin, marketId, p, plan, plan.alt);
+  if (second?.status === "encontrada") return second;
+  // junta as opções das duas, sem repetir
+  const merged = [...new Set([...("candidates" in first ? first.candidates : []), ...(second && "candidates" in second ? second.candidates : [])])];
+  return { status: merged.length ? "revisar" : "nao_encontrada", sourceUrl: null, candidates: merged.slice(0, 6), usedAi: true };
+}
+
+async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan, query: string): Promise<PhotoOutcome | null> {
+  const raw = await searchImages(query);
+  if (raw === null) return null;
   // foto pequena demais não serve para encarte
   const hits: ImageHit[] = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= 300).slice(0, 8);
   if (hits.length === 0) return { status: "nao_encontrada", sourceUrl: null, candidates: [], usedAi: true };
 
   const verdict = await judgeCandidates({ name: p.name, brand: p.brand, expect: plan.expect, generic: plan.generic }, hits);
+  console.info("[fotos] veredito", JSON.stringify({ produto: p.name, busca: query, melhor: verdict?.best ?? null, confianca: verdict?.confidence ?? null, servem: verdict?.order.length ?? null, fotos: hits.length }));
   const ordered = verdict ? [...verdict.order.map((i) => hits[i]), ...hits.filter((_, i) => !verdict.order.includes(i))] : hits;
   const candidates = ordered.map((h) => h.imageUrl);
 
   if (verdict && verdict.best !== null && verdict.confidence >= AUTO_APPLY_CONFIDENCE) {
     // tenta copiar a escolhida; se o site bloquear, a próxima que a IA aprovou
-    for (const i of verdict.order.slice(0, 3)) {
+    for (const i of verdict.order.slice(0, 5)) {
       const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, hits[i].imageUrl);
       if (stored) {
         return {
@@ -90,9 +103,10 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
         };
       }
     }
+    console.info("[fotos] nenhuma aprovada pôde ser copiada", p.name);
   }
   // sem confiança (ou nenhuma serviu): as opções, na ordem da IA, ficam para o dono
-  return { status: "revisar", sourceUrl: null, candidates: candidates.slice(0, 6), usedAi: true };
+  return { status: verdict && verdict.order.length === 0 ? "nao_encontrada" : "revisar", sourceUrl: null, candidates: candidates.slice(0, 6), usedAi: true };
 }
 
 export async function openFoodFactsImage(ean: string): Promise<string | null> {
