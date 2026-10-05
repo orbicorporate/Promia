@@ -42,7 +42,7 @@ export async function judgeCandidates(product: { name: string; brand: string | n
       `Produto da planilha de um supermercado: ${alvo}\n\n` +
       (product.generic
         ? "É um item sem embalagem: vale a foto do alimento em si, apetitosa, isolada ou em fundo claro. Rejeite fotos de prato pronto, receita, pessoas ou com texto por cima.\n"
-        : "Escolha a foto da embalagem desse produto: mesma marca e mesma versão (sabor, tipo, light/zero). Tamanho diferente é aceitável só se for a mesma embalagem. Prefira foto de frente, em fundo branco ou limpo. Rejeite: outra marca, outra versão, encarte ou montagem com vários produtos, foto com pessoa, marca d'água, foto de prateleira.\n") +
+        : "Escolha a foto da embalagem desse produto: mesma marca e mesma versão (sabor, tipo, light/zero). Tamanho ou quantidade diferente é aceitável se for a mesma marca e linha (ex.: ovos Ikeda de 12 ou de 30). Prefira foto de frente, em fundo branco ou limpo, só do produto. Rejeite: outra marca, outra versão, encarte, montagem com vários produtos, foto com pessoa, marca d'água, foto de prateleira, e imagem com faixa, selo ou texto da loja colado ao lado do produto.\n") +
       'Responda só com JSON: {"melhor": número da melhor foto ou 0 se nenhuma serve, "confianca": de 0 a 1, "ordem": [números das fotos que servem, da melhor para a pior]}',
   });
 
