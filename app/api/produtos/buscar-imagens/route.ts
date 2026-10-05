@@ -3,12 +3,14 @@ import { readJson, requireMarketAccess } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapWithConcurrency } from "@/lib/ai/imageSearch";
 import { outcomeToUpdate, resolveProductPhoto } from "@/lib/server/photos";
+import { planSearches, type SearchPlan } from "@/lib/photos/plan";
+import { serperEnabled } from "@/lib/photos/serper";
 import { recordUsage, remainingToday } from "@/lib/ai/usage";
 
 export const maxDuration = 180;
 
-const BATCH_SIZE = 10;
-const CONCURRENCY = 5;
+const BATCH_SIZE = 12;
+const CONCURRENCY = 6;
 
 // Processa um lote da fila de fotos pendentes. O painel chama de novo até
 // zerar. A reserva no banco (claim_pending_images) impede que duas abas
@@ -49,8 +51,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ processed: 0, remaining: await countPending() });
   }
 
+  // um plano de busca para o lote inteiro (uma chamada de IA), só quando a
+  // busca de imagens está ligada; os nomes ganham marca, versão e tamanho
+  let plans = new Map<string, SearchPlan>();
+  if (serperEnabled()) {
+    const { data: cats } = await admin.from("products").select("id, category").in("id", claimed.map((c) => c.id));
+    const catOf = new Map((cats ?? []).map((c) => [c.id, c.category]));
+    plans = await planSearches(claimed.map((c) => ({ id: c.id, name: c.name, brand: c.brand, category: catOf.get(c.id) ?? null })));
+  }
+
   const results = await mapWithConcurrency(claimed, CONCURRENCY, async (p) => {
-    const outcome = await resolveProductPhoto(admin, marketId, { id: p.id, name: p.name, brand: p.brand, ean: p.ean });
+    const outcome = await resolveProductPhoto(admin, marketId, { id: p.id, name: p.name, brand: p.brand, ean: p.ean }, plans.get(p.id));
     if (outcome.status === "erro") {
       // falha temporária da IA: o produto volta pra fila, sem perder a vez
       await admin.from("products").update({ image_claimed_at: null }).eq("id", p.id).eq("market_id", marketId);

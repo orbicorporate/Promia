@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { findProductImage } from "@/lib/ai/imageSearch";
+import { photoKey } from "@/lib/photos/key";
+import { fallbackPlan, type SearchPlan } from "@/lib/photos/plan";
+import { searchImages, serperEnabled, type ImageHit } from "@/lib/photos/serper";
+import { judgeCandidates } from "@/lib/photos/judge";
 import { storeImageFromUrl } from "./media";
 
 type Admin = SupabaseClient<Database>;
@@ -13,10 +17,12 @@ export type PhotoOutcome =
   | { status: "erro" };
 
 // Ordem de busca, da mais barata e certeira para a mais cara:
-// 1. banco de fotos do Promia (mesmo código de barras, aprovado antes),
+// 1. banco de fotos do Promia pelo código de barras (aprovada antes),
 // 2. Open Food Facts (catálogo aberto por código de barras),
-// 3. busca na web com IA.
-export async function resolveProductPhoto(admin: Admin, marketId: string, p: PhotoProduct): Promise<PhotoOutcome> {
+// 3. banco de fotos do Promia pelo nome (aprovada por qualquer mercado),
+// 4. busca de imagens do Google (Serper) + a IA olhando as miniaturas,
+// 5. sem chave do Serper: a busca antiga, por páginas.
+export async function resolveProductPhoto(admin: Admin, marketId: string, p: PhotoProduct, plan?: SearchPlan): Promise<PhotoOutcome> {
   if (p.ean) {
     const { data: bank } = await admin.from("photo_bank").select("image_url").eq("ean", p.ean).maybeSingle();
     if (bank?.image_url) {
@@ -32,6 +38,16 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
     }
   }
 
+  const { data: byName } = await admin.from("photo_name_bank").select("image_url").eq("key", photoKey(p.name, p.brand)).maybeSingle();
+  if (byName?.image_url) {
+    return { status: "encontrada", origin: "banco", imageUrl: byName.image_url, sourceUrl: null, candidates: [], usedAi: false };
+  }
+
+  if (serperEnabled()) {
+    const outcome = await searchAndJudge(admin, marketId, p, plan ?? fallbackPlan(p.name, p.brand));
+    if (outcome) return outcome;
+  }
+
   const found = await findProductImage({ name: p.name, brand: p.brand, ean: p.ean });
   if (found.status === "erro") return { status: "erro" };
   if (found.status === "encontrada" && found.imageUrl) {
@@ -43,6 +59,40 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
     return { status: "revisar", sourceUrl: found.sourceUrl, candidates: [found.imageUrl, ...found.candidates], usedAi: true };
   }
   return { status: found.status === "nao_encontrada" ? "nao_encontrada" : "revisar", sourceUrl: found.sourceUrl, candidates: found.candidates, usedAi: true };
+}
+
+// confiança mínima para aplicar a foto sozinha; abaixo disso vira opção
+export const AUTO_APPLY_CONFIDENCE = 0.7;
+
+async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan): Promise<PhotoOutcome | null> {
+  const raw = await searchImages(plan.query);
+  if (raw === null) return null; // Serper fora do ar: segue para a busca antiga
+  // foto pequena demais não serve para encarte
+  const hits: ImageHit[] = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= 300).slice(0, 8);
+  if (hits.length === 0) return { status: "nao_encontrada", sourceUrl: null, candidates: [], usedAi: true };
+
+  const verdict = await judgeCandidates({ name: p.name, brand: p.brand, expect: plan.expect, generic: plan.generic }, hits);
+  const ordered = verdict ? [...verdict.order.map((i) => hits[i]), ...hits.filter((_, i) => !verdict.order.includes(i))] : hits;
+  const candidates = ordered.map((h) => h.imageUrl);
+
+  if (verdict && verdict.best !== null && verdict.confidence >= AUTO_APPLY_CONFIDENCE) {
+    // tenta copiar a escolhida; se o site bloquear, a próxima que a IA aprovou
+    for (const i of verdict.order.slice(0, 3)) {
+      const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, hits[i].imageUrl);
+      if (stored) {
+        return {
+          status: "encontrada",
+          origin: "web",
+          imageUrl: stored.url,
+          sourceUrl: hits[i].imageUrl,
+          candidates: candidates.filter((c) => c !== hits[i].imageUrl).slice(0, 6),
+          usedAi: true,
+        };
+      }
+    }
+  }
+  // sem confiança (ou nenhuma serviu): as opções, na ordem da IA, ficam para o dono
+  return { status: "revisar", sourceUrl: null, candidates: candidates.slice(0, 6), usedAi: true };
 }
 
 export async function openFoodFactsImage(ean: string): Promise<string | null> {
@@ -88,4 +138,21 @@ export function outcomeToUpdate(o: Exclude<PhotoOutcome, { status: "erro" }>) {
     image_candidates: (o.candidates.length ? o.candidates.slice(0, 6) : null) as Json,
     image_claimed_at: null,
   };
+}
+
+// Foto aprovada pelo dono vira referência pelo nome para todos os mercados.
+export async function rememberByName(admin: Admin, name: string, brand: string | null, imageUrl: string, storagePath: string | null, source: string) {
+  const key = photoKey(name, brand);
+  if (!key) return;
+  const { data: current } = await admin.from("photo_name_bank").select("approvals").eq("key", key).maybeSingle();
+  const { error } = await admin.from("photo_name_bank").upsert({
+    key,
+    label: name.slice(0, 200),
+    image_url: imageUrl,
+    storage_path: storagePath,
+    source,
+    approvals: (current?.approvals ?? 0) + 1,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) console.error("[photos] banco por nome", error);
 }
