@@ -28,6 +28,12 @@ export type Database = {
         Update: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name?: string; niche?: string | null; slug?: string; address?: string | null; city?: string | null; instagram?: string | null; legal_note?: string | null; onboarded_at?: string | null; opening_hours?: string | null; phone?: string | null; tagline?: string | null; whatsapp?: string | null };
         Relationships: [];
       };
+      photo_name_bank: {
+        Row: { approvals: number; image_url: string; key: string; label: string; source: string; storage_path: string | null; updated_at: string };
+        Insert: { approvals?: number; image_url: string; key: string; label: string; source?: string; storage_path?: string | null; updated_at?: string };
+        Update: { approvals?: number; image_url?: string; key?: string; label?: string; source?: string; storage_path?: string | null; updated_at?: string };
+        Relationships: [];
+      };
       photo_bank: {
         Row: { approvals: number; ean: string; image_url: string; source: string; storage_path: string | null; updated_at: string };
         Insert: { approvals?: number; ean: string; image_url: string; source?: string; storage_path?: string | null; updated_at?: string };

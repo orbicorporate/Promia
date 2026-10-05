@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readJson, serverError } from "@/lib/auth";
 import { MEDIA_BUCKET, normalizeUploaded, storeImageFromUrl, UPLOAD_EXT } from "@/lib/server/media";
-import { rememberInBank } from "@/lib/server/photos";
+import { rememberByName, rememberInBank } from "@/lib/server/photos";
 import { loadOwnedProduct } from "@/lib/server/product-access";
 
 export const maxDuration = 60;
@@ -28,6 +28,8 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       .eq("id", id);
     if (error) return serverError("foto", error, "Não consegui salvar a foto.");
     if (product.ean) await rememberInBank(admin, product.ean, url, path, origin === "upload" ? "envio" : "aprovada");
+    // vale também pelo nome: o próximo mercado com o mesmo produto já recebe a foto
+    await rememberByName(admin, product.name, product.brand, url, path, origin === "upload" ? "envio" : "aprovada");
     return NextResponse.json({ imageUrl: url });
   };
 
