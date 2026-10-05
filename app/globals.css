@@ -116,8 +116,12 @@ select {
 @keyframes surgir {
   from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
 }
-.surgir {
-  animation: surgir 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+/* "backwards": depois de entrar não sobra transform nem filter no elemento,
+   que senão viraria referência das barras fixas e do vidro lá dentro */
+@layer components {
+  .surgir {
+    animation: surgir 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
 }
 
 :focus-visible {
@@ -167,6 +171,7 @@ select {
 @keyframes deriva-2 { to { transform: translate(-12vmax, 14vmax) scale(0.92); } }
 @keyframes deriva-3 { to { transform: translate(10vmax, -12vmax) scale(1.08); } }
 
+@layer components {
 /* ------------------------------ vidro ------------------------------ */
 
 .vidro {
@@ -257,6 +262,8 @@ select {
   border-radius: 12px;
 }
 @keyframes brilho { to { background-position: -200% 0; } }
+
+}
 
 /* barra de rolagem discreta */
 .rolagem::-webkit-scrollbar { width: 8px; height: 8px; }
