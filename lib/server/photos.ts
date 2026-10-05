@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { findProductImage } from "@/lib/ai/imageSearch";
-import { photoKey } from "@/lib/photos/key";
+import { normalizeName, photoKey } from "@/lib/photos/key";
 import { fallbackPlan, type SearchPlan } from "@/lib/photos/plan";
 import { searchImages, serperEnabled, type ImageHit } from "@/lib/photos/serper";
 import { AiUnavailable, judgeCandidates } from "@/lib/photos/judge";
@@ -88,7 +88,11 @@ async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan:
   const raw = await searchImages(query);
   if (raw === null) return null;
   // foto pequena demais não serve para encarte
-  const hits: ImageHit[] = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= 300).slice(0, 8);
+  const sized = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= 300);
+  // fotos cujo título traz a marca pedida vêm primeiro (o juiz vê só 8)
+  const brandKey = plan.brand ? normalizeName(plan.brand).replace(/[^a-z0-9]/g, "") : "";
+  const hasBrand = (h: ImageHit) => !!brandKey && normalizeName(`${h.title} ${h.imageUrl}`).replace(/[^a-z0-9]/g, "").includes(brandKey);
+  const hits: ImageHit[] = [...sized.filter(hasBrand), ...sized.filter((h) => !hasBrand(h))].slice(0, 8);
   if (hits.length === 0) return { status: "nao_encontrada", sourceUrl: null, candidates: [], usedAi: true };
 
   const verdict = await judgeCandidates({ name: p.name, brand: p.brand, expect: plan.expect, generic: plan.generic }, hits);
@@ -195,4 +199,15 @@ export async function rememberByName(
     });
     if (error) console.error("[photos] banco por nome", error);
   }
+}
+
+// O dono recusou a foto (pediu nova busca ou marcou sem foto): se ela veio
+// da memória preenchida pela IA, essa memória sai, para não voltar a mesma
+// foto errada aqui nem em outro mercado. Foto aprovada por um dono fica.
+export async function forgetAiPhoto(admin: Admin, names: (string | null | undefined)[], brand: string | null, imageUrl: string | null) {
+  if (!imageUrl) return;
+  const keys = names.map((n, i) => (n ? (i === 0 ? photoKey(n, brand) : photoKey(n)) : "")).filter(Boolean);
+  if (!keys.length) return;
+  const { error } = await admin.from("photo_name_bank").delete().in("key", keys).eq("source", "ia").eq("image_url", imageUrl);
+  if (error) console.error("[photos] esquecer foto da IA", error);
 }

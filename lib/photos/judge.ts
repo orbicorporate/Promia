@@ -25,7 +25,7 @@ async function thumb(hit: ImageHit): Promise<string | null> {
   const got = await fetchPublicImage(src, { timeoutMs: 4000, maxBytes: 3 * 1024 * 1024 });
   if (!got) return null;
   try {
-    const buf = await sharp(Buffer.from(got.body)).flatten({ background: "#ffffff" }).resize(256, 256, { fit: "inside" }).jpeg({ quality: 78 }).toBuffer();
+    const buf = await sharp(Buffer.from(got.body)).flatten({ background: "#ffffff" }).resize(384, 384, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer();
     return buf.toString("base64");
   } catch {
     return null;
@@ -41,7 +41,9 @@ export async function judgeCandidates(product: { name: string; brand: string | n
 
   const content: Anthropic.ContentBlockParam[] = [];
   shown.forEach((s, k) => {
-    content.push({ type: "text", text: `Foto ${k + 1}:` });
+    const h = hits[s.i];
+    // o título da página costuma trazer marca e tamanho escritos por extenso
+    content.push({ type: "text", text: `Foto ${k + 1} (título: ${promptSafe(h.title).slice(0, 120)}${h.domain ? `, site: ${promptSafe(h.domain)}` : ""}):` });
     content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: s.data } });
   });
   const alvo = `${promptSafe(product.name)}${product.brand ? ` (marca ${promptSafe(product.brand)})` : ""}. A foto certa mostra: ${promptSafe(product.expect)}.`;
@@ -51,7 +53,7 @@ export async function judgeCandidates(product: { name: string; brand: string | n
       `Produto da planilha de um supermercado: ${alvo}\n\n` +
       (product.generic
         ? "É um item sem embalagem: vale a foto do alimento em si, apetitosa, isolada ou em fundo claro. Rejeite fotos de prato pronto, receita, pessoas ou com texto por cima.\n"
-        : "Escolha a foto da embalagem desse produto: mesma marca e mesma versão (sabor, tipo, light/zero). Tamanho ou quantidade diferente é aceitável se for a mesma marca e linha (ex.: ovos Ikeda de 12 ou de 30). Prefira foto de frente, em fundo branco ou limpo, só do produto. Rejeite: outra marca, outra versão, encarte, montagem com vários produtos, foto com pessoa, marca d'água, foto de prateleira, e imagem com faixa, selo ou texto da loja colado ao lado do produto.\n") +
+        : "Escolha a foto da embalagem desse produto. Leia a marca escrita na embalagem e no título: se a marca for outra (ex.: pediu Italac e a foto é Itambé, pediu Panco e é Seven Boys), a foto não serve, mesmo que o produto seja o mesmo. Mesma marca e mesma versão (sabor, tipo, light/zero). Tamanho ou quantidade diferente é aceitável se for a mesma marca e linha (ex.: ovos Ikeda de 12 ou de 30). Prefira foto de frente, em fundo branco ou limpo, só do produto. Rejeite: outra marca, outra versão, encarte, montagem com vários produtos, foto com pessoa, marca d'água, foto de prateleira, e imagem com faixa, selo ou texto da loja colado ao lado do produto.\n") +
       'Responda só com JSON: {"melhor": número da melhor foto ou 0 se nenhuma serve, "confianca": de 0 a 1, "ordem": [números das fotos que servem, da melhor para a pior]}',
   });
 
