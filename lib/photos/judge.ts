@@ -11,6 +11,15 @@ import type { ImageHit } from "./serper";
 
 export type Verdict = { order: number[]; best: number | null; confidence: number };
 
+// IA fora do ar (sem crédito, chave inválida, sobrecarga): o produto volta
+// para a fila em vez de cair na revisão sem a conferência.
+export class AiUnavailable extends Error {}
+
+export function isAiUnavailable(err: unknown): boolean {
+  const e = err as { status?: number; message?: string };
+  return e?.status === 401 || e?.status === 403 || e?.status === 429 || e?.status === 529 || (e?.status === 400 && /credit balance/i.test(e?.message ?? ""));
+}
+
 async function thumb(hit: ImageHit): Promise<string | null> {
   const src = hit.thumbnailUrl ?? hit.imageUrl;
   const got = await fetchPublicImage(src, { timeoutMs: 4000, maxBytes: 3 * 1024 * 1024 });
@@ -57,6 +66,10 @@ export async function judgeCandidates(product: { name: string; brand: string | n
     const confidence = typeof j.confianca === "number" ? Math.max(0, Math.min(1, j.confianca)) : 0;
     return { order, best, confidence };
   } catch (err) {
+    if (isAiUnavailable(err)) {
+      console.error("[fotos] IA indisponível (crédito, chave ou sobrecarga)", (err as Error).message);
+      throw new AiUnavailable();
+    }
     console.error("[fotos] juiz", err);
     return null;
   }
