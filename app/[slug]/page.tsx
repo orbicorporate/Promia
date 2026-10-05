@@ -102,7 +102,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
         )}
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start">
         {/* ocasiões */}
         <Glass as="section" className="p-5 sm:p-6 space-y-4" aria-labelledby="ocasioes">
           <div className="flex items-center justify-between gap-3">

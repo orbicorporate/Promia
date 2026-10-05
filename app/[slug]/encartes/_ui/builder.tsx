@@ -675,7 +675,7 @@ export function EncarteBuilder({
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
         <div className="space-y-5">
           {/* no celular a aba escolhida entra com a mesma subida curta das telas */}
           <div key={`p-${tab === "produtos"}`} className={cn(tab !== "produtos" ? "hidden xl:block" : "surgir xl:animate-none")}>{productsPanel}</div>
