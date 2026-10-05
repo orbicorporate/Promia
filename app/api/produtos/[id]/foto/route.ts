@@ -12,7 +12,7 @@ export const maxDuration = 60;
 //   { acao: "confirmar", path } aplica a foto que acabou de subir
 //   { acao: "buscar" }          devolve o produto para a fila de busca
 //   { acao: "sem-foto" }        marca que esse produto vai sem foto
-// Foto escolhida pelo dono entra no banco compartilhado pelo código de barras.
+// Foto escolhida pelo dono (da internet) entra no banco compartilhado; foto da câmera não.
 export async function POST(req: Request, { params }: RouteContext<"/api/produtos/[id]/foto">) {
   const { id } = await params;
   const g = await loadOwnedProduct(id);
@@ -27,9 +27,14 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       .update({ image_url: url, image_status: "encontrada", image_origin: origin, image_candidates: null, image_claimed_at: null })
       .eq("id", id);
     if (error) return serverError("foto", error, "Não consegui salvar a foto.");
-    if (product.ean) await rememberInBank(admin, product.ean, url, path, origin === "upload" ? "envio" : "aprovada");
-    // vale também pelo nome: o próximo mercado com o mesmo produto já recebe a foto
-    await rememberByName(admin, product.name, product.brand, url, path, origin === "upload" ? "envio" : "aprovada");
+    // Só foto da internet ou do catálogo vai para o banco compartilhado. Foto
+    // tirada pela câmera pode mostrar gôndola, logo ou etiqueta do mercado:
+    // fica só neste mercado.
+    if (origin !== "upload") {
+      if (product.ean) await rememberInBank(admin, product.ean, url, path, "aprovada");
+      // vale também pelo nome: o próximo mercado com o mesmo produto já recebe a foto
+      await rememberByName(admin, product.name, product.brand, url, path, "aprovada");
+    }
     return NextResponse.json({ imageUrl: url });
   };
 
