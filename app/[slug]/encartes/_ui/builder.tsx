@@ -659,9 +659,9 @@ export function EncarteBuilder({
   );
 
   return (
-    <div className="space-y-5 pb-24 lg:pb-0">
+    <div className="space-y-5 pb-24 xl:pb-0">
       {/* abas no celular */}
-      <div className="lg:hidden sticky top-[76px] z-20">
+      <div className="xl:hidden sticky top-[76px] lg:top-4 z-20">
         <Segmented
           label="Etapa"
           value={tab}
@@ -675,14 +675,14 @@ export function EncarteBuilder({
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
         <div className="space-y-5">
           {/* no celular a aba escolhida entra com a mesma subida curta das telas */}
-          <div key={`p-${tab === "produtos"}`} className={cn(tab !== "produtos" ? "hidden lg:block" : "surgir lg:animate-none")}>{productsPanel}</div>
-          <div key={`e-${tab === "estilo"}`} className={cn(tab !== "estilo" ? "hidden lg:block" : "surgir lg:animate-none")}>{stylePanel}</div>
-          <div className={cn("lg:hidden", tab !== "previa" ? "hidden" : "surgir")}>{previewPanel}</div>
+          <div key={`p-${tab === "produtos"}`} className={cn(tab !== "produtos" ? "hidden xl:block" : "surgir xl:animate-none")}>{productsPanel}</div>
+          <div key={`e-${tab === "estilo"}`} className={cn(tab !== "estilo" ? "hidden xl:block" : "surgir xl:animate-none")}>{stylePanel}</div>
+          <div className={cn("xl:hidden", tab !== "previa" ? "hidden" : "surgir")}>{previewPanel}</div>
         </div>
-        <aside className="hidden lg:block">
+        <aside className="hidden xl:block">
           <div className="sticky top-8 space-y-4">
             {previewPanel}
             <Button size="lg" className="w-full" onClick={save} loading={saving}>
@@ -693,7 +693,7 @@ export function EncarteBuilder({
       </div>
 
       {/* barra de salvar no celular */}
-      <div className="lg:hidden fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4">
+      <div className="xl:hidden fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4 lg:bottom-6 lg:left-[272px]">
         <div className="vidro-forte mx-auto flex max-w-md items-center gap-3 rounded-2xl p-2 pl-4">
           <span className="min-w-0 flex-1 truncate text-sm text-[var(--ink-2)]">
             {items.length} produto(s) · {previewPages} página(s)

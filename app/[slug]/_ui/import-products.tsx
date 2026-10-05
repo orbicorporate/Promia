@@ -137,6 +137,8 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
   }
 
   const included = products?.filter((p) => p.include).length ?? 0;
+  const hasCode = !!products?.some((p) => !p.sku.startsWith("n:"));
+  const cols = hasCode ? "sm:grid-cols-[20px_minmax(0,1fr)_96px_140px_96px]" : "sm:grid-cols-[20px_minmax(0,1fr)_160px_96px]";
   const understood = meta
     ? (Object.entries(meta.columns) as [ProductField, string][]).map(([field, col]) => `${FIELD_LABEL[field]} (${col})`)
     : [];
@@ -219,7 +221,7 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
           </div>
 
           <div className="overflow-hidden rounded-2xl bg-[var(--glass-strong)] ring-1 ring-[var(--line)]">
-            <div className="grid grid-cols-[20px_minmax(0,1fr)_88px] items-center gap-x-3 border-b border-[var(--line)] px-3 py-2 text-xs font-medium text-[var(--ink-3)] sm:grid-cols-[20px_minmax(0,1fr)_96px_140px_96px]">
+            <div className={`grid grid-cols-[20px_minmax(0,1fr)_88px] items-center gap-x-3 border-b border-[var(--line)] px-3 py-2 text-xs font-medium text-[var(--ink-3)] ${cols}`}>
               <input
                 type="checkbox"
                 aria-label="Marcar ou desmarcar todos"
@@ -231,7 +233,7 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
                 className="size-4 accent-[var(--folha)]"
               />
               <span>Produto</span>
-              <span className="hidden sm:block">Código</span>
+              {hasCode && <span className="hidden sm:block">Código</span>}
               <span className="hidden sm:block">Categoria</span>
               <span className="text-right">Preço</span>
             </div>
@@ -240,7 +242,7 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
                 <li
                   key={p.sku}
                   className={cn(
-                    "grid grid-cols-[20px_minmax(0,1fr)_88px] items-center gap-x-3 px-3 py-1.5 text-sm transition-opacity sm:grid-cols-[20px_minmax(0,1fr)_96px_140px_96px]",
+                    `grid grid-cols-[20px_minmax(0,1fr)_88px] items-center gap-x-3 px-3 py-1.5 text-sm transition-opacity ${cols}`,
                     !p.include && "opacity-45"
                   )}
                 >
@@ -257,9 +259,11 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
                     onChange={(e) => updateProduct(i, { name: e.target.value })}
                     className="h-10 min-w-0 rounded-lg border border-transparent bg-transparent px-2 outline-none hover:border-[var(--line-strong)] focus:border-[var(--uva)]"
                   />
-                  <span className="hidden truncate text-xs text-[var(--ink-3)] sm:block" title={p.sku}>
-                    {p.sku.startsWith("n:") ? "pelo nome" : p.sku}
-                  </span>
+                  {hasCode && (
+                    <span className="hidden truncate text-xs text-[var(--ink-3)] sm:block" title={p.sku}>
+                      {p.sku.startsWith("n:") ? "pelo nome" : p.sku}
+                    </span>
+                  )}
                   <input
                     value={p.category ?? ""}
                     placeholder="sem categoria"

@@ -201,7 +201,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
   const contato = [f.whatsapp && `WhatsApp ${f.whatsapp}`, f.instagram && (f.instagram.startsWith("@") ? f.instagram : `@${f.instagram}`)].filter(Boolean).join("  ·  ");
 
   return (
-    <div className="grid gap-6 pb-20 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="grid gap-6 pb-20 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
         <Glass className="space-y-5 p-5 sm:p-6">
           <h2 className="text-xl font-bold">Identidade</h2>
@@ -354,7 +354,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
         </Glass>
       </div>
 
-      <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+      <aside className="order-first mx-auto w-full max-w-sm space-y-4 xl:order-none xl:sticky xl:top-8 xl:max-w-none xl:self-start">
         <div className="overflow-hidden rounded-[22px] bg-white shadow-[0_30px_60px_-30px_rgba(0,0,0,0.5)] ring-1 ring-[var(--line)]">
           <div className="flex items-center gap-3 px-4 py-3 transition-colors duration-500" style={{ background: primary, color: readable(primary) }}>
             {f.logoUrl ? (
@@ -394,7 +394,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
             animate={{ y: 0, opacity: 1, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
             exit={{ y: 12, opacity: 0, transition: { duration: 0.18 } }}
             transition={{ type: "spring", duration: 0.4, bounce: 0 }}
-            className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4 lg:bottom-6 lg:left-[260px]"
+            className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4 lg:bottom-6 lg:left-[272px]"
           >
             <div className="vidro-forte mx-auto flex max-w-md items-center gap-3 rounded-2xl p-2 pl-4">
               <span className="flex-1 text-sm text-[var(--ink-2)]">Alterações não salvas</span>
