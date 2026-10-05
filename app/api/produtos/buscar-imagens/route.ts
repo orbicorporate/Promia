@@ -58,6 +58,10 @@ export async function POST(req: NextRequest) {
     const { data: cats } = await admin.from("products").select("id, category").in("id", claimed.map((c) => c.id));
     const catOf = new Map((cats ?? []).map((c) => [c.id, c.category]));
     plans = await planSearches(claimed.map((c) => ({ id: c.id, name: c.name, brand: c.brand, category: catOf.get(c.id) ?? null })));
+    // guarda o nome padrão: serve de chave quando o dono aprovar uma foto depois
+    await Promise.all(
+      [...plans].filter(([, pl]) => pl.canonical).map(([id, pl]) => admin.from("products").update({ canonical_name: pl.canonical }).eq("id", id).eq("market_id", marketId))
+    );
   }
 
   const results = await mapWithConcurrency(claimed, CONCURRENCY, async (p) => {

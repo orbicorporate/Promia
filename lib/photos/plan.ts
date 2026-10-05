@@ -7,10 +7,10 @@ import { jsonFromText, promptSafe } from "@/lib/ai/gerente";
 // hortifrúti, pão), em que a foto certa é do alimento e não de um rótulo.
 // Uma chamada só para o lote inteiro.
 
-export type SearchPlan = { query: string; alt: string | null; generic: boolean; expect: string };
+export type SearchPlan = { query: string; alt: string | null; generic: boolean; expect: string; canonical: string | null };
 
 export function fallbackPlan(name: string, brand: string | null): SearchPlan {
-  return { query: [name, brand].filter(Boolean).join(" "), alt: null, generic: false, expect: name };
+  return { query: [name, brand].filter(Boolean).join(" "), alt: null, generic: false, expect: name, canonical: null };
 }
 
 export async function planSearches(items: { id: string; name: string; brand: string | null; category: string | null }[]): Promise<Map<string, SearchPlan>> {
@@ -35,13 +35,14 @@ export async function planSearches(items: { id: string; name: string; brand: str
             `<lista>\n${lista}\n</lista>\n\n` +
             "Para cada item, escreva a busca de imagem do Google que traz a foto da embalagem do produto, com marca, tipo e o tamanho mais comum no varejo brasileiro quando ele não vier (ex.: \"Refrigerante Coca-Cola Original 2L garrafa\"). Corrija nomes de marca (Hellmans vira Hellmann's, Antárctica vira Antarctica). Se houver duas versões, use a primeira. Para item sem embalagem (corte de carne, fruta, verdura, ovo a granel, pão de padaria), a busca é do alimento em si, com \"fundo branco\" no fim, e generic é true.\n" +
             "Em alt, uma segunda busca diferente da primeira para o caso de ela falhar (sem tamanho, ou com outro nome comum do produto; para corte de carne, \"músculo bovino peça crua\", nunca algo que traga anatomia ou receita).\n" +
+            "Em canonical, o nome do produto do jeito padrão, igual para qualquer mercado que venda o mesmo item: tipo, marca, versão e tamanho, sem abreviação (ex.: \"Refrigerante Coca-Cola Original 2L\", \"Acém bovino kg\"). Mesma coisa escrita de jeitos diferentes deve dar o mesmo canonical.\n" +
             "Em expect, descreva em poucas palavras o que a foto certa mostra (marca, versão, embalagem).\n\n" +
-            'Responda só com JSON: {"itens":[{"n":1,"query":"...","alt":"...","generic":false,"expect":"..."}]}',
+            'Responda só com JSON: {"itens":[{"n":1,"query":"...","alt":"...","canonical":"...","generic":false,"expect":"..."}]}',
         },
       ],
     });
     const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-    const parsed = jsonFromText(text) as { itens?: { n?: number; query?: string; alt?: string; generic?: boolean; expect?: string }[] } | null;
+    const parsed = jsonFromText(text) as { itens?: { n?: number; query?: string; alt?: string; canonical?: string; generic?: boolean; expect?: string }[] } | null;
     for (const row of parsed?.itens ?? []) {
       const it = typeof row.n === "number" ? items[row.n - 1] : undefined;
       const query = typeof row.query === "string" ? row.query.replace(/\s+/g, " ").trim().slice(0, 160) : "";
@@ -49,6 +50,7 @@ export async function planSearches(items: { id: string; name: string; brand: str
       out.set(it.id, {
         query,
         alt: typeof row.alt === "string" && row.alt.trim() && row.alt.trim() !== query ? row.alt.replace(/\s+/g, " ").trim().slice(0, 160) : null,
+        canonical: typeof row.canonical === "string" && row.canonical.trim() ? row.canonical.replace(/\s+/g, " ").trim().slice(0, 160) : null,
         generic: row.generic === true,
         expect: typeof row.expect === "string" ? row.expect.slice(0, 160) : it.name,
       });

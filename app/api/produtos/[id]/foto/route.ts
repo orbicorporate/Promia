@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
     if (origin !== "upload") {
       if (product.ean) await rememberInBank(admin, product.ean, url, path, "aprovada");
       // vale também pelo nome: o próximo mercado com o mesmo produto já recebe a foto
-      await rememberByName(admin, product.name, product.brand, url, path, "aprovada");
+      await rememberByName(admin, [product.name, product.canonical_name], product.brand, url, path, "aprovada");
     }
     return NextResponse.json({ imageUrl: url });
   };

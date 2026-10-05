@@ -38,7 +38,10 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
     }
   }
 
-  const { data: byName } = await admin.from("photo_name_bank").select("image_url").eq("key", photoKey(p.name, p.brand)).maybeSingle();
+  // memória entre mercados: pelo nome da planilha e pelo nome padrão da IA
+  const keys = [...new Set([photoKey(p.name, p.brand), plan?.canonical ? photoKey(plan.canonical) : ""].filter(Boolean))];
+  const { data: known } = await admin.from("photo_name_bank").select("image_url, source, approvals").in("key", keys);
+  const byName = (known ?? []).sort((a, b) => (b.source === "aprovada" ? 1 : 0) - (a.source === "aprovada" ? 1 : 0) || b.approvals - a.approvals)[0];
   if (byName?.image_url) {
     return { status: "encontrada", origin: "banco", imageUrl: byName.image_url, sourceUrl: null, candidates: [], usedAi: false };
   }
@@ -93,6 +96,8 @@ async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan:
     for (const i of verdict.order.slice(0, 5)) {
       const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, hits[i].imageUrl);
       if (stored) {
+        // entra na memória com peso de IA: a escolha de um dono sempre prevalece
+        await rememberByName(admin, [p.name, plan.canonical], p.brand, stored.url, stored.path, "ia");
         return {
           status: "encontrada",
           origin: "web",
@@ -154,19 +159,35 @@ export function outcomeToUpdate(o: Exclude<PhotoOutcome, { status: "erro" }>) {
   };
 }
 
-// Foto aprovada pelo dono vira referência pelo nome para todos os mercados.
-export async function rememberByName(admin: Admin, name: string, brand: string | null, imageUrl: string, storagePath: string | null, source: string) {
-  const key = photoKey(name, brand);
-  if (!key) return;
-  const { data: current } = await admin.from("photo_name_bank").select("approvals").eq("key", key).maybeSingle();
-  const { error } = await admin.from("photo_name_bank").upsert({
-    key,
-    label: name.slice(0, 200),
-    image_url: imageUrl,
-    storage_path: storagePath,
-    source,
-    approvals: (current?.approvals ?? 0) + 1,
-    updated_at: new Date().toISOString(),
+// Foto aprovada vira referência pelo nome para todos os mercados, pela chave
+// do nome da planilha e pela do nome padrão. Fonte "ia" (aplicada sozinha)
+// nunca substitui uma foto que algum dono aprovou.
+export async function rememberByName(
+  admin: Admin,
+  names: (string | null | undefined)[],
+  brand: string | null,
+  imageUrl: string,
+  storagePath: string | null,
+  source: "aprovada" | "ia"
+) {
+  const entries = new Map<string, string>();
+  names.forEach((n, i) => {
+    if (!n) return;
+    const key = i === 0 ? photoKey(n, brand) : photoKey(n);
+    if (key) entries.set(key, n);
   });
-  if (error) console.error("[photos] banco por nome", error);
+  for (const [key, label] of entries) {
+    const { data: current } = await admin.from("photo_name_bank").select("approvals, source").eq("key", key).maybeSingle();
+    if (source === "ia" && current) continue; // já existe: a IA não sobrescreve
+    const { error } = await admin.from("photo_name_bank").upsert({
+      key,
+      label: label.slice(0, 200),
+      image_url: imageUrl,
+      storage_path: storagePath,
+      source,
+      approvals: source === "aprovada" ? (current?.approvals ?? 0) + 1 : 0,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) console.error("[photos] banco por nome", error);
+  }
 }
