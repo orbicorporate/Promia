@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readJson, serverError } from "@/lib/auth";
 import { MEDIA_BUCKET, normalizeUploaded, storeImageFromUrl, UPLOAD_EXT } from "@/lib/server/media";
-import { rememberByName, rememberInBank } from "@/lib/server/photos";
+import { forgetAiPhoto, rememberByName, rememberInBank } from "@/lib/server/photos";
 import { loadOwnedProduct } from "@/lib/server/product-access";
 
 export const maxDuration = 60;
@@ -72,6 +72,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       }
     }
     case "buscar": {
+      await forgetAiPhoto(admin, [product.name, product.canonical_name], product.brand, product.image_url);
       const { error } = await admin
         .from("products")
         .update({ image_status: "pendente", image_claimed_at: null, image_candidates: null })
@@ -80,6 +81,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       return NextResponse.json({ ok: true });
     }
     case "sem-foto": {
+      await forgetAiPhoto(admin, [product.name, product.canonical_name], product.brand, product.image_url);
       const { error } = await admin
         .from("products")
         .update({ image_status: "nao_encontrada", image_url: null, image_origin: null, image_candidates: null })
