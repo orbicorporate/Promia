@@ -4,7 +4,7 @@ import { findProductImage } from "@/lib/ai/imageSearch";
 import { photoKey } from "@/lib/photos/key";
 import { fallbackPlan, type SearchPlan } from "@/lib/photos/plan";
 import { searchImages, serperEnabled, type ImageHit } from "@/lib/photos/serper";
-import { judgeCandidates } from "@/lib/photos/judge";
+import { AiUnavailable, judgeCandidates } from "@/lib/photos/judge";
 import { storeImageFromUrl } from "./media";
 
 type Admin = SupabaseClient<Database>;
@@ -47,8 +47,13 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
   }
 
   if (serperEnabled()) {
-    const outcome = await searchAndJudge(admin, marketId, p, plan ?? fallbackPlan(p.name, p.brand));
-    if (outcome) return outcome;
+    try {
+      const outcome = await searchAndJudge(admin, marketId, p, plan ?? fallbackPlan(p.name, p.brand));
+      if (outcome) return outcome;
+    } catch (err) {
+      if (err instanceof AiUnavailable) return { status: "erro" };
+      throw err;
+    }
   }
 
   const found = await findProductImage({ name: p.name, brand: p.brand, ean: p.ean });
