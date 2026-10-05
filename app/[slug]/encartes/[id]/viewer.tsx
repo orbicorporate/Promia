@@ -122,7 +122,7 @@ export function EncarteViewer({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
       <div className="space-y-4">
         <div
           className="relative mx-auto w-full touch-pan-y overflow-hidden rounded-[24px] bg-[var(--line)] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.6)] ring-1 ring-[var(--line)]"

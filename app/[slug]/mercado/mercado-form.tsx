@@ -201,7 +201,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
   const contato = [f.whatsapp && `WhatsApp ${f.whatsapp}`, f.instagram && (f.instagram.startsWith("@") ? f.instagram : `@${f.instagram}`)].filter(Boolean).join("  ·  ");
 
   return (
-    <div className="grid gap-6 pb-20 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 pb-20 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
         <Glass className="space-y-5 p-5 sm:p-6">
           <h2 className="text-xl font-bold">Identidade</h2>
