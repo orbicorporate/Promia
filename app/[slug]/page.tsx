@@ -81,7 +81,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
         <p className="text-[var(--ink-2)]">
           {saudacao()}. Hoje é {WEEKDAY[new Date(`${today}T12:00:00Z`).getUTCDay()]}, {formatBR(today)}.
         </p>
-        <h1 className="font-display text-[clamp(2rem,5vw,3.4rem)] font-extrabold leading-[1.02]">
+        <h1 className="max-w-[22ch] text-balance font-display text-[clamp(1.9rem,4vw,3.1rem)] font-extrabold leading-[1.04]">
           {productCount === 0 ? (
             <>Vamos montar o primeiro encarte do {market.name}.</>
           ) : next ? (
@@ -168,7 +168,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
             <div className="h-full w-full origin-left rounded-full bg-[var(--folha)] transition-transform duration-500" style={{ transform: `scaleX(${stepsDone / steps.length})` }} />
           </div>
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <ul className="mt-4 grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))]">
             {steps.map((s) => (
               <li key={s.label}>
                 <Link
