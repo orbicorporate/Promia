@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronLeft, ChevronRight, Download, FileDown, Share2, Pencil, Copy, Trash2, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileDown, Share2, Pencil, Copy, Trash2, Check, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button, ButtonLink, Sheet, cn } from "@/components/ui";
 
@@ -206,6 +206,12 @@ export function EncarteViewer({
           className="vidro flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
         >
           <FileDown className="size-5" /> Baixar PDF para imprimir
+        </a>
+        <a
+          href={`/api/encartes/${id}/cartazes`}
+          className="vidro flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
+        >
+          <Printer className="size-5" /> Cartazes de gôndola (A4)
         </a>
         <div className="grid grid-cols-3 gap-2 pt-1">
           <ButtonLink href={`/${slug}/encartes/${id}/editar`} variant="fantasma" size="sm" className="flex-col h-auto py-2.5 gap-1" icon={<Pencil className="size-[18px]" />}>

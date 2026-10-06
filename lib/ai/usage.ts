@@ -6,6 +6,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const DAILY_LIMITS = {
   gerente: 10, // rodadas do gerente por dia
   busca_imagem: 1500, // produtos buscados por dia
+  campanha: 30, // campanhas completas geradas por dia
+  pautas: 10, // calendários de pautas por dia
+  concorrencia: 40, // encartes de concorrente lidos por dia
+  bairro: 5, // análises de bairro por dia
+  vendas: 20, // análises de vendas por dia
 } as const;
 
 export type UsageKind = keyof typeof DAILY_LIMITS;
