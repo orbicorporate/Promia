@@ -7,6 +7,9 @@ import { upcomingOccasions, themeAccent } from "@/lib/occasions";
 import { Glass, ButtonLink } from "@/components/ui";
 import { GerenteCard, type Rec } from "./_ui/gerente-card";
 import { EncarteThumb } from "./_ui/encarte-thumb";
+import { HojeList } from "./_ui/hoje-list";
+import { buildHojeActions } from "@/lib/hoje";
+import { normalizeCampaign } from "@/lib/ai/campaign";
 
 export const metadata = { title: "Início" };
 
@@ -64,6 +67,39 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
 
   const productCount = total.count ?? 0;
   const occasions = upcomingOccasions(today, weekly ?? [], 21).slice(0, 4);
+
+  // encartes valendo ou por vir, com a campanha (se houver) para saber o que postar hoje
+  const { data: vigentes } = await admin
+    .from("tabloids")
+    .select("id, name, valid_from, valid_until, theme_key, campaigns(content)")
+    .eq("market_id", market.id)
+    .or(`valid_until.is.null,valid_until.gte.${today}`)
+    .order("valid_from", { ascending: true })
+    .limit(12);
+  const actions = buildHojeActions({
+    slug,
+    today,
+    productCount,
+    photosToReview: revisar.count ?? 0,
+    photosPending: pendente.count ?? 0,
+    noPrice: semPreco.count ?? 0,
+    occasions: upcomingOccasions(today, weekly ?? [], 14),
+    encartes: (vigentes ?? []).map((e) => {
+      const rel = e.campaigns as unknown as { content: unknown }[] | { content: unknown } | null;
+      const content = Array.isArray(rel) ? rel[0]?.content : rel?.content;
+      const camp = content ? normalizeCampaign(content) : null;
+      return {
+        id: e.id,
+        name: e.name,
+        valid_from: e.valid_from,
+        valid_until: e.valid_until,
+        theme_key: e.theme_key,
+        hasCampaign: !!camp,
+        todaySteps: camp ? camp.calendario.filter((c) => c.data === today).map((c) => c.acao) : [],
+      };
+    }),
+    topRec: recs.find((r) => r.productIds.length && (r.type === "promover" || r.type === "destacar" || r.type === "queimar_estoque")) ?? null,
+  });
   const next = occasions[0];
 
   const steps = [
@@ -101,6 +137,8 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
           </div>
         )}
       </header>
+
+      {productCount > 0 && <HojeList actions={actions} />}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start">
         {/* ocasiões */}
