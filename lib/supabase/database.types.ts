@@ -22,6 +22,12 @@ export type Database = {
         Update: { created_at?: string; id?: string; kind?: string; market_id?: string; units?: number; user_id?: string | null };
         Relationships: [{ foreignKeyName: "ai_usage_market_id_fkey"; columns: ["market_id"]; isOneToOne: false; referencedRelation: "markets"; referencedColumns: ["id"] }];
       };
+      campaigns: {
+        Row: { content: Json; created_at: string; created_by: string | null; id: string; market_id: string; tabloid_id: string; updated_at: string };
+        Insert: { content: Json; created_at?: string; created_by?: string | null; id?: string; market_id: string; tabloid_id: string; updated_at?: string };
+        Update: { content?: Json; created_at?: string; created_by?: string | null; id?: string; market_id?: string; tabloid_id?: string; updated_at?: string };
+        Relationships: [];
+      };
       markets: {
         Row: { color_primary: string | null; color_secondary: string | null; created_at: string; id: string; logo_url: string | null; name: string; niche: string | null; slug: string; address: string | null; city: string | null; instagram: string | null; legal_note: string | null; onboarded_at: string | null; opening_hours: string | null; phone: string | null; tagline: string | null; whatsapp: string | null };
         Insert: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name: string; niche?: string | null; slug: string; address?: string | null; city?: string | null; instagram?: string | null; legal_note?: string | null; onboarded_at?: string | null; opening_hours?: string | null; phone?: string | null; tagline?: string | null; whatsapp?: string | null };

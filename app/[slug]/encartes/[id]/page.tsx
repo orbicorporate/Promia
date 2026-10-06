@@ -11,6 +11,8 @@ import { FORMATS } from "@/lib/encarte/formats";
 import { FORMAT_SHORT, LAYOUT_SHORT } from "@/lib/encarte/labels";
 import { getTheme } from "@/lib/encarte/themes";
 import { EncarteViewer } from "./viewer";
+import { CampaignPanel } from "./campanha";
+import { normalizeCampaign } from "@/lib/ai/campaign";
 
 export async function generateMetadata({ params }: PageProps<"/[slug]/encartes/[id]">) {
   const { id } = await params;
@@ -39,6 +41,7 @@ export default async function EncartePage({ params, searchParams }: PageProps<"/
   const priced = rows.filter((r) => (r.promo_price ?? r.products?.price) != null);
   const pages = pageCount({ format, layout, items: priced.map((r) => ({ highlight: !!r.highlight }) as EncarteItem) });
   const validade = validityLabel(t.valid_from, t.valid_until);
+  const { data: camp } = await admin.from("campaigns").select("content").eq("tabloid_id", id).maybeSingle();
   const f = FORMATS[format];
 
   return (
@@ -63,6 +66,11 @@ export default async function EncartePage({ params, searchParams }: PageProps<"/
         height={f.height}
         products={priced.length}
         celebrate={sp.novo === "1"}
+      />
+      <CampaignPanel
+        encarteId={t.id}
+        imageHref={`/api/encartes/${t.id}/imagem?pagina=1&download=1&v=${encodeURIComponent(t.updated_at)}`}
+        initial={camp ? normalizeCampaign(camp.content) : null}
       />
     </div>
   );
