@@ -94,7 +94,7 @@ export function ProductList({ rows, review, categories }: { rows: Row[]; review:
               onClick={() => setOpenId(r.id)}
               className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-[var(--glass-strong)] active:bg-[var(--line)] sm:px-4", !r.active && "opacity-50")}
             >
-              <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white ring-1 ring-[var(--line)]">
+              <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl fundo-foto ring-1 ring-[var(--line)]">
                 {r.image_url ? <img src={r.image_url} alt="" loading="lazy" className="h-full w-full object-contain" /> : <ImageOff className="size-5 text-[#9aa8a0]" />}
               </span>
               <span className="min-w-0 flex-1">
