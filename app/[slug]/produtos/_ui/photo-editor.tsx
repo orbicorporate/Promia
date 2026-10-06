@@ -106,7 +106,7 @@ export function PhotoEditor({
   return (
     <div className="space-y-3">
       <div className={cn("flex gap-3", compact ? "items-center" : "items-start")}>
-        <div className={cn("grid shrink-0 place-items-center overflow-hidden rounded-2xl bg-white ring-1 ring-[var(--line)]", compact ? "size-20" : "size-28")}>
+        <div className={cn("grid shrink-0 place-items-center overflow-hidden rounded-2xl fundo-foto ring-1 ring-[var(--line)]", compact ? "size-20" : "size-28")}>
           {product.image_url ? (
             <img src={product.image_url} alt={product.name} className="h-full w-full object-contain" />
           ) : (
@@ -197,7 +197,7 @@ export function PhotoEditor({
                 type="button"
                 disabled={!!busy}
                 onClick={() => applyUrl(c, `c${i}`)}
-                className="group relative aspect-square overflow-hidden rounded-xl bg-white ring-1 ring-[var(--line)] transition hover:ring-2 hover:ring-[var(--folha)] disabled:opacity-60"
+                className="group relative aspect-square overflow-hidden rounded-xl fundo-foto ring-1 ring-[var(--line)] transition hover:ring-2 hover:ring-[var(--folha)] disabled:opacity-60"
               >
                 <img
                   src={proxied(c)}

@@ -265,6 +265,22 @@ select {
 
 }
 
+/* fundo atrás das fotos de produto: degradê bem claro no lugar do branco.
+   A foto usa multiply, então o fundo branco dela some no degradê. */
+@layer components {
+  .fundo-foto {
+    background: linear-gradient(150deg, #fdf9f1 0%, #f2f8f3 55%, #eef3f9 100%);
+  }
+  .fundo-foto img {
+    mix-blend-mode: multiply;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .fundo-foto {
+    background: linear-gradient(150deg, #f3efe6 0%, #e6eee8 55%, #e2e8f0 100%);
+  }
+}
+
 /* barra de rolagem discreta */
 .rolagem::-webkit-scrollbar { width: 8px; height: 8px; }
 .rolagem::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; }

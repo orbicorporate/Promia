@@ -725,7 +725,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 
 function Thumb({ url, name }: { url: string | null; name: string }) {
   return (
-    <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-white ring-1 ring-[var(--line)]">
+    <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl fundo-foto ring-1 ring-[var(--line)]">
       {url ? (
         <img src={url} alt="" loading="lazy" className="h-full w-full object-contain" />
       ) : (
