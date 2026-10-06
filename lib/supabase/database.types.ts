@@ -34,6 +34,18 @@ export type Database = {
         Update: { content?: Json; created_at?: string; id?: string; market_id?: string; month?: string; updated_at?: string };
         Relationships: [];
       };
+      sales_imports: {
+        Row: { created_at: string; created_by: string | null; file_name: string | null; id: string; market_id: string; matched: number; period_end: string; period_start: string; rows: number };
+        Insert: { created_at?: string; created_by?: string | null; file_name?: string | null; id?: string; market_id: string; matched?: number; period_end: string; period_start: string; rows?: number };
+        Update: { created_at?: string; created_by?: string | null; file_name?: string | null; id?: string; market_id?: string; matched?: number; period_end?: string; period_start?: string; rows?: number };
+        Relationships: [];
+      };
+      sales_records: {
+        Row: { category: string | null; cost: number | null; created_at: string; id: string; import_id: string; market_id: string; name: string; period_end: string; period_start: string; product_id: string | null; qty: number; revenue: number; sku: string | null };
+        Insert: { category?: string | null; cost?: number | null; created_at?: string; id?: string; import_id: string; market_id: string; name: string; period_end: string; period_start: string; product_id?: string | null; qty?: number; revenue?: number; sku?: string | null };
+        Update: { category?: string | null; cost?: number | null; created_at?: string; id?: string; import_id?: string; market_id?: string; name?: string; period_end?: string; period_start?: string; product_id?: string | null; qty?: number; revenue?: number; sku?: string | null };
+        Relationships: [];
+      };
       markets: {
         Row: { color_primary: string | null; color_secondary: string | null; created_at: string; id: string; logo_url: string | null; name: string; niche: string | null; slug: string; address: string | null; city: string | null; instagram: string | null; legal_note: string | null; onboarded_at: string | null; opening_hours: string | null; phone: string | null; tagline: string | null; whatsapp: string | null };
         Insert: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name: string; niche?: string | null; slug: string; address?: string | null; city?: string | null; instagram?: string | null; legal_note?: string | null; onboarded_at?: string | null; opening_hours?: string | null; phone?: string | null; tagline?: string | null; whatsapp?: string | null };

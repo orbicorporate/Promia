@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis } from "lucide-react";
+import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { MarketMark } from "./market-mark";
 import { PromiaLogo } from "./logo";
@@ -17,6 +17,7 @@ const NAV = [
   { key: "inicio", label: "Início", icon: Home, href: (s: string) => `/${s}`, mobile: true, hint: "" },
   { key: "encartes", label: "Encartes", icon: LayoutGrid, href: (s: string) => `/${s}/encartes`, mobile: true, hint: "" },
   { key: "pautas", label: "Pautas", icon: CalendarDays, href: (s: string) => `/${s}/pautas`, mobile: false, hint: "O que postar em cada dia" },
+  { key: "vendas", label: "Vendas", icon: ChartColumn, href: (s: string) => `/${s}/vendas`, mobile: false, hint: "Curva ABC, alta e queda, resultado dos encartes" },
   { key: "produtos", label: "Produtos", icon: Package, href: (s: string) => `/${s}/produtos`, mobile: true, hint: "" },
   { key: "mercado", label: "Mercado", icon: Store, href: (s: string) => `/${s}/mercado`, mobile: false, hint: "Logo, cores, contatos e promoções fixas" },
 ] as const;
