@@ -16,6 +16,8 @@ import {
 import { recordUsage, remainingToday } from "@/lib/ai/usage";
 import { seasonalDatesInRange } from "@/lib/seasonalDates";
 import { todayInSaoPaulo, addDaysISO } from "@/lib/dates";
+import { loadSalesAnalysis } from "@/lib/sales/load";
+import { compareprices } from "@/lib/competition/compare";
 
 export const maxDuration = 120;
 
@@ -88,10 +90,13 @@ export async function POST(req: NextRequest) {
     return all;
   }
 
-  const [{ data: market }, catalog, { data: weekly }] = await Promise.all([
+  const [{ data: market }, catalog, { data: weekly }, sales, { data: obs }, { data: bairro }] = await Promise.all([
     admin.from("markets").select("name, niche").eq("id", marketId).single(),
     loadCatalog(),
     admin.from("weekly_promotions").select("weekday, name, category_hint").eq("market_id", marketId).eq("active", true),
+    loadSalesAnalysis(admin, marketId),
+    admin.from("competitor_prices").select("product_id, product_name, competitor_name, price, observed_on").eq("market_id", marketId).gte("observed_on", addDaysISO(todayInSaoPaulo(), -45)).limit(3000),
+    admin.from("market_insights").select("content").eq("market_id", marketId).eq("kind", "bairro").maybeSingle(),
   ]);
   const count = catalog.length;
   const products = sampleByCategory(catalog, MAX_PRODUCTS);
@@ -124,12 +129,48 @@ export async function POST(req: NextRequest) {
     .join("\n");
 
   const total = count ?? products.length;
+
+  // contexto extra quando existe: vendas, concorrência e perfil do bairro
+  const a = sales.analysis;
+  const pctTxt = (n: number) => `${n > 0 ? "+" : ""}${Math.round(n * 100)}%`;
+  const salesText = a?.period
+    ? [
+        `Período ${a.period.start} a ${a.period.end}, faturamento R$ ${Math.round(a.kpis.revenue)}${a.kpis.revenueChange != null ? ` (${pctTxt(a.kpis.revenueChange)} no ritmo)` : ""}.`,
+        `Mais vendidos: ${a.top.slice(0, 10).map((t) => promptSafe(t.name)).join(", ")}.`,
+        a.rising.length ? `Em alta: ${a.rising.map((t) => `${promptSafe(t.name)} ${pctTxt(t.change)}`).join(", ")}.` : "",
+        a.falling.length ? `Em queda: ${a.falling.map((t) => `${promptSafe(t.name)} ${pctTxt(t.change)}`).join(", ")}.` : "",
+        a.stale.length ? `Sem venda no período: ${a.stale.slice(0, 10).map((t) => promptSafe(t.name)).join(", ")}.` : "",
+        a.campaigns.length ? `Encartes: ${a.campaigns.map((c) => `${promptSafe(c.name)} ${c.lift != null ? pctTxt(c.lift) : "sem base"}`).join(", ")}.` : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
+  let competitionText = "";
+  if (obs?.length) {
+    const ids = [...new Set(obs.map((o) => o.product_id).filter((x): x is string => !!x))].slice(0, 500);
+    const { data: ours } = ids.length ? await admin.from("products").select("id, name, category, price").in("id", ids) : { data: [] };
+    const cmp = compareprices(
+      obs.map((o) => ({ ...o, price: Number(o.price) })),
+      (ours ?? []).map((p) => ({ ...p, price: p.price == null ? null : Number(p.price) }))
+    );
+    competitionText = cmp.rows
+      .slice(0, 25)
+      .map((r) => `${promptSafe(r.name)}: seu R$ ${r.ours ?? "?"} x ${promptSafe(r.competitor)} R$ ${r.theirs}`)
+      .join("\n");
+  }
+  const bairroContent = bairro?.content as { perfil?: string; publicos?: { nome: string }[] } | undefined;
+  const bairroText = bairroContent?.perfil ? `${promptSafe(bairroContent.perfil)} Públicos: ${(bairroContent.publicos ?? []).map((p) => promptSafe(p.nome)).join(", ")}.` : "";
   const analysisPrompt = [
     `Mercado: ${promptSafe(market.name)}${market.niche ? ` (nicho: ${promptSafe(market.niche)})` : ""}. Hoje: ${today}.`,
     `<datas>\n${upcomingDates || "nenhuma data relevante nos próximos 30 dias"}\n</datas>`,
     `<promocoes_fixas>\n${weeklyText || "nenhuma cadastrada"}\n</promocoes_fixas>`,
     `<catalogo total="${total}" enviados="${products.length}">\n${catalogText}\n</catalogo>`,
-  ].join("\n\n");
+    salesText ? `<vendas>\n${salesText}\n</vendas>` : "",
+    competitionText ? `<concorrencia>\n${competitionText}\n</concorrencia>` : "",
+    bairroText ? `<bairro>\n${bairroText}\n</bairro>` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   try {
     const analysisResponse = await client.messages.create({

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair } from "lucide-react";
+import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { MarketMark } from "./market-mark";
 import { PromiaLogo } from "./logo";
@@ -19,9 +19,12 @@ const NAV = [
   { key: "pautas", label: "Pautas", icon: CalendarDays, href: (s: string) => `/${s}/pautas`, mobile: false, hint: "O que postar em cada dia" },
   { key: "vendas", label: "Vendas", icon: ChartColumn, href: (s: string) => `/${s}/vendas`, mobile: false, hint: "Curva ABC, alta e queda, resultado dos encartes" },
   { key: "concorrencia", label: "Concorrência", icon: Crosshair, href: (s: string) => `/${s}/concorrencia`, mobile: false, hint: "Preços dos concorrentes e mercados por perto" },
+  { key: "bairro", label: "Bairro e público", icon: MapPinned, href: (s: string) => `/${s}/bairro`, mobile: false, hint: "Públicos, setores para implantar e gôndolas" },
   { key: "produtos", label: "Produtos", icon: Package, href: (s: string) => `/${s}/produtos`, mobile: true, hint: "" },
   { key: "mercado", label: "Mercado", icon: Store, href: (s: string) => `/${s}/mercado`, mobile: false, hint: "Logo, cores, contatos e promoções fixas" },
 ] as const;
+
+const GROUP_START: Record<string, string> = { vendas: "Inteligência", produtos: "Cadastro" };
 
 function activeKey(pathname: string, slug: string) {
   const rest = pathname.slice(slug.length + 1);
@@ -67,17 +70,20 @@ export function AppShell({
         >
           <Plus className="size-5" /> Novo encarte
         </Link>
-        <nav className="mt-5 flex flex-col gap-1" aria-label="Principal">
-          {NAV.map((item) => {
+        <nav className="rolagem -mx-1 mt-5 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1" aria-label="Principal">
+          {NAV.map((item, idx) => {
             const Icon = item.icon;
             const on = item.key === active && !creating;
+            // grupos: dia a dia, inteligência, cadastro
+            const group = GROUP_START[item.key];
             return (
+              <div key={item.key} className="contents">
+              {group && <span className={cn("px-3 pb-1 text-xs font-medium text-[var(--ink-3)]", idx > 0 && "pt-3")}>{group}</span>}
               <Link
-                key={item.key}
                 href={item.href(market.slug)}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors",
+                  "relative flex h-11 shrink-0 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors",
                   on ? "text-[var(--ink)]" : "text-[var(--ink-2)] hover:text-[var(--ink)]"
                 )}
               >
@@ -87,10 +93,11 @@ export function AppShell({
                 <Icon className="relative size-5" />
                 <span className="relative">{item.label}</span>
               </Link>
+              </div>
             );
           })}
         </nav>
-        <div className="mt-auto space-y-1">
+        <div className="mt-3 space-y-1 border-t border-[var(--line)] pt-3">
           {isMaster && (
             <Link href="/master" className="flex h-10 items-center gap-2 rounded-xl px-3 text-sm text-[var(--ink-2)] hover:bg-[var(--line)]">
               <ChevronLeft className="size-4" /> Painel Promia
