@@ -3,26 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft } from "lucide-react";
+import { useState } from "react";
+import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis } from "lucide-react";
+import { Sheet } from "@/components/ui/sheet";
 import { MarketMark } from "./market-mark";
 import { PromiaLogo } from "./logo";
 import { cn } from "@/components/ui/cn";
 
 export type ShellMarket = { name: string; slug: string; logoUrl: string | null; colorPrimary: string | null };
 
+// "mobile": aparece na barra de baixo do celular; o resto fica em "Mais"
 const NAV = [
-  { key: "inicio", label: "Início", icon: Home, href: (s: string) => `/${s}` },
-  { key: "encartes", label: "Encartes", icon: LayoutGrid, href: (s: string) => `/${s}/encartes` },
-  { key: "produtos", label: "Produtos", icon: Package, href: (s: string) => `/${s}/produtos` },
-  { key: "mercado", label: "Mercado", icon: Store, href: (s: string) => `/${s}/mercado` },
+  { key: "inicio", label: "Início", icon: Home, href: (s: string) => `/${s}`, mobile: true, hint: "" },
+  { key: "encartes", label: "Encartes", icon: LayoutGrid, href: (s: string) => `/${s}/encartes`, mobile: true, hint: "" },
+  { key: "pautas", label: "Pautas", icon: CalendarDays, href: (s: string) => `/${s}/pautas`, mobile: false, hint: "O que postar em cada dia" },
+  { key: "produtos", label: "Produtos", icon: Package, href: (s: string) => `/${s}/produtos`, mobile: true, hint: "" },
+  { key: "mercado", label: "Mercado", icon: Store, href: (s: string) => `/${s}/mercado`, mobile: false, hint: "Logo, cores, contatos e promoções fixas" },
 ] as const;
 
 function activeKey(pathname: string, slug: string) {
   const rest = pathname.slice(slug.length + 1);
-  if (rest.startsWith("/encartes")) return "encartes";
-  if (rest.startsWith("/produtos")) return "produtos";
-  if (rest.startsWith("/mercado")) return "mercado";
-  return "inicio";
+  const hit = NAV.find((n) => n.key !== "inicio" && rest.startsWith(`/${n.key}`));
+  return hit?.key ?? "inicio";
 }
 
 export function AppShell({
@@ -37,6 +39,8 @@ export function AppShell({
   const pathname = usePathname();
   const active = activeKey(pathname, market.slug);
   const creating = pathname.endsWith("/encartes/novo");
+  const [more, setMore] = useState(false);
+  const moreActive = NAV.some((n) => !n.mobile && n.key === active);
 
   return (
     <div className="min-h-dvh lg:pl-[272px]">
@@ -126,7 +130,7 @@ export function AppShell({
         className="lg:hidden fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)]"
       >
         <div className="vidro-forte mx-auto flex max-w-md items-center justify-between rounded-[26px] p-1.5">
-          {NAV.slice(0, 2).map((item) => (
+          {NAV.filter((n) => n.mobile).slice(0, 2).map((item) => (
             <NavItem key={item.key} item={item} slug={market.slug} on={item.key === active && !creating} />
           ))}
           <Link
@@ -136,11 +140,42 @@ export function AppShell({
           >
             <Plus className="size-7" />
           </Link>
-          {NAV.slice(2).map((item) => (
+          {NAV.filter((n) => n.mobile).slice(2).map((item) => (
             <NavItem key={item.key} item={item} slug={market.slug} on={item.key === active && !creating} />
           ))}
+          <button
+            type="button"
+            onClick={() => setMore(true)}
+            aria-label="Mais opções"
+            className={cn("relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-[20px] text-xs font-medium transition-colors active:scale-95", moreActive ? "text-[var(--ink)]" : "text-[var(--ink-3)]")}
+          >
+            {moreActive && <span className="absolute inset-0 rounded-[20px] bg-[var(--line)]" />}
+            <Ellipsis className="relative size-[22px]" />
+            <span className="relative">Mais</span>
+          </button>
         </div>
       </nav>
+
+      <Sheet open={more} onClose={() => setMore(false)} title="Mais">
+        <ul className="space-y-2">
+          {NAV.filter((n) => !n.mobile).map((n) => {
+            const Icon = n.icon;
+            return (
+              <li key={n.key}>
+                <Link href={n.href(market.slug)} onClick={() => setMore(false)} className="flex items-center gap-3 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)] active:scale-[0.99]">
+                  <span className="grid size-11 place-items-center rounded-xl bg-[var(--line)]">
+                    <Icon className="size-5" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold">{n.label}</span>
+                    <span className="block text-sm text-[var(--ink-2)]">{n.hint}</span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </Sheet>
     </div>
   );
 }
