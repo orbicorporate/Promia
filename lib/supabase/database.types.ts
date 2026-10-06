@@ -46,6 +46,24 @@ export type Database = {
         Update: { category?: string | null; cost?: number | null; created_at?: string; id?: string; import_id?: string; market_id?: string; name?: string; period_end?: string; period_start?: string; product_id?: string | null; qty?: number; revenue?: number; sku?: string | null };
         Relationships: [];
       };
+      competitors: {
+        Row: { address: string | null; category: string | null; created_at: string; id: string; latitude: number | null; longitude: number | null; market_id: string; name: string; phone: string | null; rating: number | null; reviews: number | null; source: string; tracked: boolean; website: string | null };
+        Insert: { address?: string | null; category?: string | null; created_at?: string; id?: string; latitude?: number | null; longitude?: number | null; market_id: string; name: string; phone?: string | null; rating?: number | null; reviews?: number | null; source?: string; tracked?: boolean; website?: string | null };
+        Update: { address?: string | null; category?: string | null; created_at?: string; id?: string; latitude?: number | null; longitude?: number | null; market_id?: string; name?: string; phone?: string | null; rating?: number | null; reviews?: number | null; source?: string; tracked?: boolean; website?: string | null };
+        Relationships: [];
+      };
+      competitor_flyers: {
+        Row: { competitor_id: string | null; competitor_name: string; created_at: string; created_by: string | null; id: string; items: number; market_id: string; observed_on: string; valid_until: string | null };
+        Insert: { competitor_id?: string | null; competitor_name: string; created_at?: string; created_by?: string | null; id?: string; items?: number; market_id: string; observed_on?: string; valid_until?: string | null };
+        Update: { competitor_id?: string | null; competitor_name?: string; created_at?: string; created_by?: string | null; id?: string; items?: number; market_id?: string; observed_on?: string; valid_until?: string | null };
+        Relationships: [];
+      };
+      competitor_prices: {
+        Row: { competitor_id: string | null; competitor_name: string; created_at: string; flyer_id: string | null; id: string; market_id: string; match_score: number | null; observed_on: string; old_price: number | null; price: number; product_id: string | null; product_name: string };
+        Insert: { competitor_id?: string | null; competitor_name: string; created_at?: string; flyer_id?: string | null; id?: string; market_id: string; match_score?: number | null; observed_on?: string; old_price?: number | null; price: number; product_id?: string | null; product_name: string };
+        Update: { competitor_id?: string | null; competitor_name?: string; created_at?: string; flyer_id?: string | null; id?: string; market_id?: string; match_score?: number | null; observed_on?: string; old_price?: number | null; price?: number; product_id?: string | null; product_name?: string };
+        Relationships: [];
+      };
       markets: {
         Row: { color_primary: string | null; color_secondary: string | null; created_at: string; id: string; logo_url: string | null; name: string; niche: string | null; slug: string; address: string | null; city: string | null; instagram: string | null; legal_note: string | null; onboarded_at: string | null; opening_hours: string | null; phone: string | null; tagline: string | null; whatsapp: string | null };
         Insert: { color_primary?: string | null; color_secondary?: string | null; created_at?: string; id?: string; logo_url?: string | null; name: string; niche?: string | null; slug: string; address?: string | null; city?: string | null; instagram?: string | null; legal_note?: string | null; onboarded_at?: string | null; opening_hours?: string | null; phone?: string | null; tagline?: string | null; whatsapp?: string | null };
