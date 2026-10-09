@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toJpeg } from "@/lib/client/image";
 import { Button, Field, Glass, Input, Segmented, Select, cn } from "@/components/ui";
 import type { CompareRow } from "@/lib/competition/compare";
+import { plural } from "@/lib/plural";
 
 type Competitor = { id: string; name: string; address: string | null; rating: number | null; reviews: number | null; category: string | null };
 type Flyer = { id: string; competitor_name: string; observed_on: string; items: number; valid_until: string | null };
@@ -40,6 +41,12 @@ export function ConcorrenciaView({
   const [reading, setReading] = useState(false);
   const [competitorId, setCompetitorId] = useState(competitors[0]?.id ?? "");
   const [competitorName, setCompetitorName] = useState("");
+  // quando a busca traz os primeiros concorrentes, já deixa o mais próximo escolhido
+  const [seenFirst, setSeenFirst] = useState(competitors[0]?.id ?? "");
+  if ((competitors[0]?.id ?? "") !== seenFirst) {
+    setSeenFirst(competitors[0]?.id ?? "");
+    if (!competitorId && !competitorName.trim() && competitors[0]) setCompetitorId(competitors[0].id);
+  }
   const [filtro, setFiltro] = useState<Filtro>("acao");
   const [applied, setApplied] = useState<Record<string, number>>({});
   const fileRef = useRef<HTMLInputElement>(null);
@@ -50,7 +57,7 @@ export function ConcorrenciaView({
       const res = await fetch("/api/concorrencia/buscar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) return toast.error(d.error || "Não consegui buscar.");
-      toast.success(d.found ? `${d.found} mercado(s) encontrados por perto.` : "Nenhum mercado encontrado por perto.");
+      toast.success(d.found ? `${plural(d.found, "mercado encontrado", "mercados encontrados")} por perto.` : "Nenhum mercado encontrado por perto.");
       router.refresh();
     } finally {
       setSearching(false);
@@ -109,12 +116,12 @@ export function ConcorrenciaView({
               {compare.index > 0.01 ? <TrendingUp className="size-7" /> : compare.index < -0.01 ? <TrendingDown className="size-7" /> : null}
               {pct(compare.index)}
             </p>
-            <p className="mt-1 text-sm text-[var(--ink-3)]">em {compare.rows.length} produto(s) em comum</p>
+            <p className="mt-1 text-sm text-[var(--ink-3)]">em {plural(compare.rows.length, "produto", "produtos")} em comum</p>
           </div>
           <div className="vidro rounded-[22px] p-5">
             <p className="text-sm text-[var(--ink-2)]">Você é mais caro em</p>
             <p className="mt-1 font-display text-4xl font-extrabold tabular">{compare.pricier}</p>
-            <p className="mt-1 text-sm text-[var(--ink-3)]">produto(s)</p>
+            <p className="mt-1 text-sm text-[var(--ink-3)]">{compare.pricier === 1 ? "produto" : "produtos"}</p>
           </div>
           <div className="vidro rounded-[22px] p-5">
             <p className="text-sm text-[var(--ink-2)]">Você é mais barato em</p>
@@ -124,7 +131,7 @@ export function ConcorrenciaView({
                 Anunciar no encarte <ArrowRight className="size-4" />
               </Link>
             ) : (
-              <p className="mt-1 text-sm text-[var(--ink-3)]">produto(s)</p>
+              <p className="mt-1 text-sm text-[var(--ink-3)]">{compare.cheaper === 1 ? "produto" : "produtos"}</p>
             )}
           </div>
         </div>
@@ -219,7 +226,7 @@ export function ConcorrenciaView({
               <h2 id="precos" className="text-lg font-bold">Preços comparados</h2>
               <p className="text-sm text-[var(--ink-2)]">
                 Produtos que o cliente compara (arroz, óleo, carne, cerveja...) acompanham o concorrente. Os outros seguram a margem.
-                {unmatched > 0 && ` ${unmatched} preço(s) lidos não acharam produto igual no seu catálogo.`}
+                {unmatched > 0 && ` ${plural(unmatched, "preço lido não achou", "preços lidos não acharam")} produto igual no seu catálogo.`}
               </p>
             </div>
             <Segmented

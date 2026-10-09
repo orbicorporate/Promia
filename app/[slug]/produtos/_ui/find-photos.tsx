@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui";
+import { plural } from "@/lib/plural";
 
 // Roda a fila de fotos em lotes até acabar, mostrando o progresso.
 export function FindPhotos({ marketId, pending }: { marketId: string; pending: number }) {
@@ -58,10 +59,10 @@ export function FindPhotos({ marketId, pending }: { marketId: string; pending: n
     <div data-trabalhando={running} className="borda-ia vidro flex flex-wrap items-center gap-4 rounded-[22px] p-4">
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
-          {running ? `Buscando fotos: ${done} de ${total}` : `${pending} produto(s) esperando foto`}
+          {running ? `Buscando fotos: ${done} de ${total}` : `${plural(pending, "produto esperando", "produtos esperando")} foto`}
         </p>
         <p className="text-sm text-[var(--ink-2)]">
-          {running ? `${found} encontrada(s) até agora. Pode continuar usando o Promia.` : "Primeiro pelo código de barras, depois na internet com conferência da IA."}
+          {running ? `${plural(found, "encontrada", "encontradas")} até agora. Pode continuar usando o Promia.` : "Primeiro pelo código de barras, depois na internet com conferência da IA."}
         </p>
         {running && (
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--line)]">

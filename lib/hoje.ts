@@ -1,5 +1,6 @@
 import { addDaysISO } from "@/lib/dates";
 import type { Occasion } from "@/lib/occasions";
+import { plural } from "@/lib/plural";
 
 // Ações do dia para a tela Hoje: o que o dono do mercado deveria fazer
 // agora, em ordem de urgência, cada uma com um botão que já leva ao lugar
@@ -77,12 +78,12 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
   }
 
   if (i.photosToReview > 0) {
-    out.push({ id: "fotos", tone: "rotina", icon: "fotos", title: `${i.photosToReview} foto(s) esperando sua escolha`, detail: "Um toque em cada uma e o encarte sai com a foto certa.", cta: "Revisar fotos", href: `/${i.slug}/produtos?fotos=1` });
+    out.push({ id: "fotos", tone: "rotina", icon: "fotos", title: `${plural(i.photosToReview, "foto esperando", "fotos esperando")} sua escolha`, detail: "Um toque em cada uma e o encarte sai com a foto certa.", cta: "Revisar fotos", href: `/${i.slug}/produtos?fotos=1` });
   } else if (i.photosPending > 0) {
-    out.push({ id: "fotos-fila", tone: "rotina", icon: "fotos", title: `${i.photosPending} produto(s) ainda sem foto`, detail: "A busca encontra a maioria sozinha em menos de um minuto.", cta: "Buscar fotos", href: `/${i.slug}/produtos` });
+    out.push({ id: "fotos-fila", tone: "rotina", icon: "fotos", title: `${plural(i.photosPending, "produto", "produtos")} ainda sem foto`, detail: "A busca encontra a maioria sozinha em menos de um minuto.", cta: "Buscar fotos", href: `/${i.slug}/produtos` });
   }
   if (i.noPrice > 0) {
-    out.push({ id: "preco", tone: "rotina", icon: "preco", title: `${i.noPrice} produto(s) sem preço`, detail: "Produto sem preço não entra no encarte.", cta: "Ver produtos", href: `/${i.slug}/produtos?filtro=sem-preco` });
+    out.push({ id: "preco", tone: "rotina", icon: "preco", title: `${plural(i.noPrice, "produto", "produtos")} sem preço`, detail: "Produto sem preço não entra no encarte.", cta: "Ver produtos", href: `/${i.slug}/produtos?filtro=sem-preco` });
   }
 
   const rank = { urgente: 0, oportunidade: 1, rotina: 2 };

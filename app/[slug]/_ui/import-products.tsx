@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
 import { Button, cn } from "@/components/ui";
 import type { ParsedProduct, ParseResult, ProductField } from "@/lib/products";
+import { plural } from "@/lib/plural";
 
 type DraftProduct = ParsedProduct & { include: boolean };
 
@@ -190,7 +191,7 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
       {error && <p className="rounded-2xl bg-[color-mix(in_srgb,var(--perigo)_12%,transparent)] px-4 py-3 text-sm text-[var(--perigo)]">{error}</p>}
       {doneCount != null && (
         <p className="flex items-center gap-2 rounded-2xl bg-[var(--folha-soft)] px-4 py-3 text-sm font-medium text-[var(--folha)]">
-          <CheckCircle2 className="size-5" /> {doneCount} produto(s) importado(s). As fotos começam a ser buscadas na lista de produtos.
+          <CheckCircle2 className="size-5" /> {plural(doneCount, "produto importado", "produtos importados")}. As fotos começam a ser buscadas na lista de produtos.
         </p>
       )}
 
@@ -198,17 +199,17 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
         <div className="space-y-3">
           <div className="space-y-1.5 rounded-2xl bg-[var(--glass-strong)] px-4 py-3 text-sm ring-1 ring-[var(--line)]">
             <p className="font-medium">
-              {products.length} produto(s) a partir da linha {meta.headerRow + 1} de {fileName}.
+              {plural(products.length, "produto", "produtos")} a partir da linha {meta.headerRow + 1} de {fileName}.
             </p>
             <p className="text-[var(--ink-2)]">Colunas lidas: {understood.join(", ")}.</p>
             {meta.generatedSkus > 0 && (
               <p className="text-[var(--banana-ink)] dark:text-[var(--banana)]">
-                {meta.generatedSkus} produto(s) sem código: o código foi criado pelo nome. Se o nome mudar numa próxima planilha, ele entra como produto novo.
+                {plural(meta.generatedSkus, "produto", "produtos")} sem código: o código foi criado pelo nome. Se o nome mudar numa próxima planilha, ele entra como produto novo.
               </p>
             )}
             {meta.skippedRows.length > 0 && (
               <details className="text-[var(--ink-3)]">
-                <summary className="cursor-pointer">{meta.skippedRows.length} linha(s) ignorada(s)</summary>
+                <summary className="cursor-pointer">{plural(meta.skippedRows.length, "linha ignorada", "linhas ignoradas")}</summary>
                 <ul className="rolagem mt-1 max-h-40 space-y-0.5 overflow-y-auto">
                   {meta.skippedRows.slice(0, 200).map((s, i) => (
                     <li key={i}>
@@ -286,7 +287,7 @@ export function ImportProducts({ marketId, onImported }: { marketId: string; onI
               {included} de {products.length} marcados
             </span>
             <Button onClick={handleConfirm} loading={saving} disabled={included === 0}>
-              {saving ? "Importando" : `Importar ${included} produto(s)`}
+              {saving ? "Importando" : `Importar ${plural(included, "produto", "produtos")}`}
             </Button>
             <Button
               variant="fantasma"

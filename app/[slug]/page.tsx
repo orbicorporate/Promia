@@ -10,6 +10,7 @@ import { EncarteThumb } from "./_ui/encarte-thumb";
 import { HojeList } from "./_ui/hoje-list";
 import { buildHojeActions } from "@/lib/hoje";
 import { normalizeCampaign } from "@/lib/ai/campaign";
+import { plural } from "@/lib/plural";
 
 export const metadata = { title: "Início" };
 
@@ -259,13 +260,13 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
         <p className="text-sm text-[var(--ink-2)]">
           {(revisar.count ?? 0) > 0 && (
             <Link href={`/${slug}/produtos?fotos=1`} className="underline decoration-[var(--line-strong)] underline-offset-4 hover:text-[var(--ink)]">
-              {revisar.count} foto(s) esperando sua escolha
+              {plural(revisar.count ?? 0, "foto esperando", "fotos esperando")} sua escolha
             </Link>
           )}
           {(revisar.count ?? 0) > 0 && (semPreco.count ?? 0) > 0 && " e "}
           {(semPreco.count ?? 0) > 0 && (
             <Link href={`/${slug}/produtos?filtro=sem-preco`} className="underline decoration-[var(--line-strong)] underline-offset-4 hover:text-[var(--ink)]">
-              {semPreco.count} produto(s) sem preço
+              {plural(semPreco.count ?? 0, "produto", "produtos")} sem preço
             </Link>
           )}
           .

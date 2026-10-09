@@ -42,12 +42,12 @@ export function VendasView({ slug, analysis: a, imports }: { slug: string; analy
     <div className="space-y-8">
       <section className="space-y-3" aria-labelledby="periodo">
         <h2 id="periodo" className="text-sm font-semibold text-[var(--ink-3)]">
-          Período de {dm(a.period.start)} a {dm(a.period.end)} ({a.period.days} dias){a.previousPeriods ? `, comparado com ${a.previousPeriods} período(s) antes` : ""}
+          Período de {dm(a.period.start)} a {dm(a.period.end)} ({a.period.days} dias){a.previousPeriods ? (a.previousPeriods === 1 ? ", comparado com o período anterior" : `, comparado com os ${a.previousPeriods} períodos anteriores`) : ""}
         </h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Kpi label="Faturamento" value={brl(a.kpis.revenue)} note={change == null ? "Envie mais um período para comparar" : `${pct(change, true)} no ritmo diário`} tone={change == null ? null : change >= 0 ? "up" : "down"} />
           <Kpi label="Itens vendidos" value={Math.round(a.kpis.qty).toLocaleString("pt-BR")} />
-          <Kpi label="Produtos com venda" value={a.kpis.products.toLocaleString("pt-BR")} note={a.stale.length ? `${a.stale.length}+ parados no catálogo` : null} />
+          <Kpi label="Produtos com venda" value={a.kpis.products.toLocaleString("pt-BR")} note={a.stale.length ? (a.stale.length === 1 ? "1 produto parado no catálogo" : `${a.stale.length} produtos parados no catálogo`) : null} />
           <Kpi label="Margem bruta" value={a.kpis.grossMargin == null ? "sem custo" : pct(a.kpis.grossMargin)} note={a.kpis.grossMargin == null ? "Precisa do custo no relatório ou no catálogo" : null} />
         </div>
       </section>
@@ -57,7 +57,7 @@ export function VendasView({ slug, analysis: a, imports }: { slug: string; analy
           <div>
             <h2 id="abc" className="text-lg font-bold">Curva ABC</h2>
             <p className="text-sm text-[var(--ink-2)]">
-              {a.abc.countA} produto(s) fazem {pct(a.abc.shareA)} do faturamento. São eles que não podem faltar na gôndola nem sair caros.
+              {a.abc.countA === 1 ? "1 produto faz" : `${a.abc.countA} produtos fazem`} {pct(a.abc.shareA)} do faturamento. São eles que não podem faltar na gôndola nem sair caros.
             </p>
           </div>
           <ol className="space-y-2.5">
