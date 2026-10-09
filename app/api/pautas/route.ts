@@ -9,7 +9,7 @@ import { upcomingOccasions } from "@/lib/occasions";
 import { forecastForCity } from "@/lib/weather";
 import type { Json } from "@/lib/supabase/database.types";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 // POST /api/pautas { marketId }: gera o calendário de pautas dos próximos 30 dias.
 export async function POST(req: Request) {
