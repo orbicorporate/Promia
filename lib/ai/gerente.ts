@@ -123,8 +123,33 @@ export function jsonFromText(text: string): unknown {
   try {
     return JSON.parse(match[0]);
   } catch {
-    return null;
+    try {
+      return JSON.parse(repairJson(match[0]));
+    } catch {
+      return null;
+    }
   }
+}
+
+// Conserta os deslizes mais comuns da IA ao escrever JSON: quebra de linha
+// e tabulação crua dentro de texto (legenda, WhatsApp) e vírgula sobrando
+// antes de fechar lista ou objeto.
+export function repairJson(raw: string): string {
+  let out = "";
+  let inStr = false;
+  let esc = false;
+  for (const ch of raw) {
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      else if (ch === "\n") { out += "\\n"; continue; }
+      else if (ch === "\r") continue;
+      else if (ch === "\t") { out += "\\t"; continue; }
+    } else if (ch === '"') inStr = true;
+    out += ch;
+  }
+  return out.replace(/,(\s*[}\]])/g, "$1");
 }
 
 export function toolInput(blocks: Anthropic.ContentBlock[]): unknown {

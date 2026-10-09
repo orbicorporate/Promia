@@ -79,6 +79,6 @@ export async function generateContentPlan(ctx: {
   const res = await client.messages.create({ model: GERENTE_MODEL, max_tokens: 16000, messages: [{ role: "user", content: prompt }] });
   const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
   const plan = normalizePlan(jsonFromText(text), ctx.de, ctx.ate) ?? normalizePlan(salvageList(text, "pautas", ["resumo", "clima"]), ctx.de, ctx.ate);
-  if (!plan) console.error("pautas: resposta sem calendário", { stop: res.stop_reason, chars: text.length, inicio: text.slice(0, 200) });
+  if (!plan) console.error("pautas: resposta sem calendário", { stop: res.stop_reason, chars: text.length, inicio: text.slice(0, 300), fim: text.slice(-200) });
   return plan;
 }

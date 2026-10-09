@@ -106,5 +106,7 @@ export async function generateCampaign(data: EncarteData, ctx: { today: string; 
 
   const res = await client.messages.create({ model: GERENTE_MODEL, max_tokens: 6000, messages: [{ role: "user", content: prompt }] });
   const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  return normalizeCampaign(jsonFromText(text));
+  const campaign = normalizeCampaign(jsonFromText(text));
+  if (!campaign) console.error("campanha: resposta sem campanha", { stop: res.stop_reason, chars: text.length, inicio: text.slice(0, 300), fim: text.slice(-200) });
+  return campaign;
 }
