@@ -1,7 +1,7 @@
 import { isUuid } from "@/lib/auth";
 import { isISODate } from "@/lib/dates";
 import { isThemeKey } from "@/lib/encarte/themes";
-import { isEncarteFormat, isEncarteLayout, type EncarteFormat, type EncarteLayout } from "@/lib/encarte/types";
+import { isEncarteFormat, isEncarteLayout, isEncarteModelo, type EncarteFormat, type EncarteLayout, type EncarteModelo } from "@/lib/encarte/types";
 
 // Validação do encarte salvo (criar ou editar). Os itens apontam para
 // produtos do catálogo; a rota confere depois que são deste mercado.
@@ -23,6 +23,7 @@ export type EncarteInput = {
   subheadline: string | null;
   format: EncarteFormat;
   layout: EncarteLayout;
+  modelo: EncarteModelo | null;
   themeKey: string;
   validFrom: string | null;
   validUntil: string | null;
@@ -80,7 +81,8 @@ export function parseEncarteInput(raw: Record<string, unknown>): { ok: true; dat
       headline: text(raw.headline, 80),
       subheadline: text(raw.subheadline, 120),
       format: raw.format,
-      layout: raw.layout,
+      layout: isEncarteModelo(raw.modelo) ? "grade" : raw.layout,
+      modelo: isEncarteModelo(raw.modelo) ? raw.modelo : null,
       themeKey: raw.themeKey,
       validFrom,
       validUntil,

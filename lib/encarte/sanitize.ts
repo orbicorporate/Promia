@@ -1,7 +1,7 @@
 import { isISODate } from "@/lib/dates";
 import { normalizeUnit } from "@/lib/products";
 import { isThemeKey } from "./themes";
-import { isEncarteFormat, isEncarteLayout, type EncarteData, type EncarteItem } from "./types";
+import { isEncarteFormat, isEncarteLayout, isEncarteModelo, type EncarteData, type EncarteItem } from "./types";
 
 // Validação do encarte que chega do navegador (rota de prévia). Nada do
 // que vem de fora é confiável: textos cortados, preços numéricos e não
@@ -79,7 +79,8 @@ export function sanitizePreviewInput(raw: unknown): SanitizeResult {
       headline: text(r.headline, 80),
       subheadline: text(r.subheadline, 120),
       format: r.format,
-      layout: r.layout,
+      layout: isEncarteModelo(r.modelo) ? "grade" : r.layout,
+      modelo: isEncarteModelo(r.modelo) ? r.modelo : null,
       themeKey: r.themeKey,
       validFrom: isISODate(r.validFrom) ? r.validFrom : null,
       validUntil: isISODate(r.validUntil) ? r.validUntil : null,

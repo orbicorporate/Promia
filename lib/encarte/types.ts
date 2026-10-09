@@ -12,6 +12,14 @@ export type EncarteFormat = (typeof ENCARTE_FORMATS)[number];
 export const ENCARTE_LAYOUTS = ["grade", "destaque", "lista"] as const;
 export type EncarteLayout = (typeof ENCARTE_LAYOUTS)[number];
 
+// Modelo de arte (família visual). Nulo = Clássico (usa o layout).
+export const ENCARTE_MODELOS = ["feira"] as const;
+export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
+
+export function isEncarteModelo(value: unknown): value is EncarteModelo {
+  return typeof value === "string" && (ENCARTE_MODELOS as readonly string[]).includes(value);
+}
+
 export type EncarteItem = {
   name: string;
   brand?: string | null;
@@ -46,6 +54,7 @@ export type EncarteData = {
   subheadline?: string | null;
   format: EncarteFormat;
   layout: EncarteLayout;
+  modelo?: EncarteModelo | null;
   themeKey: string;
   validFrom?: string | null; // YYYY-MM-DD
   validUntil?: string | null; // YYYY-MM-DD

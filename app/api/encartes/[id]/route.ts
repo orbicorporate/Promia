@@ -33,6 +33,7 @@ export async function PUT(req: Request, { params }: RouteContext<"/api/encartes/
       subheadline: input.subheadline,
       format: input.format,
       layout: input.layout,
+      modelo: input.modelo,
       theme_key: input.themeKey,
       valid_from: input.validFrom,
       valid_until: input.validUntil,
