@@ -27,8 +27,8 @@ import {
 import { toast } from "sonner";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { FORMATS } from "@/lib/encarte/formats";
-import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT } from "@/lib/encarte/labels";
-import type { EncarteFormat, EncarteLayout } from "@/lib/encarte/types";
+import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS } from "@/lib/encarte/labels";
+import type { EncarteFormat, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 
 export type CatalogProduct = {
@@ -59,6 +59,7 @@ export type BuilderInitial = {
   subheadline: string;
   format: EncarteFormat;
   layout: EncarteLayout;
+  modelo: EncarteModelo | null;
   themeKey: string;
   validFrom: string;
   validUntil: string;
@@ -101,6 +102,7 @@ export function EncarteBuilder({
   const [subheadline, setSubheadline] = useState(initial.subheadline);
   const [format, setFormat] = useState<EncarteFormat>(initial.format);
   const [layout, setLayout] = useState<EncarteLayout>(initial.layout);
+  const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
   const [validUntil, setValidUntil] = useState(initial.validUntil);
@@ -176,6 +178,7 @@ export function EncarteBuilder({
       subheadline: subheadline || null,
       format,
       layout,
+      modelo,
       themeKey,
       validFrom: validFrom || null,
       validUntil: validUntil || null,
@@ -199,7 +202,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, themeKey, validFrom, validUntil, items, byId]
+    [name, headline, subheadline, format, layout, modelo, themeKey, validFrom, validUntil, items, byId]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -271,7 +274,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -509,7 +512,32 @@ export function EncarteBuilder({
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">Estilo da arte</h4>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {([null, ...(Object.keys(MODELO_LABELS) as EncarteModelo[])] as (EncarteModelo | null)[]).map((key) => {
+              const active = modelo === key;
+              return (
+                <button
+                  key={key ?? "classico"}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setModelo(key);
+                    if (key) setLayout("grade");
+                    setPreviewPage(1);
+                  }}
+                  className={cn("rounded-xl border px-3 py-2.5 text-left transition-colors", active ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}
+                >
+                  <span className="block text-sm font-semibold">{key ? MODELO_LABELS[key].label : "Clássico"}</span>
+                  <span className={cn("block text-xs", active ? "opacity-70" : "text-[var(--ink-3)]")}>{key ? MODELO_LABELS[key].hint : "Cartões brancos, escolha grade, destaque ou lista"}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
+        <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
           <Segmented
             label="Layout"
             value={layout}

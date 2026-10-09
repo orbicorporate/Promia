@@ -71,4 +71,22 @@ describe("renderEncartePng", () => {
     expect(empty!.pageCount).toBe(1);
     expect(await renderEncartePng(data("feed", "grade"), 5)).toBeNull();
   }, 30_000);
+
+  describe("modelo feira", () => {
+    it.each(ENCARTE_FORMATS)("%s gera PNG do tamanho certo", async (format) => {
+      const out = await renderEncartePng({ ...data(format, "grade", "hortifruti"), modelo: "feira" }, 0);
+      expect(out).not.toBeNull();
+      expect(out!.png.byteLength).toBeGreaterThan(10_000);
+      expect(pngSize(out!.png)).toEqual({ width: FORMATS[format].width, height: FORMATS[format].height });
+    }, 30_000);
+
+    it("desenha todos os temas e encarte vazio", async () => {
+      for (const theme of THEMES) {
+        const out = await renderEncartePng({ ...data("quadrado", "grade", theme.key), modelo: "feira", market: { name: "Mercado" } }, 0);
+        expect(out!.png.byteLength, theme.key).toBeGreaterThan(10_000);
+      }
+      const empty = await renderEncartePng({ ...data("feed", "grade"), modelo: "feira", items: [] }, 0);
+      expect(empty!.pageCount).toBe(1);
+    }, 90_000);
+  });
 });

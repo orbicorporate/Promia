@@ -1,4 +1,5 @@
 import { fetchPublicImage, type FetchedImage } from "@/lib/net";
+import { cutoutProductPhoto } from "./cutout";
 import { getPage } from "./paginate";
 import type { EncarteData, EncarteItem } from "./types";
 
@@ -44,6 +45,7 @@ export type ResolveImagesOptions = {
   budgetMs?: number; // tempo total: depois disso, o que faltar vira placeholder
   pageIndex?: number; // só as imagens dessa página (0-based)
   fetcher?: ImageFetcher; // para testes
+  cutout?: boolean; // recortar o fundo das fotos de produto (modelos de arte); padrão: quando o encarte tem modelo
   cache?: Map<string, Promise<string | null>>; // reaproveitar entre páginas (PDF)
 };
 
@@ -78,8 +80,9 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
   const cache = opts.cache ?? createImageCache();
   const run = limiter(Math.max(1, concurrency));
   const deadline = Date.now() + budgetMs;
+  const doCutout = opts.cutout ?? !!data.modelo;
 
-  const load = (raw: string | null | undefined): Promise<string | null> => {
+  const load = (raw: string | null | undefined, isProduct = false): Promise<string | null> => {
     const url = (raw ?? "").trim();
     if (!url) return Promise.resolve(null);
     const cached = cache.get(url);
@@ -97,6 +100,12 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
           const img = await fetcher(url, { maxBytes, timeoutMs: Math.min(timeoutMs, remaining) });
           if (!img || img.body.byteLength === 0) return null;
           const bytes = new Uint8Array(img.body);
+          if (doCutout && isProduct) {
+            // foto de produto sem fundo (PNG com transparência); se o fundo
+            // não for liso, segue a foto como veio
+            const cut = await cutoutProductPhoto(Buffer.from(bytes)).catch(() => null);
+            if (cut) return `data:image/png;base64,${cut.toString("base64")}`;
+          }
           const type = sniffImageType(bytes);
           return type ? `data:${type};base64,${Buffer.from(bytes).toString("base64")}` : null;
         } catch {
@@ -116,7 +125,7 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
 
   const [logoUrl, ...images] = await Promise.all([
     load(data.market.logoUrl),
-    ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl))),
+    ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl, true))),
   ]);
 
   return {
