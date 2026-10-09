@@ -11,3 +11,12 @@ describe("salvageList", () => {
     expect(salvageList("nada aqui", "pautas")).toBeNull();
   });
 });
+
+import { jsonFromText } from "@/lib/ai/gerente";
+
+describe("jsonFromText", () => {
+  it("aceita quebra de linha crua dentro do texto e vírgula sobrando", () => {
+    const text = 'Aqui está:\n```json\n{"whatsapp":"Oi!\nArroz R$ 9,99\n\tFeijão","dicas":["a","b",],}\n```';
+    expect(jsonFromText(text)).toEqual({ whatsapp: "Oi!\nArroz R$ 9,99\n\tFeijão", dicas: ["a", "b"] });
+  });
+});
