@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarHeart, Sparkles, Send, Camera, Tag, BrainCircuit, Repeat, FileSpreadsheet, ArrowRight } from "lucide-react";
+import { CalendarHeart, Sparkles, Send, Camera, Tag, BrainCircuit, Repeat, FileSpreadsheet, ArrowRight, TrendingUp, TrendingDown, Scale, PackageX, BarChart3 } from "lucide-react";
 import { Glass, cn } from "@/components/ui";
 import type { HojeAction } from "@/lib/hoje";
 
@@ -12,6 +12,11 @@ const ICONS = {
   gerente: BrainCircuit,
   fixa: Repeat,
   primeiro: FileSpreadsheet,
+  alta: TrendingUp,
+  queda: TrendingDown,
+  concorrencia: Scale,
+  parado: PackageX,
+  vendas: BarChart3,
 } as const;
 
 const TONE = {

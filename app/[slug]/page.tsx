@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Camera, Palette, Phone, FileSpreadsheet, Sparkles, CheckCircle2, Circle } from "lucide-react";
 import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { todayInSaoPaulo, formatBR } from "@/lib/dates";
+import { todayInSaoPaulo, formatBR, addDaysISO } from "@/lib/dates";
 import { upcomingOccasions, themeAccent } from "@/lib/occasions";
 import { Glass, ButtonLink } from "@/components/ui";
 import { GerenteCard, type Rec } from "./_ui/gerente-card";
@@ -11,6 +11,8 @@ import { HojeList } from "./_ui/hoje-list";
 import { buildHojeActions } from "@/lib/hoje";
 import { normalizeCampaign } from "@/lib/ai/campaign";
 import { plural } from "@/lib/plural";
+import { loadSalesAnalysis } from "@/lib/sales/load";
+import { compareprices } from "@/lib/competition/compare";
 
 export const metadata = { title: "Início" };
 
@@ -77,7 +79,37 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
     .or(`valid_until.is.null,valid_until.gte.${today}`)
     .order("valid_from", { ascending: true })
     .limit(12);
+  // vendas e concorrência para as ações do dia
+  const [salesData, { data: obs }] = await Promise.all([
+    productCount > 0 ? loadSalesAnalysis(admin, market.id) : Promise.resolve({ imports: [], analysis: null }),
+    admin.from("competitor_prices").select("product_id, product_name, competitor_name, price, observed_on").eq("market_id", market.id).gte("observed_on", addDaysISO(today, -30)).limit(3000),
+  ]);
+  const sa = salesData.analysis;
+  let pricier: { name: string; ours: number; theirs: number; competitor: string }[] = [];
+  if (obs?.length) {
+    const ids = [...new Set(obs.map((o) => o.product_id).filter((x): x is string => !!x))].slice(0, 1000);
+    const { data: ours } = ids.length ? await admin.from("products").select("id, name, category, price").in("id", ids) : { data: [] };
+    const cmp = compareprices(
+      obs.map((o) => ({ ...o, price: Number(o.price) })),
+      (ours ?? []).map((p) => ({ ...p, price: p.price == null ? null : Number(p.price) }))
+    );
+    pricier = cmp.rows
+      .filter((r) => r.role === "atracao" && r.advice.kind === "baixar" && r.ours != null)
+      .sort((a, b) => (b.diff ?? 0) - (a.diff ?? 0))
+      .map((r) => ({ name: r.name, ours: r.ours as number, theirs: r.theirs, competitor: r.competitor }));
+  }
+
   const actions = buildHojeActions({
+    pricier,
+    sales:
+      salesData.imports.length === 0
+        ? null
+        : {
+            periodEnd: salesData.imports[0].period_end,
+            rising: sa?.rising ?? [],
+            falling: sa?.falling ?? [],
+            stale: (sa?.stale ?? []).map((p) => ({ id: p.id, name: p.name })),
+          },
     slug,
     today,
     productCount,

@@ -96,7 +96,7 @@ export function GerenteCard({
       ) : recs.length === 0 ? (
         <div className="mt-3 flex flex-col items-start gap-4">
           <p className="text-[var(--ink-2)]">
-            O gerente analisa o catálogo, as datas próximas e as promoções fixas, e aponta onde está a margem e o que precisa
+            O gerente analisa o catálogo, as vendas, a concorrência, o bairro, as datas próximas e as promoções fixas, e aponta onde está a margem e o que precisa
             girar. Leva cerca de um minuto.
           </p>
           <Button variant="ia" onClick={run} loading={running} icon={<Sparkles className="size-4" />}>

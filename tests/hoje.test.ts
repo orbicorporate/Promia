@@ -39,3 +39,33 @@ describe("tela Hoje", () => {
     expect(a.at(-1)?.id).toBe("fotos");
   });
 });
+
+describe("tela Hoje com vendas e concorrência", () => {
+  it("mostra o que subiu, o que caiu, os parados e o preço acima do concorrente", () => {
+    const a = buildHojeActions({
+      ...base,
+      occasions: [],
+      sales: {
+        periodEnd: "2026-10-04",
+        rising: [{ productId: "p1", name: "Antárctica", change: 0.8 }, { productId: "p2", name: "Coca", change: 0.6 }],
+        falling: [{ productId: "p3", name: "Alcatra", change: -0.5 }],
+        stale: [{ id: "p4", name: "Sabonete" }],
+      },
+      pricier: [{ name: "Banana", ours: 6.99, theirs: 5.49, competitor: "Bom Lugar" }],
+    });
+    const byId = Object.fromEntries(a.map((x) => [x.id, x]));
+    expect(byId.alta.title).toBe("Antárctica e Coca estão vendendo mais");
+    expect(byId.alta.href).toContain("produtos=p1,p2");
+    expect(byId.queda.title).toBe("Alcatra caiu 50% nas vendas");
+    expect(byId.parado.title).toBe("1 produto sem venda no último relatório");
+    expect(byId.concorrencia.detail).toContain("R$ 6,99 aqui, R$ 5,49 no Bom Lugar");
+    expect(byId.vendas).toBeUndefined();
+  });
+
+  it("pede o relatório quando nunca foi enviado ou está velho", () => {
+    expect(buildHojeActions({ ...base, occasions: [], sales: null }).some((x) => x.id === "vendas")).toBe(true);
+    const velho = buildHojeActions({ ...base, occasions: [], sales: { periodEnd: "2026-09-20", rising: [], falling: [], stale: [] } });
+    expect(velho.find((x) => x.id === "vendas")?.title).toContain("da semana");
+    expect(buildHojeActions({ ...base, occasions: [] }).some((x) => x.id === "vendas")).toBe(false);
+  });
+});

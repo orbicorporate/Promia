@@ -9,7 +9,7 @@ import { plural } from "@/lib/plural";
 export type HojeAction = {
   id: string;
   tone: "urgente" | "oportunidade" | "rotina";
-  icon: "calendario" | "campanha" | "postar" | "fotos" | "preco" | "gerente" | "fixa" | "primeiro";
+  icon: "calendario" | "campanha" | "postar" | "fotos" | "preco" | "gerente" | "fixa" | "primeiro" | "alta" | "queda" | "concorrencia" | "parado" | "vendas";
   title: string;
   detail: string;
   cta: string;
@@ -26,7 +26,23 @@ export type HojeInput = {
   occasions: Occasion[];
   encartes: { id: string; name: string; valid_from: string | null; valid_until: string | null; theme_key: string; hasCampaign: boolean; todaySteps: string[] }[];
   topRec: { target: string; reason: string; productIds: string[] } | null;
+  // último relatório de vendas (null quando nunca foi enviado)
+  sales?: {
+    periodEnd: string;
+    rising: { productId: string | null; name: string; change: number }[];
+    falling: { productId: string | null; name: string; change: number }[];
+    stale: { id: string; name: string }[];
+  } | null;
+  // produtos que o cliente compara em que o mercado está mais caro
+  pricier?: { name: string; ours: number; theirs: number; competitor: string }[];
 };
+
+const brl = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
+const pctAbs = (n: number) => `${Math.round(Math.abs(n) * 100)}%`;
+export function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}`;
+}
 
 const covers = (e: { valid_from: string | null; valid_until: string | null }, day: string) =>
   (!e.valid_from || e.valid_from <= day) && (!e.valid_until || e.valid_until >= day);
@@ -77,6 +93,65 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
     out.push({ id: "gerente", tone: "oportunidade", icon: "gerente", title: `Vale promover ${i.topRec.target}`, detail: i.topRec.reason, cta: "Montar encarte", href: `/${i.slug}/encartes/novo?produtos=${i.topRec.productIds.join(",")}` });
   }
 
+  // concorrência: mais caro em produto que o cliente compara
+  if (i.pricier && i.pricier.length > 0) {
+    const ex = i.pricier[0];
+    out.push({
+      id: "concorrencia",
+      tone: i.pricier.length >= 3 ? "urgente" : "oportunidade",
+      icon: "concorrencia",
+      title: `Você está mais caro em ${plural(i.pricier.length, "produto", "produtos")} que o cliente compara`,
+      detail: `${ex.name}: ${brl(ex.ours)} aqui, ${brl(ex.theirs)} no ${ex.competitor}. O preço sugerido já está pronto.`,
+      cta: "Ajustar preços",
+      href: `/${i.slug}/concorrencia`,
+    });
+  }
+
+  // vendas: o que subiu, o que caiu, o que parou
+  if (i.sales) {
+    const up = i.sales.rising.filter((t) => t.productId).slice(0, 3);
+    if (up.length) {
+      out.push({
+        id: "alta",
+        tone: "oportunidade",
+        icon: "alta",
+        title: `${joinNames(up.map((t) => t.name))} ${up.length === 1 ? "está vendendo" : "estão vendendo"} mais`,
+        detail: `${up.map((t) => `+${pctAbs(t.change)}`).join(", ")} no último relatório. Garanta estoque e destaque no próximo encarte.`,
+        cta: "Montar encarte",
+        href: `/${i.slug}/encartes/novo?produtos=${up.map((t) => t.productId).join(",")}&titulo=${encodeURIComponent("Os mais pedidos")}`,
+      });
+    }
+    const down = i.sales.falling[0];
+    if (down) {
+      out.push({
+        id: "queda",
+        tone: "oportunidade",
+        icon: "queda",
+        title: `${down.name} caiu ${pctAbs(down.change)} nas vendas`,
+        detail: "Confira preço, exposição e se algum concorrente baixou o preço.",
+        cta: "Ver vendas",
+        href: `/${i.slug}/vendas`,
+      });
+    }
+    if (i.sales.stale.length > 0) {
+      out.push({
+        id: "parado",
+        tone: "rotina",
+        icon: "parado",
+        title: `${plural(i.sales.stale.length, "produto sem venda", "produtos sem venda")} no último relatório`,
+        detail: `${joinNames(i.sales.stale.slice(0, 3).map((p) => p.name))}${i.sales.stale.length > 3 ? " e outros" : ""}. Um encarte de giro ajuda a desovar.`,
+        cta: "Montar encarte de giro",
+        href: `/${i.slug}/encartes/novo?produtos=${i.sales.stale.slice(0, 30).map((p) => p.id).join(",")}&titulo=${encodeURIComponent("Aproveite")}`,
+      });
+    }
+    const dias = Math.round((Date.parse(`${i.today}T12:00:00Z`) - Date.parse(`${i.sales.periodEnd}T12:00:00Z`)) / 86400000);
+    if (dias > 9) {
+      out.push({ id: "vendas", tone: "rotina", icon: "vendas", title: "Envie o relatório de vendas da semana", detail: `O último vai até ${i.sales.periodEnd.slice(8, 10)}/${i.sales.periodEnd.slice(5, 7)}. Com ele em dia, o Promia mostra o que sobe e o que cai.`, cta: "Enviar relatório", href: `/${i.slug}/vendas` });
+    }
+  } else if (i.sales === null) {
+    out.push({ id: "vendas", tone: "rotina", icon: "vendas", title: "Envie o relatório de vendas do caixa", detail: "Com ele o Promia mostra o que mais vende, o que está caindo e quanto cada encarte vendeu a mais.", cta: "Enviar relatório", href: `/${i.slug}/vendas` });
+  }
+
   if (i.photosToReview > 0) {
     out.push({ id: "fotos", tone: "rotina", icon: "fotos", title: `${plural(i.photosToReview, "foto esperando", "fotos esperando")} sua escolha`, detail: "Um toque em cada uma e o encarte sai com a foto certa.", cta: "Revisar fotos", href: `/${i.slug}/produtos?fotos=1` });
   } else if (i.photosPending > 0) {
@@ -87,5 +162,5 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
   }
 
   const rank = { urgente: 0, oportunidade: 1, rotina: 2 };
-  return out.sort((a, b) => rank[a.tone] - rank[b.tone]).slice(0, 6);
+  return out.sort((a, b) => rank[a.tone] - rank[b.tone]).slice(0, 7);
 }
