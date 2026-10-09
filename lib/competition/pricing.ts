@@ -1,6 +1,7 @@
 // Posição de preço: produto de atração (o que o cliente compara entre
 // mercados) acompanha o concorrente; produto de margem segura o preço.
-// Preço sugerido sempre termina em ,99 / ,89 / ,49 como o varejo usa.
+// Preço sugerido termina em ,99 / ,89 / ,49 e afins, como o varejo usa, sem
+// descer mais que o necessário (5,44 vira 5,39, não 4,99).
 
 const ATRACAO = /\b(arroz|feijao|oleo|acucar|cafe|leite|cerveja|refrigerante|coca|ovo|ovos|carne|picanha|alcatra|patinho|frango|linguica|papel higienico|sabao|detergente|margarina|manteiga|farinha|macarrao|banana|tomate|batata|cebola)\b/;
 
@@ -16,7 +17,7 @@ export function retailPrice(value: number): number {
   if (value <= 0) return 0;
   const reais = Math.floor(value);
   const cents = value - reais;
-  const endings = [0.99, 0.89, 0.79, 0.49];
+  const endings = [0.99, 0.89, 0.79, 0.69, 0.59, 0.49, 0.39, 0.29, 0.19, 0.09];
   for (const e of endings) if (cents >= e - 0.0001) return Math.round((reais + e) * 100) / 100;
   return reais > 0 ? Math.round((reais - 1 + 0.99) * 100) / 100 : Math.round(value * 100) / 100;
 }

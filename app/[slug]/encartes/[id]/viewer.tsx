@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, ChevronRight, Download, FileDown, Share2, Pencil, Copy, Trash2, Check, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button, ButtonLink, Sheet, cn } from "@/components/ui";
+import { plural } from "@/lib/plural";
 
 const noop = () => () => {};
 
@@ -184,7 +185,7 @@ export function EncarteViewer({
 
       <aside className="vidro space-y-3 rounded-[24px] p-4 lg:sticky lg:top-8">
         <p className="px-1 text-sm text-[var(--ink-2)]">
-          {products} produto(s) em {pages} página(s)
+          {plural(products, "produto", "produtos")} em {plural(pages, "página", "páginas")}
         </p>
         {canShare && (
           <Button size="lg" className="w-full" onClick={share} loading={busy === "share"} icon={<Share2 className="size-5" />}>

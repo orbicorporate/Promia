@@ -14,7 +14,9 @@ describe("casar produto do concorrente", () => {
 
 describe("posição de preço", () => {
   it("arredonda para final de varejo", () => {
-    expect(retailPrice(10.43)).toBe(9.99);
+    expect(retailPrice(10.43)).toBe(10.39);
+    expect(retailPrice(5.44)).toBe(5.39);
+    expect(retailPrice(3.05)).toBe(2.99);
     expect(retailPrice(24.95)).toBe(24.89);
     expect(retailPrice(7.5)).toBe(7.49);
   });

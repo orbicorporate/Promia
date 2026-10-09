@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { PromiaLogo } from "@/components/shell/logo";
 import { MarketMark } from "@/components/shell/market-mark";
 import { NewMarketForm } from "./new-market-form";
+import { plural } from "@/lib/plural";
 
 export const metadata = { title: "Painel Promia" };
 
@@ -50,7 +51,7 @@ export default async function MasterPage() {
         <div>
           <h1 className="font-display text-4xl font-extrabold">Mercados</h1>
           <p className="mt-1 text-[var(--ink-2)]">
-            {markets?.length ?? 0} cliente(s), {totals.products.toLocaleString("pt-BR")} produtos, {totals.tabloids} encartes
+            {plural(markets?.length ?? 0, "cliente", "clientes")}, {totals.products.toLocaleString("pt-BR")} produtos, {totals.tabloids} encartes
           </p>
         </div>
         <NewMarketForm />

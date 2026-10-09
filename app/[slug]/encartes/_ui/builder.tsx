@@ -29,6 +29,7 @@ import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from
 import { FORMATS } from "@/lib/encarte/formats";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT } from "@/lib/encarte/labels";
 import type { EncarteFormat, EncarteLayout } from "@/lib/encarte/types";
+import { plural } from "@/lib/plural";
 
 export type CatalogProduct = {
   id: string;
@@ -260,7 +261,7 @@ export function EncarteBuilder({
     }
     const semPreco = items.filter((i) => (i.promoPrice ?? byId.get(i.productId)?.price) == null);
     if (semPreco.length) {
-      toast.error(`${semPreco.length} produto(s) sem preço. Informe o preço de oferta.`);
+      toast.error(`${plural(semPreco.length, "produto", "produtos")} sem preço. Informe o preço de oferta.`);
       setTab("produtos");
       setEditing(semPreco[0].productId);
       return;
@@ -696,7 +697,7 @@ export function EncarteBuilder({
       <div className="xl:hidden fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4 lg:bottom-6 lg:left-[272px]">
         <div className="vidro-forte mx-auto flex max-w-md items-center gap-3 rounded-2xl p-2 pl-4">
           <span className="min-w-0 flex-1 truncate text-sm text-[var(--ink-2)]">
-            {items.length} produto(s) · {previewPages} página(s)
+            {plural(items.length, "produto", "produtos")} · {plural(previewPages, "página", "páginas")}
           </span>
           <Button onClick={save} loading={saving}>
             Salvar

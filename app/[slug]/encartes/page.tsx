@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { todayInSaoPaulo } from "@/lib/dates";
 import { ButtonLink, EmptyState } from "@/components/ui";
 import { EncarteThumb } from "../_ui/encarte-thumb";
+import { plural } from "@/lib/plural";
 
 export const metadata = { title: "Encartes" };
 
@@ -26,7 +27,7 @@ export default async function EncartesPage({ params }: PageProps<"/[slug]/encart
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Encartes</h1>
-          <p className="mt-1 text-[var(--ink-2)]">{all.length ? `${all.length} encarte(s) criados` : "Monte o primeiro em menos de um minuto."}</p>
+          <p className="mt-1 text-[var(--ink-2)]">{all.length ? plural(all.length, "encarte criado", "encartes criados") : "Monte o primeiro em menos de um minuto."}</p>
         </div>
         <ButtonLink href={`/${slug}/encartes/novo`} icon={<Plus className="size-5" />} className="hidden sm:inline-flex">
           Novo encarte
