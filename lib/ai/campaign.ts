@@ -104,7 +104,7 @@ export async function generateCampaign(data: EncarteData, ctx: { today: string; 
     "7. resumo: uma frase dizendo a ideia central da campanha.\n\n" +
     'Responda só com JSON: {"resumo":"","posts":[{"titulo":"","quando":"","formato":"feed","legenda":"","hashtags":[""]}],"whatsapp":"","video":{"titulo":"","cenas":[{"tempo":"0-3s","imagem":"","fala":""}]},"carroDeSom":"","calendario":[{"data":"","acao":""}],"dicasLoja":[""]}';
 
-  const res = await client.messages.create({ model: GERENTE_MODEL, max_tokens: 4000, messages: [{ role: "user", content: prompt }] });
+  const res = await client.messages.create({ model: GERENTE_MODEL, max_tokens: 6000, messages: [{ role: "user", content: prompt }] });
   const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
   return normalizeCampaign(jsonFromText(text));
 }

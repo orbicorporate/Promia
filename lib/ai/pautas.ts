@@ -1,4 +1,5 @@
 import { anthropic, GERENTE_MODEL } from "./models";
+import { salvageList } from "./salvage";
 import { jsonFromText, promptSafe } from "./gerente";
 import type { DayWeather } from "@/lib/weather";
 import type { Occasion } from "@/lib/occasions";
@@ -75,7 +76,9 @@ export async function generateContentPlan(ctx: {
     "Para cada pauta: data (AAAA-MM-DD), titulo curto, formato (feed, story, reels ou whatsapp), objetivo (vender, atrair ou relacionar), ideia (o que mostrar, em 1 ou 2 frases), legenda pronta curta, produtos (2 a 5 nomes genéricos ou categorias) e pedeEncarte (true quando a pauta for uma oferta que merece encarte).\n" +
     "Em resumo, uma frase com a linha do mês. Em clima, uma frase do que a previsão sugere (ou vazio sem previsão).\n" +
     'Responda só com JSON: {"resumo":"","clima":"","pautas":[{"data":"","titulo":"","formato":"feed","objetivo":"vender","ideia":"","legenda":"","produtos":[""],"pedeEncarte":false}]}';
-  const res = await client.messages.create({ model: GERENTE_MODEL, max_tokens: 8000, messages: [{ role: "user", content: prompt }] });
+  const res = await client.messages.create({ model: GERENTE_MODEL, max_tokens: 16000, messages: [{ role: "user", content: prompt }] });
   const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  return normalizePlan(jsonFromText(text), ctx.de, ctx.ate);
+  const plan = normalizePlan(jsonFromText(text), ctx.de, ctx.ate) ?? normalizePlan(salvageList(text, "pautas", ["resumo", "clima"]), ctx.de, ctx.ate);
+  if (!plan) console.error("pautas: resposta sem calendário", { stop: res.stop_reason, chars: text.length, inicio: text.slice(0, 200) });
+  return plan;
 }
