@@ -21,25 +21,17 @@ const sem = (...dias: number[]): Quando => ({ kind: "semana", dias });
 
 export const PLANEJADOS: Planejado[] = [
   // Dias da semana e ofertões
-  { nome: "Ofertão de Sábado", tipo: "ofertao", prioridade: 1, ideia: "Mesma família verde e dourada dos outros ofertões, faixa SÁBADO", quando: sem(6), motivo: "Sábado é o dia de maior movimento e não tem ofertão" },
   { nome: "Ofertão de Domingo", tipo: "ofertao", prioridade: 2, ideia: "Mesma família dos ofertões, faixa DOMINGO", quando: sem(0) },
-  { nome: "Ofertão do Mês", tipo: "ofertao", prioridade: 1, ideia: "Mesma família dos ofertões, faixa MÊS, sem nome de mês para servir o ano todo", motivo: "Hoje só existe o de Setembro, o genérico evita fazer 12" },
   { nome: "Ofertão de Janeiro a Dezembro (11 meses)", tipo: "ofertao", prioridade: 3, ideia: "Mesma família, um por mês, só se o cliente quiser o nome do mês", quando: { kind: "sempre" } },
-  { nome: "Sábado do Churrasco", tipo: "dia-da-semana", prioridade: 1, ideia: "Grelha com chamas, espetos e carne, placa de madeira", quando: sem(6), motivo: "Carne e bebida vendem mais no fim de semana" },
   { nome: "Sexta do Churrasco", tipo: "dia-da-semana", prioridade: 2, ideia: "Variante da Terça da Carne com brasa e linguiça", quando: sem(5) },
   { nome: "Segunda da Limpeza", tipo: "dia-da-semana", prioridade: 3, ideia: "Balde, esponja e bolhas, letras azuis e verdes", quando: sem(1) },
   { nome: "Quinta da Padaria", tipo: "dia-da-semana", prioridade: 3, ideia: "Pão quente com vapor e trigo", quando: sem(4) },
-  { nome: "Sábado de Ofertas", tipo: "periodo", prioridade: 1, ideia: "Calendário vermelho no estilo Ofertas de Fim de Semana, faixa SÁBADO", quando: sem(6) },
   { nome: "Domingo de Ofertas", tipo: "periodo", prioridade: 2, ideia: "Variante com sol e cesta", quando: sem(0) },
-  { nome: "Oferta Relâmpago", tipo: "periodo", prioridade: 1, ideia: "Raio amarelo e relógio, letras vermelhas, no estilo do Só Hoje", motivo: "Urgência de poucas horas, muito usada em story" },
   { nome: "Última Chance", tipo: "periodo", prioridade: 2, ideia: "Ampulheta e seta, vermelho e preto" },
   { nome: "Estoque Limitado", tipo: "periodo", prioridade: 2, ideia: "Caixas quase vazias e placa de aviso" },
 
   // Condições comerciais
-  { nome: "Leve 3 Pague 2", tipo: "condicao", prioridade: 1, ideia: "Três produtos com o número 3 e o 2 em destaque, selo redondo", motivo: "É um dos rótulos fixos do editor" },
   { nome: "Compre 1 Leve 2", tipo: "condicao", prioridade: 2, ideia: "Duas sacolas de compras, +1 grande" },
-  { nome: "Imperdível", tipo: "condicao", prioridade: 1, ideia: "Estrela dourada e letras vermelhas, brilho", motivo: "É um dos rótulos fixos do editor" },
-  { nome: "Novidade", tipo: "condicao", prioridade: 1, ideia: "Fita NOVO e estrelas, azul e amarelo", motivo: "É um dos rótulos fixos do editor" },
   { nome: "Super Oferta", tipo: "condicao", prioridade: 2, ideia: "Capa de herói, letras com raio" },
   { nome: "Mega Oferta", tipo: "condicao", prioridade: 3, ideia: "Explosão amarela e letras azuis" },
   { nome: "Preço de Atacado", tipo: "condicao", prioridade: 2, ideia: "Fardo e caixa fechada, etiqueta ATACADO" },
@@ -53,10 +45,6 @@ export const PLANEJADOS: Planejado[] = [
   { nome: "Vence Logo", tipo: "condicao", prioridade: 3, ideia: "Relógio e etiqueta de validade para produtos perto do vencimento" },
 
   // Datas comemorativas
-  { nome: "Dia da Mulher", tipo: "data", prioridade: 1, ideia: "Flores, laço lilás e coração, 8 de março", quando: { kind: "periodo", de: "02-25", ate: "03-08" }, motivo: "Entra no calendário do app e não tem emblema" },
-  { nome: "Dia do Consumidor", tipo: "data", prioridade: 1, ideia: "Carrinho, sacola e selo 15/03", feriados: [], quando: { kind: "periodo", de: "03-05", ate: "03-15" } },
-  { nome: "Ceia de Natal", tipo: "data", prioridade: 1, ideia: "Mesa farta com peru, panetone e taças, verde e dourado", feriados: ["Natal"], quando: { kind: "feriado", titulo: "Natal", antes: 21 }, motivo: "Maior ticket do ano, merece emblema além do Natal de Ofertas" },
-  { nome: "Esquenta Black Friday", tipo: "campanha", prioridade: 1, ideia: "Chama e contagem regressiva no preto e amarelo da Black Friday", feriados: ["Black Friday"], quando: { kind: "feriado", titulo: "Black Friday", antes: 30 } },
   { nome: "Semana Santa e Bacalhau", tipo: "data", prioridade: 2, ideia: "Bacalhau, azeite e cruz discreta, tons de azul e dourado", feriados: ["Páscoa"], quando: { kind: "feriado", titulo: "Páscoa", antes: 10 } },
   { nome: "Halloween", tipo: "data", prioridade: 2, ideia: "Abóbora e guloseimas, laranja e roxo", quando: { kind: "periodo", de: "10-20", ate: "10-31" } },
   { nome: "Dia dos Avós", tipo: "data", prioridade: 2, ideia: "Cesta de café da tarde, óculos e xícara", quando: { kind: "periodo", de: "07-15", ate: "07-26" } },
@@ -103,6 +91,25 @@ export const PLANEJADOS: Planejado[] = [
   { nome: "Dia 10 Ofertas", tipo: "calendario", prioridade: 3, ideia: "Mesma família do Dia 5 e Dia 20", quando: { kind: "diaDoMes", dias: [10], antes: 3 } },
   { nome: "Dia 15 Ofertas", tipo: "calendario", prioridade: 3, ideia: "Mesma família do Dia 5 e Dia 20", quando: { kind: "diaDoMes", dias: [15], antes: 3 } },
   { nome: "Dia 30 Ofertas", tipo: "calendario", prioridade: 3, ideia: "Mesma família do Dia 5 e Dia 20", quando: { kind: "diaDoMes", dias: [30], antes: 3 } },
+
+  // Sugestões de mercado (lote 3): o que supermercado de bairro e rede média costuma usar e ainda não estava na lista
+  { nome: "Pague com Pix", tipo: "condicao", prioridade: 1, ideia: "Símbolo do Pix em verde-água com etiqueta de desconto, letras brancas", motivo: "Desconto no Pix já é rotina no caixa e quase todo encarte cita" },
+  { nome: "Cobrimos Qualquer Oferta", tipo: "condicao", prioridade: 1, ideia: "Escudo com seta para baixo e selo de garantia, azul e amarelo", motivo: "Promessa de preço que o mercado de bairro usa contra rede grande. Exige que o dono possa cumprir" },
+  { nome: "Fim de Mês", tipo: "calendario", prioridade: 2, ideia: "Calendário com últimos dias riscados e sacola cheia", quando: { kind: "diaDoMes", dias: [30], antes: 4 }, motivo: "Quem recebe vale e compra de abastecimento já sem dinheiro responde a preço" },
+  { nome: "Mês do Cliente", tipo: "calendario", prioridade: 2, ideia: "Coração dourado com estrelas e fita, parabéns ao cliente", quando: { kind: "mes", mes: 9 }, motivo: "Estende o Dia do Cliente (15/9) para o mês inteiro" },
+  { nome: "Feirão de Ofertas", tipo: "condicao", prioridade: 2, ideia: "Barraca de feira com toldo listrado, caixas de produtos, letras vermelhas", motivo: "Palavra muito usada por mercado de bairro para liquidar volume" },
+  { nome: "Churrasco de Domingo", tipo: "dia-da-semana", prioridade: 2, ideia: "Família do Sábado do Churrasco, faixa DOMINGO, brasa e linguiça", quando: sem(0), motivo: "Domingo é o dia de maior consumo de carne" },
+  { nome: "Direto do Produtor", tipo: "setor", prioridade: 2, ideia: "Caixote de madeira com frutas e verduras, selo de origem local", motivo: "Mercado pequeno compra de produtor da região e quer mostrar isso" },
+  { nome: "Frete Grátis", tipo: "condicao", prioridade: 2, ideia: "Moto de entrega com sacola, faixa verde", motivo: "Quem entrega em casa usa na capa do encarte digital" },
+  { nome: "Panetones e Chocotones", tipo: "data", prioridade: 2, ideia: "Panetone com fita dourada e frutas cristalizadas, vermelho e dourado", feriados: ["Natal"], quando: { kind: "feriado", titulo: "Natal", antes: 50 }, motivo: "Entra semanas antes da ceia e tem encarte próprio em muitas redes" },
+  { nome: "Ovos de Páscoa", tipo: "data", prioridade: 2, ideia: "Ovos embrulhados em papel colorido e cesta, roxo e dourado", feriados: ["Páscoa"], quando: { kind: "feriado", titulo: "Páscoa", antes: 40 }, motivo: "A Páscoa vende em chocolate por quase seis semanas, antes do bacalhau" },
+  { nome: "Ceia de Ano Novo", tipo: "data", prioridade: 2, ideia: "Taça com champanhe, romã e lentilha, branco e dourado", feriados: ["Réveillon"], quando: { kind: "feriado", titulo: "Réveillon", antes: 10 }, motivo: "Ofertas de Ano Novo é só genérico, falta o apelo da ceia" },
+  { nome: "Black Week", tipo: "campanha", prioridade: 2, ideia: "Mesmo preto e amarelo da Black Friday, faixa SEMANA", feriados: ["Black Friday"], quando: { kind: "feriado", titulo: "Black Friday", antes: 7, depois: 3 } },
+  { nome: "Lanche Escolar", tipo: "campanha", prioridade: 3, ideia: "Lancheira aberta com suco, fruta e biscoito", feriados: ["Volta às aulas"], quando: { kind: "periodo", de: "01-10", ate: "02-20" } },
+  { nome: "Retirada na Loja", tipo: "condicao", prioridade: 3, ideia: "Sacola com seta e relógio, compre online e retire", motivo: "Só serve para mercado com pedido online" },
+  { nome: "Carvão, Gelo e Espetos", tipo: "setor", prioridade: 3, ideia: "Saco de carvão, gelo e espetos cruzados", quando: sem(5, 6), motivo: "Complemento do churrasco, bom para o fim de semana" },
+  { nome: "Produtos da Região", tipo: "setor", prioridade: 3, ideia: "Mapa estilizado com coração e selo de feito aqui", motivo: "Orgulho local vende bem em cidade pequena" },
+  { nome: "Sopas e Caldos", tipo: "setor", prioridade: 3, ideia: "Panela fumegante e colher, tons quentes", quando: { kind: "periodo", de: "05-15", ate: "08-31" }, motivo: "Inverno é a época da categoria" },
 ];
 
 // Peças que não são logo de campanha e saem em código (selos de preço,
@@ -118,6 +125,7 @@ export const EM_CODIGO = [
 ];
 
 // Variações técnicas dos emblemas prontos que valem pedir de uma vez
+// Os 12 de prioridade alta já vieram com as três versões. Faltam nos outros 47.
 export const VARIACOES = [
   { nome: "Versão só texto (sem ilustração)", para: "Cabeçalhos pequenos, story com pouca altura e quadrado" },
   { nome: "Versão em uma cor (preto ou cor do mercado)", para: "Cartaz de gôndola A4 impresso em preto e branco" },
