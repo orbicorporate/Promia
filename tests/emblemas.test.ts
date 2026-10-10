@@ -63,7 +63,7 @@ describe("catálogo de emblemas", () => {
     }
     const prontos = new Set(EMBLEMAS.map((e) => e.nome));
     for (const p of PLANEJADOS) expect(prontos.has(p.nome)).toBe(false);
-    expect(EMBLEMAS).toHaveLength(71);
+    expect(EMBLEMAS).toHaveLength(83);
   });
 
   it("texto da janela que termina antes da data", () => {
