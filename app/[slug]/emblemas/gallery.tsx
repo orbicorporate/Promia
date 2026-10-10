@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Check, Copy, Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, Button, EmptyState, Field, Glass, Input, Segmented, Select, Sheet, cn } from "@/components/ui";
-import { emblemaPng, emblemaThumb, type Emblema } from "@/lib/emblemas/catalog";
+import { emblemaPng, emblemaThumb, VARIANTE_LABEL, VARIANTE_USO, type Emblema, type Variante } from "@/lib/emblemas/catalog";
 import { FILTRO_VAZIO, filtrarEmblemas, filtrarPlanejados, filtroAtivo, type Filtro, type Janela } from "@/lib/emblemas/filtro";
 import type { Planejado } from "@/lib/emblemas/planejados";
 import { EM_CODIGO, VARIACOES } from "@/lib/emblemas/planejados";
@@ -50,6 +50,7 @@ export function EmblemasGallery({
   const [f, setF] = useState<Filtro>(FILTRO_VAZIO);
   const [fundo, setFundo] = useState<Fundo>("claro");
   const [aberto, setAberto] = useState<Emblema | null>(null);
+  const [variante, setVariante] = useState<Variante | null>(null);
   const [copiado, setCopiado] = useState(false);
 
   const prontos = useMemo(() => filtrarEmblemas(emblemas, f, hoje), [emblemas, f, hoje]);
@@ -189,7 +190,10 @@ export function EmblemasGallery({
               <li key={e.slug}>
                 <button
                   type="button"
-                  onClick={() => setAberto(e)}
+                  onClick={() => {
+                    setVariante(null);
+                    setAberto(e);
+                  }}
                   className="vidro group block w-full overflow-hidden rounded-[22px] text-left transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
                 >
                   <span className={cn("grid aspect-[4/3] place-items-center p-3", fundoClasse(fundo))} style={estiloFundo}>
@@ -200,6 +204,7 @@ export function EmblemasGallery({
                     <span className="flex flex-wrap items-center gap-1.5">
                       <Badge>{TIPO_LABEL[e.tipo]}</Badge>
                       {e.alternativa ? <Badge tone="ia">Variação</Badge> : null}
+                      {e.variantes?.length ? <Badge tone="ok">{e.variantes.length + 1} versões</Badge> : null}
                     </span>
                     <span className="block truncate text-xs text-[var(--ink-3)]">{quandoTexto(e.quando)}</span>
                   </span>
@@ -273,10 +278,32 @@ export function EmblemasGallery({
         {aberto ? (
           <div className="space-y-4">
             <div className={cn("grid place-items-center rounded-2xl p-4", fundoClasse(fundo))} style={estiloFundo}>
-              <Image src={emblemaPng(aberto.slug)} alt={`Emblema ${aberto.nome}`} width={640} height={480} unoptimized className="max-h-[46vh] w-auto object-contain" />
+              <Image key={`${aberto.slug}-${variante ?? "ilustrado"}`} src={emblemaPng(aberto.slug, variante ?? undefined)} alt={`Emblema ${aberto.nome}${variante ? `, versão ${VARIANTE_LABEL[variante].toLowerCase()}` : ""}`} width={640} height={480} unoptimized className="max-h-[46vh] w-auto object-contain" />
             </div>
+            {aberto.variantes?.length ? (
+              <div className="space-y-1.5">
+                <div role="group" aria-label="Versão do emblema" className="flex flex-wrap gap-2">
+                  {([null, ...aberto.variantes] as (Variante | null)[]).map((v) => (
+                    <button
+                      key={v ?? "ilustrado"}
+                      type="button"
+                      aria-pressed={variante === v}
+                      onClick={() => setVariante(v)}
+                      className={cn(
+                        "h-10 rounded-2xl px-4 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]",
+                        variante === v ? "bg-[var(--ink)] text-[var(--bg)]" : "vidro hover:opacity-80",
+                      )}
+                    >
+                      {v ? VARIANTE_LABEL[v] : "Ilustrado"}
+                    </button>
+                  ))}
+                </div>
+                {variante ? <p className="text-xs text-[var(--ink-3)]">{VARIANTE_USO[variante]}</p> : null}
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-center gap-2">
               <Badge>{TIPO_LABEL[aberto.tipo]}</Badge>
+              {aberto.baixaResolucao ? <Badge tone="atencao">Arquivo pequeno</Badge> : null}
               {aberto.alternativa ? <Badge tone="ia">Variação</Badge> : null}
               {aberto.feriados.map((x) => (
                 <Badge key={x} tone="atencao">
@@ -304,10 +331,11 @@ export function EmblemasGallery({
                 <dd className="font-medium">{aberto.tags.join(", ")}</dd>
               </div>
             </dl>
+            {aberto.baixaResolucao ? <p className="text-xs text-[var(--ink-3)]">Arquivo com cerca de 400 px de largura. Serve bem no cabeçalho de story e feed, mas pode ficar mole em A4. Peça a versão em alta resolução ao gerar os próximos.</p> : null}
             {aberto.nota ? <p className="rounded-xl bg-[color-mix(in_srgb,var(--banana)_30%,transparent)] p-3 text-sm">{aberto.nota}</p> : null}
             <a
-              href={emblemaPng(aberto.slug)}
-              download={`${aberto.slug}.png`}
+              href={emblemaPng(aberto.slug, variante ?? undefined)}
+              download={`${aberto.slug}${variante ? `--${variante}` : ""}.png`}
               className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--ink)] px-5 text-sm font-semibold text-[var(--bg)] transition hover:opacity-90"
             >
               <Download className="size-4" aria-hidden />

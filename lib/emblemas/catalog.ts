@@ -5,6 +5,21 @@ import type { Feriado, Quando, TipoOferta } from "./tipos";
 // miniatura em public/emblemas/t/{slug}.webp. Os campos abaixo alimentam
 // os filtros da galeria: tipo de oferta, tema do encarte, data e feriado.
 
+// Variações técnicas do mesmo emblema. O arquivo da versão ilustrada é
+// {slug}.png; as outras ficam em {slug}--{variante}.png.
+export const VARIANTES = ["so-texto", "monocromatico", "horizontal"] as const;
+export type Variante = (typeof VARIANTES)[number];
+export const VARIANTE_LABEL: Record<Variante, string> = {
+  "so-texto": "Só texto",
+  monocromatico: "Uma cor",
+  horizontal: "Horizontal",
+};
+export const VARIANTE_USO: Record<Variante, string> = {
+  "so-texto": "Cabeçalho pequeno, story com pouca altura e quadrado",
+  monocromatico: "Impressão em preto e branco ou na cor do mercado",
+  horizontal: "Barra de topo do encarte e capa de WhatsApp",
+};
+
 export type Emblema = {
   slug: string;
   nome: string;
@@ -16,9 +31,13 @@ export type Emblema = {
   tags: string[]; // palavras para a busca
   alternativa?: boolean; // primeira versão, serve de variação
   nota?: string; // ponto de atenção sobre o arquivo
+  variantes?: Variante[]; // versões extras além da ilustrada
+  baixaResolucao?: boolean; // arquivo com menos de 480 px de largura
 };
 
 const SEMPRE: Quando = { kind: "sempre" };
+const V: Variante[] = [...VARIANTES];
+const SEM = (...dias: number[]): Quando => ({ kind: "semana", dias });
 
 export const EMBLEMAS: Emblema[] = [
   // 01 Campanhas recorrentes
@@ -101,9 +120,23 @@ export const EMBLEMAS: Emblema[] = [
   { slug: "oferta-da-semana", nome: "Oferta da Semana", tipo: "periodo", grupo: "Primeiras versões", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["semanal", "cesta"], alternativa: true },
   { slug: "ofertas-do-dia", nome: "Ofertas do Dia", tipo: "periodo", grupo: "Primeiras versões", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["diaria", "calendario", "hoje"], alternativa: true },
   { slug: "semana-de-ofertas", nome: "Semana de Ofertas", tipo: "periodo", grupo: "Primeiras versões", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["semanal", "etiqueta"], alternativa: true },
+
+  // 12 Prioridade alta (lote 2, com quatro versões cada)
+  { slug: "ceia-de-natal", nome: "Ceia de Natal", tipo: "data", grupo: "Prioridade alta", temas: ["natal"], quando: { kind: "feriado", titulo: "Natal", antes: 21 }, feriados: ["Natal"], tags: ["peru", "chester", "panetone", "mesa farta", "dezembro", "ceia"], variantes: V, baixaResolucao: true },
+  { slug: "dia-da-mulher", nome: "Dia da Mulher", tipo: "data", grupo: "Prioridade alta", temas: [], quando: { kind: "periodo", de: "02-25", ate: "03-08" }, feriados: [], tags: ["8 de marco", "flores", "rosa", "marco"], variantes: V, baixaResolucao: true, nota: "O motor de encarte ainda não tem tema do Dia da Mulher." },
+  { slug: "dia-do-consumidor", nome: "Dia do Consumidor", tipo: "data", grupo: "Prioridade alta", temas: ["ofertas"], quando: { kind: "periodo", de: "03-05", ate: "03-15" }, feriados: [], tags: ["15 de marco", "carrinho", "cesta", "marco"], variantes: V, baixaResolucao: true },
+  { slug: "esquenta-black-friday", nome: "Esquenta Black Friday", tipo: "campanha", grupo: "Prioridade alta", temas: ["black-friday"], quando: { kind: "feriado", titulo: "Black Friday", antes: 30, depois: -14 }, feriados: ["Black Friday"], tags: ["pre black friday", "chama", "novembro", "antecipado"], variantes: V, baixaResolucao: true },
+  { slug: "imperdivel", nome: "Imperdível", tipo: "condicao", grupo: "Prioridade alta", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["megafone", "destaque", "rotulo", "oportunidade"], variantes: V, baixaResolucao: true },
+  { slug: "leve-3-pague-2", nome: "Leve 3 Pague 2", tipo: "condicao", grupo: "Prioridade alta", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["combo", "promocao", "leve mais", "rotulo"], variantes: V, baixaResolucao: true },
+  { slug: "novidade", nome: "Novidade", tipo: "condicao", grupo: "Prioridade alta", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["novo", "lancamento", "estrelas", "rotulo"], variantes: V, baixaResolucao: true },
+  { slug: "oferta-relampago", nome: "Oferta Relâmpago", tipo: "periodo", grupo: "Prioridade alta", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["raio", "urgencia", "poucas horas", "story"], variantes: V, baixaResolucao: true },
+  { slug: "ofertao-de-sabado", nome: "Ofertão de Sábado", tipo: "ofertao", grupo: "Prioridade alta", temas: ["ofertas", "fim-de-semana"], quando: SEM(6), feriados: [], tags: ["sabado", "fim de semana", "calendario"], variantes: V, baixaResolucao: true },
+  { slug: "ofertao-do-mes", nome: "Ofertão do Mês", tipo: "ofertao", grupo: "Prioridade alta", temas: ["ofertas"], quando: SEMPRE, feriados: [], tags: ["mensal", "mes", "calendario", "qualquer mes"], variantes: V, baixaResolucao: true },
+  { slug: "sabado-de-ofertas", nome: "Sábado de Ofertas", tipo: "periodo", grupo: "Prioridade alta", temas: ["fim-de-semana", "ofertas"], quando: SEM(6), feriados: [], tags: ["sabado", "cesta", "fim de semana"], variantes: V, baixaResolucao: true },
+  { slug: "sabado-do-churrasco", nome: "Sábado do Churrasco", tipo: "dia-da-semana", grupo: "Prioridade alta", temas: ["acougue", "fim-de-semana"], quando: SEM(6), feriados: [], tags: ["carne", "grelha", "espeto", "picanha", "cerveja"], variantes: V, baixaResolucao: true },
 ];
 
-export const emblemaPng = (slug: string) => `/emblemas/${slug}.png`;
+export const emblemaPng = (slug: string, variante?: Variante) => `/emblemas/${slug}${variante ? `--${variante}` : ""}.png`;
 export const emblemaThumb = (slug: string) => `/emblemas/t/${slug}.webp`;
 export function emblemaPorSlug(slug: string): Emblema | undefined {
   return EMBLEMAS.find((e) => e.slug === slug);

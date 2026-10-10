@@ -78,6 +78,7 @@ export function quandoTexto(q: Quando): string {
     case "diaDoMes":
       return `Perto do dia ${lista(q.dias.map(String))}${q.antes ? `, a partir de ${q.antes} dias antes` : ""}`;
     case "feriado":
+      if (q.depois && q.depois < 0) return `De ${q.antes} a ${-q.depois} dias antes de ${q.titulo}`;
       return `${q.antes} dias antes de ${q.titulo}${q.depois ? ` até ${q.depois} depois` : ""}`;
     case "periodo":
       return `De ${mmdd(q.de)} a ${mmdd(q.ate)}`;
