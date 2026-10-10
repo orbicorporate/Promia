@@ -64,6 +64,8 @@ describe("catálogo de emblemas", () => {
     const prontos = new Set(EMBLEMAS.map((e) => e.nome));
     for (const p of PLANEJADOS) expect(prontos.has(p.nome)).toBe(false);
     expect(EMBLEMAS).toHaveLength(83);
+    // todos os emblemas foram recriados em alta resolução
+    expect(EMBLEMAS.filter((e) => e.baixaResolucao)).toHaveLength(0);
   });
 
   it("texto da janela que termina antes da data", () => {
