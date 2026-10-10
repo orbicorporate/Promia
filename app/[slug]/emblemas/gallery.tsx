@@ -331,7 +331,8 @@ export function EmblemasGallery({
                 <dd className="font-medium">{aberto.tags.join(", ")}</dd>
               </div>
             </dl>
-            {aberto.baixaResolucao ? <p className="text-xs text-[var(--ink-3)]">Arquivo com cerca de 400 px de largura. Serve bem no cabeçalho de story e feed, mas pode ficar mole em A4. Peça a versão em alta resolução ao gerar os próximos.</p> : null}
+            {aberto.versoesPequenas ? <p className="text-xs text-[var(--ink-3)]">As versões Só texto e Uma cor ainda estão em cerca de 400 px de largura. Ilustrado e Horizontal estão em alta resolução, boas para impressão.</p> : null}
+            {aberto.baixaResolucao ? <p className="text-xs text-[var(--ink-3)]">Arquivo original com menos de 1000 px de largura. Serve no cabeçalho de story e feed, mas fica mole em A4 impresso. Está na lista para refazer em alta resolução.</p> : null}
             {aberto.nota ? <p className="rounded-xl bg-[color-mix(in_srgb,var(--banana)_30%,transparent)] p-3 text-sm">{aberto.nota}</p> : null}
             <a
               href={emblemaPng(aberto.slug, variante ?? undefined)}
