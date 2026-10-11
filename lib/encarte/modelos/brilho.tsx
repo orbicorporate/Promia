@@ -1,3 +1,4 @@
+import { cenarioSvg } from "./cenarios";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { FORMATS } from "../formats";
 import { getPage } from "../paginate";
@@ -145,6 +146,9 @@ export type EstiloFundo = EncarteFundo;
 // Degradê vertical + luz atrás do emblema + textura do estilo + vinheta +
 // granulação fina. Tudo em SVG com filtro (o renderizador desenha).
 export function fundoBrilho(W: number, H: number, t: BT, estilo: EstiloFundo, cx = 0.5, cy = 0.2, tk?: Tokens): string {
+  // cenários desenhados em código (palco, papel, cortinas, festas, departamentos)
+  const cen = cenarioSvg(W, H, estilo);
+  if (cen) return uri(cen);
   // fundos de material: papel, madeira e estúdio claro
   if (estilo === "kraft") return kraft(W, H, tk?.paper ?? "#d9c3a0");
   if (estilo === "madeira") return madeira(W, H, "#a8743a", 1);

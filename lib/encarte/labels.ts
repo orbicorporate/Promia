@@ -36,6 +36,10 @@ export const MODELO_LABELS: Record<EncarteModelo, { label: string; hint: string 
 };
 
 // Fundos dos modelos brilhantes (lib/encarte/modelos/brilho.tsx).
+import { CENARIOS } from "./modelos/cenarios";
+
+const FUNDO_LABELS_CENARIO = Object.fromEntries(CENARIOS.map((c) => [c.id, `${c.id.slice(2)} ${c.nome}`])) as Record<string, string> as Record<Exclude<import("./types").EncarteFundo, "raios" | "bokeh" | "diagonal" | "aros" | "kraft" | "madeira" | "estudio" | "vinheta" | "xadrez" | "feira">, string>;
+
 export const FUNDO_LABELS: Record<import("./types").EncarteFundo, string> = {
   raios: "Raios de luz",
   bokeh: "Luzes desfocadas",
@@ -47,4 +51,5 @@ export const FUNDO_LABELS: Record<import("./types").EncarteFundo, string> = {
   vinheta: "Raios com vinheta",
   xadrez: "Quadriculado",
   feira: "Toldo de feira",
+  ...FUNDO_LABELS_CENARIO,
 };
