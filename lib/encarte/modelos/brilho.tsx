@@ -161,6 +161,29 @@ export function fundoBrilho(W: number, H: number, t: BT, estilo: EstiloFundo, cx
       const a1 = ((i + 1) / n) * Math.PI * 2;
       parts.push(`<path d="M${px} ${py} L${px + Math.cos(a0) * R} ${py + Math.sin(a0) * R} L${px + Math.cos(a1) * R} ${py + Math.sin(a1) * R} Z" fill="#fff" opacity="0.075"/>`);
     }
+  } else if (estilo === "vinheta") {
+    const n = 32;
+    const R = Math.hypot(W, H);
+    for (let i = 0; i < n; i += 2) {
+      const a0 = (i / n) * Math.PI * 2;
+      const a1 = ((i + 1) / n) * Math.PI * 2;
+      parts.push(`<path d="M${px} ${py} L${px + Math.cos(a0) * R} ${py + Math.sin(a0) * R} L${px + Math.cos(a1) * R} ${py + Math.sin(a1) * R} Z" fill="#fff" opacity="0.11"/>`);
+    }
+    parts.push(`<rect width="${W}" height="${H}" fill="url(#v)"/><rect width="${W}" height="${H}" fill="url(#v)"/>`);
+  } else if (estilo === "xadrez") {
+    const q = W / 9;
+    for (let y = 0; y * q < H; y++) for (let x = 0; x < 9; x++) if ((x + y) % 2 === 0) parts.push(`<rect x="${x * q}" y="${y * q}" width="${q}" height="${q}" fill="#fff" opacity="0.07"/>`);
+  } else if (estilo === "feira") {
+    // toldo listrado no topo, com barra recortada em arcos
+    const n = 12;
+    const sw = W / n;
+    const bh = H * 0.065;
+    for (let i = 0; i < n; i++) {
+      const c = i % 2 ? "#FFFFFF" : "#E5412B";
+      parts.push(`<path d="M${i * sw} 0 H${(i + 1) * sw} V${bh} A${sw / 2} ${sw / 2} 0 0 1 ${i * sw} ${bh} Z" fill="${c}"/>`);
+    }
+    parts.push(`<rect width="${W}" height="${bh * 0.35}" fill="#000" opacity="0.12"/>`);
+    for (let i = 0; i < 16; i++) parts.push(`<circle cx="${rand() * W}" cy="${bh + rand() * (H - bh)}" r="${(10 + rand() * 50) * (W / 1080)}" fill="#fff" opacity="${0.05 + rand() * 0.07}" filter="url(#b)"/>`);
   } else if (estilo === "bokeh") {
     for (let i = 0; i < 22; i++) {
       const rr = (18 + rand() * 80) * (W / 1080);
@@ -193,6 +216,18 @@ export function fundoBrilho(W: number, H: number, t: BT, estilo: EstiloFundo, cx
     <rect width="${W}" height="${H}" filter="url(#n)"/>
   </svg>`
   );
+}
+
+// cerca de madeira (rodapé do modelo Cerca)
+export function cercaUri(w: number, h: number): string {
+  const n = Math.max(8, Math.round(w / 70));
+  const pw = w / n;
+  const pk = Array.from({ length: n }, (_, i) => {
+    const x = i * pw + pw * 0.06;
+    const ww = pw * 0.88;
+    return `<path d="M${x} ${h} V${h * 0.2} L${x + ww / 2} 0 L${x + ww} ${h * 0.2} V${h} Z" fill="url(#w)" stroke="#5a3410" stroke-opacity="0.55" stroke-width="2"/>`;
+  }).join("");
+  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><linearGradient id="w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c98d49"/><stop offset="0.5" stop-color="#e0a35e"/><stop offset="1" stop-color="#b57a3a"/></linearGradient></defs>${pk}<rect x="0" y="${h * 0.42}" width="${w}" height="${h * 0.14}" fill="#9a6226"/></svg>`);
 }
 
 // ---------------------------------------------------------------- peças
@@ -336,6 +371,8 @@ export type ConfigModelo = {
   padX?: number;
   cardMaxRatio?: number; // altura máxima do cartão em relação à altura nominal
   heroScale?: number; // fração da altura da página para o emblema
+  cols?: (format: EncarteData["format"]) => number | undefined; // colunas no lugar das do formato
+  rodape?: "escuro" | "cerca"; // rodapé: barra escura ou cerca de madeira com barra branca
   overlap?: number; // quanto a grade sobe sobre o cabeçalho (px de 1080)
 };
 
@@ -347,7 +384,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const H = spec.height;
   const s = W / 1080;
   const cap = spec.capacity.grade;
-  const cols = cap.columns;
+  const cols = cfg.cols?.(data.format) ?? cap.columns;
   const capRows = Math.ceil(cap.perPage / cols);
   const items = page.items.slice(0, cap.perPage);
   const rows = Math.max(1, Math.ceil(items.length / cols));
@@ -364,7 +401,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const heroH = r(H * heroFrac) + spec.safeTop;
   const validH = validity ? r(56 * s) : 0;
   const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
-  const areaH = H - areaTop - footerH - r(14 * s);
+  const areaH = H - areaTop - footerH - r(14 * s) - (cfg.rodape === "cerca" ? r(52 * s) : 0);
   const cardW = r((W - padX * 2 - gap * (cols - 1)) / cols);
   const nominalH = (areaH - gap * (capRows - 1)) / capRows;
   const cardH = r(Math.min(nominalH * (cfg.cardMaxRatio ?? 1.2), (areaH - gap * (rows - 1)) / rows));
@@ -429,7 +466,26 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       </div>
 
       {/* rodapé */}
-      <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${t.barA}, ${t.barB})`, borderTop: `${r(5 * s)}px solid ${t.gold}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
+      {cfg.rodape === "cerca" ? (
+        <>
+          <Img src={cercaUri(W, r(70 * s))} w={W} h={r(70 * s)} style={{ position: "absolute", left: 0, top: H - footerH - r(60 * s) }} />
+          <div style={{ ...row, position: "absolute", left: 0, top: H - footerH + r(10 * s), width: W, height: footerH - r(10 * s), backgroundColor: "#FFFFFF", alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
+            {data.market.logoUrl ? (
+              <div style={{ ...row, width: d, height: d, borderRadius: d, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.bg1}` }}>
+                <Img src={data.market.logoUrl} w={d * 0.82} h={d * 0.82} style={{ objectFit: "contain" }} />
+              </div>
+            ) : (
+              <Selo kind="festonado" w={d} h={d} fill={t.bg1} edge={t.gold} edgeW={3 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: "#FFFFFF" }]} />
+            )}
+            <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+              <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(34 * s), color: t.bg1, letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
+              {addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: t.cardMuted, whiteSpace: "nowrap", lineHeight: 1.15 }}>{addr}</div> : null}
+              {contact ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(26 * s), color: t.bg0, whiteSpace: "nowrap", lineHeight: 1.15 }}>{contact}</div> : null}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${t.barA}, ${t.barB})`, borderTop: `${r(5 * s)}px solid ${t.gold}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
         {data.market.logoUrl ? (
           <div style={{ ...row, width: d, height: d, borderRadius: d, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
             <Img src={data.market.logoUrl} w={d * 0.82} h={d * 0.82} style={{ objectFit: "contain" }} />
@@ -443,6 +499,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
           {contact ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(26 * s), color: t.gold, whiteSpace: "nowrap", lineHeight: 1.15 }}>{contact}</div> : null}
         </div>
       </div>
+      )}
     </div>
   );
   return { element, width: W, height: H, pageIndex: page.index, pageCount: page.total };

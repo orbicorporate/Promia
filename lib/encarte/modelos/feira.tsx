@@ -141,7 +141,8 @@ export function renderFeira(data: EncarteData, pageIndex: number): Pg | null {
   const validity = validityLabel(data.validFrom, data.validUntil);
 
   const lockupH = r(84 * s);
-  const plankH = r((data.format === "quadrado" ? 120 : 168) * s);
+  const em = data.emblemaImg ?? null;
+  const plankH = r((data.format === "quadrado" ? 120 : 168) * s * (em ? 1.55 : 1));
   const subH = sub ? r(48 * s) : 0;
   const headerH = topPad + lockupH + r(14 * s) + plankH + subH + r(18 * s);
   const areaTop = headerH - r(26 * s);
@@ -178,11 +179,22 @@ export function renderFeira(data: EncarteData, pageIndex: number): Pg | null {
         ) : null}
       </div>
 
+      {/* emblema da campanha no lugar da placa */}
+      {em ? (
+        <div style={{ ...row, position: "absolute", left: pad, top: topPad + lockupH + r(14 * s), width: plankW, height: plankH, alignItems: "center", justifyContent: "center" }}>
+          {(() => {
+            const pick = em.horizontal && Math.min(plankW / em.horizontal.w, plankH / em.horizontal.h) ** 2 * em.horizontal.w * em.horizontal.h > Math.min(plankW / em.ilustrado.w, plankH / em.ilustrado.h) ** 2 * em.ilustrado.w * em.ilustrado.h * 1.1 ? em.horizontal : em.ilustrado;
+            const k = Math.min(plankW / pick.w, plankH / pick.h);
+            return <Img src={pick.src} w={pick.w * k} h={pick.h * k} />;
+          })()}
+        </div>
+      ) : null}
+
       {/* placa de madeira com o título */}
-      <div style={{ ...row, position: "absolute", left: pad, top: topPad + lockupH + r(14 * s), width: plankW, height: plankH, transform: "rotate(-1deg)", alignItems: "center", justifyContent: "center", borderRadius: r(18 * s), border: `${r(5 * s)}px solid ${t.ink}`, overflow: "hidden", boxShadow: `${r(8 * s)}px ${r(9 * s)}px 0 ${mix(t.ink, "#000", 0.25)}` }}>
+      {em ? null : <div style={{ ...row, position: "absolute", left: pad, top: topPad + lockupH + r(14 * s), width: plankW, height: plankH, transform: "rotate(-1deg)", alignItems: "center", justifyContent: "center", borderRadius: r(18 * s), border: `${r(5 * s)}px solid ${t.ink}`, overflow: "hidden", boxShadow: `${r(8 * s)}px ${r(9 * s)}px 0 ${mix(t.ink, "#000", 0.25)}` }}>
         <Img src={madeira(plankW, plankH, mix("#8a5a2b", t.main, 0.12), 2)} w={plankW} h={plankH} style={{ position: "absolute", left: 0, top: 0 }} />
         <div style={{ display: "flex", fontFamily: FONT_LILITA, fontSize: fs, color: t.cream, letterSpacing: 1.5 * s, lineHeight: 1, whiteSpace: "nowrap", textShadow: `${r(4 * s)}px ${r(5 * s)}px 0 ${t.ink}` }}>{headline.toUpperCase()}</div>
-      </div>
+      </div>}
 
       {sub ? (
         <div style={{ ...row, position: "absolute", left: pad, top: topPad + lockupH + r(14 * s) + plankH + r(10 * s), width: plankW, height: subH, alignItems: "center", justifyContent: "center" }}>

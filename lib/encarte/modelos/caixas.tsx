@@ -1,7 +1,7 @@
 import { discountPercent, effectiveOldPrice, formatBRL } from "../price";
 import { wrapMeasured } from "../text";
 import { ProductCard } from "./feira";
-import { Foto, NomeProduto, Pilula, PrecoTexto, TagDesconto, col, r, row, type BT, type CardProps } from "./brilho";
+import { Foto, NomeProduto, Pilula, PrecoTexto, SeloPreco, TagDesconto, hsl, col, r, row, type BT, type CardProps } from "./brilho";
 import { Forma } from "./formas";
 import { FONT_BALOO } from "./tipografia";
 
@@ -71,4 +71,74 @@ export function CardBarra({ t, item, w, h, s, wide }: CardProps) {
 // Mercado: o cartão de papel do modelo Feira, sobre qualquer fundo.
 export function CardMercado({ tk, item, w, h, s, index }: CardProps) {
   return <ProductCard t={tk} item={item} w={w} h={h} s={s} tilt={index % 2 === 0 ? -1.2 : 1.1} />;
+}
+
+// Selo: produto grande, nome numa placa escura e selo redondo de preço com
+// aro dourado sobre o canto da foto (referência: Mega Dia das Mães).
+export function CardSelo({ t, item, w, h, s, wide }: CardProps) {
+  const d = r(Math.min(w * (wide ? 0.4 : 0.5), h * (wide ? 0.62 : 0.42)));
+  const size = r(Math.min(30 * s, w / (wide ? 15 : 10)));
+  const plaqueH = r(h * (wide ? 0.34 : 0.2));
+  const old = effectiveOldPrice(item.price, item.oldPrice);
+  const nameW = wide ? w * 0.5 : w * 0.86;
+  const lines = wrapMeasured(item.name, nameW - 24 * s, "baloo800", size, 2);
+  const placa = (
+    <div style={{ ...col, width: r(nameW), minHeight: plaqueH, alignItems: "center", justifyContent: "center", borderRadius: r(16 * s), backgroundImage: `linear-gradient(180deg, ${t.barA}, ${t.barB})`, border: `${r(2.5 * s)}px solid ${t.gold}`, padding: `${r(6 * s)}px 0`, boxShadow: `0 ${r(7 * s)}px ${r(14 * s)}px rgba(0,0,0,0.4)` }}>
+      {lines.map((l, i) => (
+        <div key={i} style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: size, lineHeight: 1.05, color: "#fff", whiteSpace: "nowrap" }}>{l}</div>
+      ))}
+      {old ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(size * 0.7), color: "rgba(255,255,255,0.65)", textDecoration: "line-through", whiteSpace: "nowrap" }}>{`de ${formatBRL(old)}`}</div> : null}
+    </div>
+  );
+  if (wide) {
+    return (
+      <div style={{ ...row, position: "relative", width: r(w), height: r(h), alignItems: "center" }}>
+        <Foto item={item} t={t} w={w * 0.5} h={h * 0.9} shadow={0.5} />
+        <div style={{ ...col, width: r(w * 0.5), alignItems: "center", justifyContent: "center" }}>
+          {placa}
+          <div style={{ display: "flex", marginTop: r(10 * s) }}><SeloPreco t={t} price={item.price} unit={item.unit} d={d} s={s} /></div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ ...col, position: "relative", width: r(w), height: r(h), alignItems: "center" }}>
+      <Foto item={item} t={t} w={w * 0.94} h={h * 0.62} shadow={0.5} />
+      <div style={{ display: "flex", position: "absolute", left: r(w * 0.07), top: r(h - plaqueH - (old ? size * 0.8 : 0) - 4 * s) }}>{placa}</div>
+      <div style={{ display: "flex", position: "absolute", left: r(w - d - w * 0.02), top: r(h * 0.36) }}><SeloPreco t={t} price={item.price} unit={item.unit} d={d} s={s} /></div>
+    </div>
+  );
+}
+
+// Linhas: uma faixa por produto, amarela e menta alternadas, foto à
+// esquerda, nome no meio e preço à direita (referência: hortifrúti).
+export function CardLinhas({ t, item, w, h, s, index }: CardProps) {
+  const amarelo = index % 2 === 0;
+  const bg = amarelo ? "#FFF0A0" : hsl(t.hue, 55, 88);
+  const bg2 = amarelo ? "#FFDD55" : hsl(t.hue, 55, 78);
+  const ink = hsl(t.hue, 55, 12);
+  const pct = discountPercent(item.price, item.oldPrice);
+  const pad = r(12 * s);
+  const photoW = r(h * 1.15);
+  const priceW = r(Math.min(w * 0.36, h * 2.3));
+  const nameW = w - photoW - priceW - pad * 4;
+  const size = r(Math.min(h * 0.3, 36 * s));
+  const lines = wrapMeasured(item.name, nameW, "baloo800", size, 2);
+  const old = effectiveOldPrice(item.price, item.oldPrice);
+  const dark: BT = { ...t, pillA: "#3a3a42", pillB: "#050507", pillEdge: "#000000", pillInk: "#FFFFFF", pillRing: t.gold };
+  return (
+    <div style={{ ...row, position: "relative", width: r(w), height: r(h), alignItems: "center", borderRadius: r(h * 0.28), backgroundImage: `linear-gradient(90deg, ${bg}, ${bg2})`, border: `${r(3 * s)}px solid #FFFFFF`, boxShadow: `0 ${r(6 * s)}px ${r(14 * s)}px rgba(0,0,0,0.35)`, padding: `0 ${pad}px` }}>
+      <Foto item={item} t={t} w={photoW} h={h * 0.9} shadow={0.3} />
+      <div style={{ ...col, width: r(nameW), marginLeft: pad, justifyContent: "center" }}>
+        {lines.map((l, i) => (
+          <div key={i} style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: size, lineHeight: 1.04, color: ink, whiteSpace: "nowrap" }}>{l}</div>
+        ))}
+        {old ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(size * 0.7), color: hsl(t.hue, 20, 36), textDecoration: "line-through", whiteSpace: "nowrap" }}>{`de ${formatBRL(old)}`}</div> : null}
+      </div>
+      <div style={{ display: "flex", position: "absolute", left: r(w - priceW - pad), top: r(h * 0.12) }}>
+        <Pilula t={dark} price={item.price} unit={item.unit} w={priceW} h={r(h * 0.76)} s={s} radius={r(h * 0.2)} />
+      </div>
+      {pct && pct >= 5 ? <div style={{ display: "flex", position: "absolute", left: r(w - priceW - pad - h * 0.5), top: r(-4 * s) }}><TagDesconto t={t} pct={pct} w={h * 0.5} s={s} /></div> : null}
+    </div>
+  );
 }

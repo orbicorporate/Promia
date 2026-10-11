@@ -126,7 +126,7 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
 
   const [logoUrl, emblemaImg, ...images] = await Promise.all([
     load(data.market.logoUrl),
-    data.modelo && data.emblema ? carregarEmblema(data.emblema) : Promise.resolve(null),
+    data.emblema ? carregarEmblema(data.emblema) : Promise.resolve(null),
     ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl, true))),
   ]);
 

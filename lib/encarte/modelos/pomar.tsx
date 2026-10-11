@@ -16,13 +16,13 @@ function caixote(w: number, h: number) {
   return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d79a52"/><stop offset="1" stop-color="#9a6226"/></linearGradient></defs>${rects}</svg>`);
 }
 
-function CardPomar({ t, item, w, h, s, wide }: CardProps) {
+export function CardPomar({ t, item, w, h, s, wide }: CardProps) {
   const pct = discountPercent(item.price, item.oldPrice);
   const old = effectiveOldPrice(item.price, item.oldPrice);
-  const barH = r(h * (wide ? 0.34 : 0.27));
-  const crateH = r(h * 0.3);
+  const barH = r(h * (wide ? 0.25 : 0.27));
+  const crateH = r(h * (wide ? 0.2 : 0.3));
   const crateTop = r(h - barH - crateH + 6 * s);
-  const photoH = r(crateTop + crateH * 0.3);
+  const photoH = r(crateTop + crateH * (wide ? 0.62 : 0.3));
   const size = r(Math.min(30 * s, w / 11));
   const nameW = w * 0.52;
   const lines = wrapMeasured(item.name, nameW, "baloo800", size, 2);
@@ -32,7 +32,7 @@ function CardPomar({ t, item, w, h, s, wide }: CardProps) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={caixote(r(w), crateH)} width={r(w)} height={crateH} alt="" style={{ position: "absolute", left: 0, top: crateTop, width: r(w), height: crateH, borderRadius: r(8 * s) }} />
       <div style={{ display: "flex", justifyContent: "center", width: r(w) }}>
-        <Foto item={item} t={t} w={w * 0.8} h={photoH * 0.97} shadow={0.15} />
+        <Foto item={item} t={t} w={w * (wide ? 0.62 : 0.8)} h={photoH * 0.97} shadow={0.15} />
       </div>
       <div style={{ ...row, position: "absolute", left: 0, top: r(h - barH), width: r(w), height: barH, alignItems: "center", justifyContent: "space-between", padding: `0 ${r(14 * s)}px`, borderRadius: r(16 * s), backgroundImage: `linear-gradient(180deg, ${t.barA}, ${t.barB})`, border: `${r(2.5 * s)}px solid ${t.gold}`, boxShadow: `0 ${r(8 * s)}px ${r(16 * s)}px rgba(0,0,0,0.4)` }}>
         <div style={{ ...col, width: r(nameW) }}>

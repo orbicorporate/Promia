@@ -24,6 +24,9 @@ export const MODELO_LABELS: Record<EncarteModelo, { label: string; hint: string 
   vidro: { label: "Vidro", hint: "Cartões translúcidos com selo festonado de preço" },
   barra: { label: "Barra", hint: "Cartões escuros com etiqueta preta e contorno dourado" },
   mercado: { label: "Mercado", hint: "Cartões de papel da Feira sobre fundo à escolha" },
+  selo: { label: "Selo", hint: "Produto grande com selo redondo de preço dourado" },
+  cerca: { label: "Cerca", hint: "Caixotes, barra de preço e cerca de madeira no rodapé" },
+  linhas: { label: "Linhas", hint: "Faixas amarelas e menta, uma por produto" },
   pomar: { label: "Pomar", hint: "Caixotes e barras de preço" },
 };
 
@@ -36,4 +39,7 @@ export const FUNDO_LABELS: Record<import("./types").EncarteFundo, string> = {
   kraft: "Papel kraft",
   madeira: "Madeira",
   estudio: "Estúdio",
+  vinheta: "Raios com vinheta",
+  xadrez: "Quadriculado",
+  feira: "Toldo de feira",
 };
