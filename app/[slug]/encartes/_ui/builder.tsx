@@ -530,7 +530,7 @@ export function EncarteBuilder({
         </div>
         <div className="space-y-2">
           <h4 className="text-sm font-semibold">Estilo da arte</h4>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid max-h-[28rem] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {([null, ...(Object.keys(MODELO_LABELS) as EncarteModelo[])] as (EncarteModelo | null)[]).map((key) => {
               const active = modelo === key;
               return (

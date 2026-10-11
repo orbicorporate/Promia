@@ -13,7 +13,7 @@ export const ENCARTE_LAYOUTS = ["grade", "destaque", "lista"] as const;
 export type EncarteLayout = (typeof ENCARTE_LAYOUTS)[number];
 
 // Modelo de arte (família visual). Nulo = Clássico (usa o layout).
-export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar", "vidro", "barra", "mercado", "selo", "cerca", "linhas"] as const;
+export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar", "vidro", "barra", "mercado", "selo", "cerca", "linhas", "cx01", "cx02", "cx03", "cx04", "cx05", "cx06", "cx07", "cx08", "cx09", "cx10", "cx11", "cx12", "cx13", "cx14", "cx15", "cx16", "cx17", "cx18", "cx19", "cx20", "cx21", "cx22", "cx23", "cx24"] as const;
 export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
 
 // Fundo da arte (só nos modelos brilhantes; nulo = o fundo padrão do modelo).

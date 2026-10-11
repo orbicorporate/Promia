@@ -4,6 +4,7 @@ import { compor } from "./brilho";
 import { CardBarra, CardLinhas, CardMercado, CardSelo, CardVidro } from "./caixas";
 import { renderPainel } from "./painel";
 import { CardPomar, renderPomar } from "./pomar";
+import { MODELOS_CAIXA } from "./caixas-ref";
 import { renderVitrine } from "./vitrine";
 
 // Registro dos modelos de arte. Cada modelo desenha a página inteira (mesmo
@@ -23,6 +24,7 @@ export const MODELOS: Record<EncarteModelo, { label: string; hint: string; rende
   cerca: { label: "Cerca", hint: "Caixotes, barra de preço e cerca de madeira no rodapé", render: (d, i) => compor(d, i, { estilo: "feira", Card: CardPomar, gap: 22, padX: 34, cardMaxRatio: 1.1, rodape: "cerca" }) },
   linhas: { label: "Linhas", hint: "Faixas amarelas e menta, uma por produto", render: (d, i) => compor(d, i, { estilo: "estudio", Card: CardLinhas, gap: 14, padX: 34, cols: (f) => (f === "a4" ? 2 : 1), cardMaxRatio: 1.0 }) },
   pomar: { label: "Pomar", hint: "Produto sobre caixote de madeira e barra de preço escura", render: renderPomar },
+  ...(MODELOS_CAIXA as Record<Extract<EncarteModelo, `cx${string}`>, { label: string; hint: string; render: (data: EncarteData, pageIndex: number) => Pg | null }>),
 };
 
 export function renderModelo(data: EncarteData, pageIndex: number): Pg | null {
