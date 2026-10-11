@@ -27,11 +27,15 @@ import {
 import { toast } from "sonner";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { FORMATS } from "@/lib/encarte/formats";
+import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
 import { quandoFitsRange } from "@/lib/emblemas/quando";
+
+const FUNDOS_BASE = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as EncarteFundo[];
+const GRUPOS_CENARIO: CenarioGrupo[] = ["Palco", "Papel", "Cortinas", "Festas", "Departamentos"];
 
 export type CatalogProduct = {
   id: string;
@@ -556,11 +560,18 @@ export function EncarteBuilder({
         {modelo && modelo !== "feira" ? (
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Fundo</h4>
-            <div className="flex flex-wrap gap-2">
-              {([null, ...(Object.keys(FUNDO_LABELS) as EncarteFundo[])] as (EncarteFundo | null)[]).map((f) => (
-                <button key={f ?? "padrao"} type="button" aria-pressed={fundo === f} onClick={() => setFundo(f)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors", fundo === f ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
-                  {f ? FUNDO_LABELS[f] : "Do modelo"}
-                </button>
+            <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
+              {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
+                <div key={grupo} className="space-y-1.5">
+                  <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ids.map((f) => (
+                      <button key={f ?? "padrao"} type="button" aria-pressed={fundo === f} onClick={() => setFundo(f)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors", fundo === f ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
+                        {f ? FUNDO_LABELS[f] : "Do modelo"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

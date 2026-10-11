@@ -1,3 +1,4 @@
+import { CENARIO_IDS } from "./modelos/cenarios";
 // Tipos do motor de encarte (tabloide promocional de supermercado).
 //
 // O encarte é desenhado no servidor (lib/encarte/render.tsx + next/og) a
@@ -17,7 +18,7 @@ export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar", "vidro", 
 export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
 
 // Fundo da arte (só nos modelos brilhantes; nulo = o fundo padrão do modelo).
-export const ENCARTE_FUNDOS = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as const;
+export const ENCARTE_FUNDOS = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira", ...CENARIO_IDS] as const;
 export type EncarteFundo = (typeof ENCARTE_FUNDOS)[number];
 
 export function isEncarteFundo(value: unknown): value is EncarteFundo {
