@@ -3,7 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { emblemaPorSlug } from "@/lib/emblemas/catalog";
 import { effectiveOldPrice } from "./price";
 import { DEFAULT_THEME_KEY, isThemeKey } from "./themes";
-import { isEncarteFormat, isEncarteLayout, isEncarteModelo, type EncarteData, type EncarteItem, type EncarteMarket } from "./types";
+import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteData, type EncarteItem, type EncarteMarket } from "./types";
 
 // Lê um encarte salvo do Supabase e devolve os dados prontos para desenhar
 // (ainda com as URLs originais das fotos; ver lib/encarte/images.ts).
@@ -48,7 +48,7 @@ export type LoadedEncarte = {
 export async function loadEncarte(admin: Admin, tabloidId: string): Promise<LoadedEncarte | null> {
   const { data: tabloid, error } = await admin
     .from("tabloids")
-    .select("id, name, headline, subheadline, format, layout, modelo, emblema, theme_key, valid_from, valid_until, market_id")
+    .select("id, name, headline, subheadline, format, layout, modelo, emblema, fundo, theme_key, valid_from, valid_until, market_id")
     .eq("id", tabloidId)
     .maybeSingle();
   if (error) throw error;
@@ -105,6 +105,7 @@ export async function loadEncarte(admin: Admin, tabloidId: string): Promise<Load
       format: isEncarteFormat(tabloid.format) ? tabloid.format : "feed",
       layout: isEncarteModelo(tabloid.modelo) ? "grade" : isEncarteLayout(tabloid.layout) ? tabloid.layout : "grade",
       modelo: isEncarteModelo(tabloid.modelo) ? tabloid.modelo : null,
+      fundo: isEncarteFundo(tabloid.fundo) ? tabloid.fundo : null,
       emblema: tabloid.emblema && emblemaPorSlug(tabloid.emblema) ? tabloid.emblema : null,
       themeKey: isThemeKey(tabloid.theme_key) ? tabloid.theme_key : DEFAULT_THEME_KEY,
       validFrom: tabloid.valid_from,

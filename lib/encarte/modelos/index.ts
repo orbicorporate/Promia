@@ -1,5 +1,7 @@
 import type { EncarteData, EncarteModelo } from "../types";
 import { renderFeira } from "./feira";
+import { compor } from "./brilho";
+import { CardBarra, CardMercado, CardVidro } from "./caixas";
 import { renderPainel } from "./painel";
 import { renderPomar } from "./pomar";
 import { renderVitrine } from "./vitrine";
@@ -14,6 +16,9 @@ export const MODELOS: Record<EncarteModelo, { label: string; hint: string; rende
   feira: { label: "Feira", hint: "Papel kraft, placa de madeira e etiquetas de preço", render: renderFeira },
   vitrine: { label: "Vitrine", hint: "Cartões brancos com brilho, preço em relevo e cores do emblema", render: renderVitrine },
   painel: { label: "Painel", hint: "Produtos grandes soltos sobre fundo de luz e bokeh", render: renderPainel },
+  vidro: { label: "Vidro", hint: "Cartões translúcidos com selo festonado de preço", render: (d, i) => compor(d, i, { estilo: "bokeh", Card: CardVidro, gap: 24, padX: 34 }) },
+  barra: { label: "Barra", hint: "Cartões escuros com etiqueta preta e contorno dourado", render: (d, i) => compor(d, i, { estilo: "diagonal", Card: CardBarra, gap: 24, padX: 34 }) },
+  mercado: { label: "Mercado", hint: "Cartões de papel da Feira sobre fundo à escolha", render: (d, i) => compor(d, i, { estilo: "kraft", Card: CardMercado, gap: 22, padX: 34 }) },
   pomar: { label: "Pomar", hint: "Produto sobre caixote de madeira e barra de preço escura", render: renderPomar },
 };
 

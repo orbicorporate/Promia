@@ -27,8 +27,8 @@ import {
 import { toast } from "sonner";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { FORMATS } from "@/lib/encarte/formats";
-import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS } from "@/lib/encarte/labels";
-import type { EncarteFormat, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
+import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
+import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
 import { quandoFitsRange } from "@/lib/emblemas/quando";
@@ -63,6 +63,7 @@ export type BuilderInitial = {
   layout: EncarteLayout;
   modelo: EncarteModelo | null;
   emblema: string | null;
+  fundo: EncarteFundo | null;
   themeKey: string;
   validFrom: string;
   validUntil: string;
@@ -107,6 +108,7 @@ export function EncarteBuilder({
   const [layout, setLayout] = useState<EncarteLayout>(initial.layout);
   const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
   const [emblema, setEmblema] = useState<string | null>(initial.emblema);
+  const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
   const [validUntil, setValidUntil] = useState(initial.validUntil);
@@ -192,6 +194,7 @@ export function EncarteBuilder({
       layout,
       modelo,
       emblema,
+      fundo,
       themeKey,
       validFrom: validFrom || null,
       validUntil: validUntil || null,
@@ -215,7 +218,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, themeKey, validFrom, validUntil, items, byId]
+    [name, headline, subheadline, format, layout, modelo, emblema, fundo, themeKey, validFrom, validUntil, items, byId]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -287,7 +290,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, fundo, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -550,6 +553,18 @@ export function EncarteBuilder({
           </div>
         </div>
         {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
+        {modelo && modelo !== "feira" ? (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Fundo</h4>
+            <div className="flex flex-wrap gap-2">
+              {([null, ...(Object.keys(FUNDO_LABELS) as EncarteFundo[])] as (EncarteFundo | null)[]).map((f) => (
+                <button key={f ?? "padrao"} type="button" aria-pressed={fundo === f} onClick={() => setFundo(f)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors", fundo === f ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
+                  {f ? FUNDO_LABELS[f] : "Do modelo"}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {modelo && modelo !== "feira" ? (
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Emblema da campanha</h4>
