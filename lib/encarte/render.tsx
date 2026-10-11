@@ -654,7 +654,24 @@ function BrandBar({ ctx, market, m }: { ctx: Ctx; market: EncarteData["market"];
   );
 }
 
-function Hero({ ctx, headline, subheadline, m }: { ctx: Ctx; headline: string; subheadline: string | null; m: Metrics }) {
+function Hero({ ctx, headline, subheadline, m, emblema }: { ctx: Ctx; headline: string; subheadline: string | null; m: Metrics; emblema: EncarteData["emblemaImg"] }) {
+  if (emblema) {
+    const bw = m.W * 0.9;
+    const bh = m.heroH * 0.94;
+    const a = emblema.ilustrado;
+    const b = emblema.horizontal;
+    const fit = (x: { w: number; h: number }) => Math.min(bw / x.w, bh / x.h);
+    const pick = b && fit(b) * fit(b) * b.w * b.h > fit(a) * fit(a) * a.w * a.h * 1.1 ? b : a;
+    const k = fit(pick);
+    return (
+      <div style={{ ...flexCol, position: "relative", width: m.W, height: m.heroH, backgroundColor: ctx.c.headerBg, alignItems: "center", justifyContent: "center" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={patternDataUri(ctx.theme.pattern, m.W, m.heroH, ctx.c.pattern, 0.16)} width={m.W} height={m.heroH} alt="" style={{ position: "absolute", top: 0, left: 0 }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={pick.src} width={round(pick.w * k)} height={round(pick.h * k)} alt="" style={{ width: round(pick.w * k), height: round(pick.h * k) }} />
+      </div>
+    );
+  }
   const innerW = m.W - m.pad * 4;
   const subF = round(clamp(m.heroH * 0.14, 22, 36));
   const subH = subheadline ? round(subF * 1.5) : 0;
@@ -795,7 +812,9 @@ export type RenderedPage = { element: ReactElement; width: number; height: numbe
 export function renderEncartePage(data: EncarteData, pageIndex: number): RenderedPage | null {
   const page = getPage(data, pageIndex);
   if (!page) return null;
-  const m = metrics(data.format);
+  const m0 = metrics(data.format);
+  // com emblema o cabeçalho cresce para o logo da campanha aparecer grande
+  const m = data.emblemaImg ? { ...m0, heroH: Math.round(m0.heroH * 1.55) } : m0;
   const theme = getTheme(data.themeKey);
   const c = resolveThemeColors(theme, data.market);
   // contorno do destaque: a cor do título, ou a da etiqueta quando a do
@@ -829,7 +848,7 @@ export function renderEncartePage(data: EncarteData, pageIndex: number): Rendere
   const element = (
     <div style={{ ...flexCol, width: m.W, height: m.H, backgroundColor: c.bg, fontFamily: FONT_TEXT, color: c.cardText }}>
       <BrandBar ctx={ctx} market={data.market} m={m} />
-      <Hero ctx={ctx} headline={headline} subheadline={subheadline} m={m} />
+      <Hero ctx={ctx} headline={headline} subheadline={subheadline} m={m} emblema={data.emblemaImg ?? null} />
       {validity ? <ValidityRibbon ctx={ctx} label={validity} m={m} /> : null}
       <div style={{ ...flexRow, position: "relative", width: m.W, height: areaH + m.pad * 2, padding: m.pad }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -565,7 +565,7 @@ export function EncarteBuilder({
             </div>
           </div>
         ) : null}
-        {modelo && modelo !== "feira" ? (
+        {
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Emblema da campanha</h4>
             <p className="text-xs text-[var(--ink-3)]">O emblema vira o título do encarte e define as cores do fundo e das etiquetas.</p>
@@ -581,7 +581,7 @@ export function EncarteBuilder({
               ))}
             </div>
           </div>
-        ) : null}
+        }
         <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
           <Segmented
             label="Layout"
