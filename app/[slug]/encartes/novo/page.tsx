@@ -36,6 +36,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     format: "feed",
     layout: "grade",
     modelo: null,
+    emblema: null,
     themeKey,
     validFrom,
     validUntil,
@@ -53,7 +54,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     const admin = createAdminClient();
     const { data: src } = await admin
       .from("tabloids")
-      .select("name, headline, subheadline, format, layout, modelo, theme_key, tabloid_products(product_id, position, promo_price, old_price, highlight, limit_qty, label)")
+      .select("name, headline, subheadline, format, layout, modelo, emblema, theme_key, tabloid_products(product_id, position, promo_price, old_price, highlight, limit_qty, label)")
       .eq("id", copiar)
       .eq("market_id", market.id)
       .maybeSingle();
@@ -66,6 +67,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
         format: isEncarteFormat(src.format) ? src.format : "feed",
         layout: isEncarteLayout(src.layout) ? src.layout : "grade",
         modelo: isEncarteModelo(src.modelo) ? src.modelo : null,
+        emblema: src.emblema ?? null,
         themeKey: isThemeKey(src.theme_key) ? src.theme_key : initial.themeKey,
         items: [...(src.tabloid_products ?? [])]
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))

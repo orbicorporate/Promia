@@ -1,5 +1,6 @@
 import { fetchPublicImage, type FetchedImage } from "@/lib/net";
 import { cutoutProductPhoto } from "./cutout";
+import { carregarEmblema } from "./modelos/emblema";
 import { getPage } from "./paginate";
 import type { EncarteData, EncarteItem } from "./types";
 
@@ -123,14 +124,16 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
     wanted = new Set(page ? [...(page.featured ? [page.featured] : []), ...page.items] : []);
   }
 
-  const [logoUrl, ...images] = await Promise.all([
+  const [logoUrl, emblemaImg, ...images] = await Promise.all([
     load(data.market.logoUrl),
+    data.modelo && data.emblema ? carregarEmblema(data.emblema) : Promise.resolve(null),
     ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl, true))),
   ]);
 
   return {
     ...data,
     market: { ...data.market, logoUrl },
+    emblemaImg,
     items: data.items.map((item, i) => ({ ...item, imageUrl: images[i] })),
   };
 }

@@ -19,4 +19,7 @@ export const ITEM_LABELS = ["Só hoje", "Leve 3 pague 2", "Imperdível", "Preço
 // Modelos de arte (lib/encarte/modelos): nome e descrição para o editor.
 export const MODELO_LABELS: Record<EncarteModelo, { label: string; hint: string }> = {
   feira: { label: "Feira", hint: "Papel kraft, placa de madeira e etiquetas de preço" },
+  vitrine: { label: "Vitrine", hint: "Cartões brancos com brilho, preço em relevo e cores do emblema" },
+  painel: { label: "Painel", hint: "Produtos soltos sobre fundo de luz" },
+  pomar: { label: "Pomar", hint: "Caixotes e barras de preço" },
 };
