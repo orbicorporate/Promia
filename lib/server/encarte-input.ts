@@ -1,5 +1,6 @@
 import { isUuid } from "@/lib/auth";
 import { isISODate } from "@/lib/dates";
+import { emblemaPorSlug } from "@/lib/emblemas/catalog";
 import { isThemeKey } from "@/lib/encarte/themes";
 import { isEncarteFormat, isEncarteLayout, isEncarteModelo, type EncarteFormat, type EncarteLayout, type EncarteModelo } from "@/lib/encarte/types";
 
@@ -24,6 +25,7 @@ export type EncarteInput = {
   format: EncarteFormat;
   layout: EncarteLayout;
   modelo: EncarteModelo | null;
+  emblema: string | null;
   themeKey: string;
   validFrom: string | null;
   validUntil: string | null;
@@ -83,6 +85,7 @@ export function parseEncarteInput(raw: Record<string, unknown>): { ok: true; dat
       format: raw.format,
       layout: isEncarteModelo(raw.modelo) ? "grade" : raw.layout,
       modelo: isEncarteModelo(raw.modelo) ? raw.modelo : null,
+      emblema: typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? raw.emblema : null,
       themeKey: raw.themeKey,
       validFrom,
       validUntil,

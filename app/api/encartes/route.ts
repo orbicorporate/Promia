@@ -26,6 +26,7 @@ export async function POST(req: Request) {
       format: input.format,
       layout: input.layout,
       modelo: input.modelo,
+      emblema: input.emblema,
       theme_key: input.themeKey,
       valid_from: input.validFrom,
       valid_until: input.validUntil,

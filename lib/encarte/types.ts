@@ -13,12 +13,21 @@ export const ENCARTE_LAYOUTS = ["grade", "destaque", "lista"] as const;
 export type EncarteLayout = (typeof ENCARTE_LAYOUTS)[number];
 
 // Modelo de arte (família visual). Nulo = Clássico (usa o layout).
-export const ENCARTE_MODELOS = ["feira"] as const;
+export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar"] as const;
 export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
 
 export function isEncarteModelo(value: unknown): value is EncarteModelo {
   return typeof value === "string" && (ENCARTE_MODELOS as readonly string[]).includes(value);
 }
+
+export type EncarteEmblemaArquivo = { src: string; w: number; h: number };
+export type EncarteEmblemaImg = {
+  slug: string;
+  nome: string;
+  ilustrado: EncarteEmblemaArquivo;
+  horizontal: EncarteEmblemaArquivo | null;
+  cores: { hue: number; sat: number; hue2: number; neutro: boolean; quente: boolean; dourado: number };
+};
 
 export type EncarteItem = {
   name: string;
@@ -55,6 +64,8 @@ export type EncarteData = {
   format: EncarteFormat;
   layout: EncarteLayout;
   modelo?: EncarteModelo | null;
+  emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
+  emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
   themeKey: string;
   validFrom?: string | null; // YYYY-MM-DD
   validUntil?: string | null; // YYYY-MM-DD

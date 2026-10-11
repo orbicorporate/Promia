@@ -30,6 +30,8 @@ import { FORMATS } from "@/lib/encarte/formats";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS } from "@/lib/encarte/labels";
 import type { EncarteFormat, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
+import { EMBLEMAS } from "@/lib/emblemas/catalog";
+import { quandoFitsRange } from "@/lib/emblemas/quando";
 
 export type CatalogProduct = {
   id: string;
@@ -60,6 +62,7 @@ export type BuilderInitial = {
   format: EncarteFormat;
   layout: EncarteLayout;
   modelo: EncarteModelo | null;
+  emblema: string | null;
   themeKey: string;
   validFrom: string;
   validUntil: string;
@@ -103,6 +106,7 @@ export function EncarteBuilder({
   const [format, setFormat] = useState<EncarteFormat>(initial.format);
   const [layout, setLayout] = useState<EncarteLayout>(initial.layout);
   const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
+  const [emblema, setEmblema] = useState<string | null>(initial.emblema);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
   const [validUntil, setValidUntil] = useState(initial.validUntil);
@@ -128,6 +132,14 @@ export function EncarteBuilder({
       .filter((p) => (!category || p.category === category) && (!q || norm(`${p.name} ${p.brand ?? ""} ${p.category ?? ""}`).includes(q)))
       .slice(0, 200);
   }, [catalog, query, category]);
+
+  // emblemas do período do encarte primeiro (pela data de início ou hoje)
+  const emblemasOrdenados = useMemo(() => {
+    const from = validFrom || new Date().toISOString().slice(0, 10);
+    const hit = EMBLEMAS.filter((e) => !e.alternativa && quandoFitsRange(e.quando, from, 7));
+    const rest = EMBLEMAS.filter((e) => !e.alternativa && !hit.includes(e)).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return { hit, rest };
+  }, [validFrom]);
 
   const orderedThemes = useMemo(() => {
     const rank = (k: string) => {
@@ -179,6 +191,7 @@ export function EncarteBuilder({
       format,
       layout,
       modelo,
+      emblema,
       themeKey,
       validFrom: validFrom || null,
       validUntil: validUntil || null,
@@ -202,7 +215,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, themeKey, validFrom, validUntil, items, byId]
+    [name, headline, subheadline, format, layout, modelo, emblema, themeKey, validFrom, validUntil, items, byId]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -274,7 +287,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -537,6 +550,23 @@ export function EncarteBuilder({
           </div>
         </div>
         {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
+        {modelo && modelo !== "feira" ? (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Emblema da campanha</h4>
+            <p className="text-xs text-[var(--ink-3)]">O emblema vira o título do encarte e define as cores do fundo e das etiquetas.</p>
+            <div className="grid max-h-72 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
+              <button type="button" aria-pressed={emblema === null} onClick={() => setEmblema(null)} className={cn("flex min-h-20 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold", emblema === null ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
+                Sem emblema
+              </button>
+              {[...emblemasOrdenados.hit, ...emblemasOrdenados.rest].map((e) => (
+                <button key={e.slug} type="button" aria-pressed={emblema === e.slug} aria-label={e.nome} title={e.nome} onClick={() => setEmblema(e.slug)} className={cn("relative flex min-h-20 items-center justify-center rounded-xl border p-1.5", emblema === e.slug ? "border-[var(--ink)] bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
+                  <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading="lazy" className="max-h-16 w-full object-contain" />
+                  {emblemasOrdenados.hit.includes(e) ? <span className="absolute left-1 top-1 rounded-full bg-[var(--ink)] px-1.5 text-[10px] font-semibold text-white">Agora</span> : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
           <Segmented
             label="Layout"

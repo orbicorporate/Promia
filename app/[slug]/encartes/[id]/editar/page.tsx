@@ -18,7 +18,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
   const admin = createAdminClient();
   const { data: t } = await admin
     .from("tabloids")
-    .select("id, name, headline, subheadline, format, layout, modelo, theme_key, valid_from, valid_until, tabloid_products(product_id, position, promo_price, old_price, highlight, limit_qty, label)")
+    .select("id, name, headline, subheadline, format, layout, modelo, emblema, theme_key, valid_from, valid_until, tabloid_products(product_id, position, promo_price, old_price, highlight, limit_qty, label)")
     .eq("id", id)
     .eq("market_id", market.id)
     .maybeSingle();
@@ -34,6 +34,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     format: isEncarteFormat(t.format) ? t.format : "feed",
     layout: isEncarteLayout(t.layout) ? t.layout : "grade",
     modelo: isEncarteModelo(t.modelo) ? t.modelo : null,
+    emblema: t.emblema ?? null,
     themeKey: isThemeKey(t.theme_key) ? t.theme_key : DEFAULT_THEME_KEY,
     validFrom: t.valid_from ?? "",
     validUntil: t.valid_until ?? "",
