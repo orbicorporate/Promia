@@ -13,8 +13,16 @@ export const ENCARTE_LAYOUTS = ["grade", "destaque", "lista"] as const;
 export type EncarteLayout = (typeof ENCARTE_LAYOUTS)[number];
 
 // Modelo de arte (família visual). Nulo = Clássico (usa o layout).
-export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar"] as const;
+export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar", "vidro", "barra", "mercado"] as const;
 export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
+
+// Fundo da arte (só nos modelos brilhantes; nulo = o fundo padrão do modelo).
+export const ENCARTE_FUNDOS = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio"] as const;
+export type EncarteFundo = (typeof ENCARTE_FUNDOS)[number];
+
+export function isEncarteFundo(value: unknown): value is EncarteFundo {
+  return typeof value === "string" && (ENCARTE_FUNDOS as readonly string[]).includes(value);
+}
 
 export function isEncarteModelo(value: unknown): value is EncarteModelo {
   return typeof value === "string" && (ENCARTE_MODELOS as readonly string[]).includes(value);
@@ -64,6 +72,7 @@ export type EncarteData = {
   format: EncarteFormat;
   layout: EncarteLayout;
   modelo?: EncarteModelo | null;
+  fundo?: EncarteFundo | null;
   emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
   themeKey: string;

@@ -5,7 +5,7 @@ import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isUuid } from "@/lib/auth";
 import { isThemeKey, DEFAULT_THEME_KEY } from "@/lib/encarte/themes";
-import { isEncarteFormat, isEncarteLayout, isEncarteModelo } from "@/lib/encarte/types";
+import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } from "@/lib/encarte/types";
 import { EncarteBuilder, type BuilderInitial } from "../../_ui/builder";
 import { loadBuilderData } from "../../_ui/builder-data";
 
@@ -18,7 +18,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
   const admin = createAdminClient();
   const { data: t } = await admin
     .from("tabloids")
-    .select("id, name, headline, subheadline, format, layout, modelo, emblema, theme_key, valid_from, valid_until, tabloid_products(product_id, position, promo_price, old_price, highlight, limit_qty, label)")
+    .select("id, name, headline, subheadline, format, layout, modelo, emblema, fundo, theme_key, valid_from, valid_until, tabloid_products(product_id, position, promo_price, old_price, highlight, limit_qty, label)")
     .eq("id", id)
     .eq("market_id", market.id)
     .maybeSingle();
@@ -35,6 +35,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     layout: isEncarteLayout(t.layout) ? t.layout : "grade",
     modelo: isEncarteModelo(t.modelo) ? t.modelo : null,
     emblema: t.emblema ?? null,
+    fundo: isEncarteFundo(t.fundo) ? t.fundo : null,
     themeKey: isThemeKey(t.theme_key) ? t.theme_key : DEFAULT_THEME_KEY,
     validFrom: t.valid_from ?? "",
     validUntil: t.valid_until ?? "",

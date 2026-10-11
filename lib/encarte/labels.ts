@@ -21,5 +21,19 @@ export const MODELO_LABELS: Record<EncarteModelo, { label: string; hint: string 
   feira: { label: "Feira", hint: "Papel kraft, placa de madeira e etiquetas de preço" },
   vitrine: { label: "Vitrine", hint: "Cartões brancos com brilho, preço em relevo e cores do emblema" },
   painel: { label: "Painel", hint: "Produtos soltos sobre fundo de luz" },
+  vidro: { label: "Vidro", hint: "Cartões translúcidos com selo festonado de preço" },
+  barra: { label: "Barra", hint: "Cartões escuros com etiqueta preta e contorno dourado" },
+  mercado: { label: "Mercado", hint: "Cartões de papel da Feira sobre fundo à escolha" },
   pomar: { label: "Pomar", hint: "Caixotes e barras de preço" },
+};
+
+// Fundos dos modelos brilhantes (lib/encarte/modelos/brilho.tsx).
+export const FUNDO_LABELS: Record<import("./types").EncarteFundo, string> = {
+  raios: "Raios de luz",
+  bokeh: "Luzes desfocadas",
+  diagonal: "Faixas diagonais",
+  aros: "Aros",
+  kraft: "Papel kraft",
+  madeira: "Madeira",
+  estudio: "Estúdio",
 };

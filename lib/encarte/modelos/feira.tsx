@@ -48,7 +48,7 @@ function Lockup({ t, name, s, logo }: { t: Tokens; name: string; s: number; logo
   );
 }
 
-function ProductCard({ t, item, w, h, s, tilt }: { t: Tokens; item: EncarteItem; w: number; h: number; s: number; tilt: number }) {
+export function ProductCard({ t, item, w, h, s, tilt }: { t: Tokens; item: EncarteItem; w: number; h: number; s: number; tilt: number }) {
   const photoH = h * (w / h > 1.1 ? 0.46 : 0.52);
   const bodyTop = h * 0.17;
   const pad = w * 0.06;

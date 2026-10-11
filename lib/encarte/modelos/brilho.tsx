@@ -5,11 +5,11 @@ import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix }
 import { marketInitials } from "../render";
 import { getTheme } from "../themes";
 import { measureText, validityLabel, wrapMeasured } from "../text";
-import type { EncarteData, EncarteItem, EncarteMarket } from "../types";
+import type { EncarteData, EncarteFundo, EncarteItem, EncarteMarket } from "../types";
 import type { CoresEmblema } from "./emblema";
 import { Selo, fitFont } from "./formas";
-import { tokensFor } from "./paleta";
-import { sombraChao } from "./texturas";
+import { tokensFor, type Tokens } from "./paleta";
+import { estudio, kraft, madeira, sombraChao } from "./texturas";
 import { FONT_ANTON, FONT_BALOO, FONT_LILITA } from "./tipografia";
 
 // Kit dos modelos "brilhantes": fundo com degradê forte, luz e raios,
@@ -140,11 +140,15 @@ function rng(seed: number) {
   };
 }
 
-export type EstiloFundo = "raios" | "bokeh" | "diagonal" | "aros";
+export type EstiloFundo = EncarteFundo;
 
 // Degradê vertical + luz atrás do emblema + textura do estilo + vinheta +
 // granulação fina. Tudo em SVG com filtro (o renderizador desenha).
-export function fundoBrilho(W: number, H: number, t: BT, estilo: EstiloFundo, cx = 0.5, cy = 0.2): string {
+export function fundoBrilho(W: number, H: number, t: BT, estilo: EstiloFundo, cx = 0.5, cy = 0.2, tk?: Tokens): string {
+  // fundos de material: papel, madeira e estúdio claro
+  if (estilo === "kraft") return kraft(W, H, tk?.paper ?? "#d9c3a0");
+  if (estilo === "madeira") return madeira(W, H, "#a8743a", 1);
+  if (estilo === "estudio") return estudio(W, H, t.bg0, 0.3);
   const rand = rng(Math.round(t.hue * 7 + W));
   const px = W * cx;
   const py = H * cy;
@@ -323,7 +327,7 @@ export function Titulo3D({ text, w, h, s, t }: { text: string; w: number; h: num
 
 // ---------------------------------------------------------------- página
 
-export type CardProps = { t: BT; item: EncarteItem; w: number; h: number; s: number; wide: boolean; index: number };
+export type CardProps = { t: BT; tk: Tokens; item: EncarteItem; w: number; h: number; s: number; wide: boolean; index: number };
 
 export type ConfigModelo = {
   estilo: EstiloFundo;
@@ -347,6 +351,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const capRows = Math.ceil(cap.perPage / cols);
   const items = page.items.slice(0, cap.perPage);
   const rows = Math.max(1, Math.ceil(items.length / cols));
+  const tk = tokensFor(data.themeKey, data.market);
   const t = brilhoTokens(data.emblemaImg?.cores ?? null, data.market, data.themeKey);
   const theme = getTheme(data.themeKey);
   const headline = (data.headline && data.headline.trim()) || theme.headline;
@@ -391,7 +396,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       <div key={rIdx} style={{ ...row, justifyContent: slice.length < cols ? "center" : "space-between", marginTop: rIdx === 0 ? 0 : gap }}>
         {slice.map((it, i) => (
           <div key={i} style={{ display: "flex", marginLeft: slice.length < cols && i > 0 ? gap : 0 }}>
-            {cfg.Card({ t, item: it, w: cardW, h: cardH, s, wide, index: rIdx * cols + i })}
+            {cfg.Card({ t, tk, item: it, w: cardW, h: cardH, s, wide, index: rIdx * cols + i })}
           </div>
         ))}
       </div>
@@ -404,7 +409,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   const element = (
     <div style={{ ...col, position: "relative", width: W, height: H, backgroundColor: t.bg1, fontFamily: FONT_BALOO }}>
-      <Img src={fundoBrilho(W, H, t, cfg.estilo, cx, cy)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
+      <Img src={fundoBrilho(W, H, t, data.fundo ?? cfg.estilo, cx, cy, tk)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
 
       {/* título: emblema da campanha ou texto em 3D */}
       <div style={{ ...row, position: "absolute", left: 0, top: spec.safeTop + r(6 * s), width: W, height: heroH - spec.safeTop, alignItems: "center", justifyContent: "center" }}>
