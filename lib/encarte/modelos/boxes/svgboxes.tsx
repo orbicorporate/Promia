@@ -26,7 +26,7 @@ function Camadas({ id, w, h, under, over }: { id: string; w: number; h: number; 
     <Shell w={w} h={h}>
       <img src={uri(d.base)} width={r(w)} height={r(h)} style={{ position: "absolute", left: 0, top: 0, width: r(w), height: r(h) }} />
       {under}
-      <img src={uri(d.top)} width={r(w)} height={r(h)} style={{ position: "absolute", left: 0, top: 0, width: r(w), height: r(h) }} />
+      {d.top ? <img src={uri(d.top)} width={r(w)} height={r(h)} style={{ position: "absolute", left: 0, top: 0, width: r(w), height: r(h) }} /> : null}
       {over}
     </Shell>
   );
@@ -116,6 +116,64 @@ export function SvgBox03({ t, item, w, h }: BoxProps): ReactElement {
             <Txt text="OFERTA" size={sel.h * 0.2} color="#D3121D" font={FONT_ANTON} />
           </div>
         )}
+      </Shell>
+    )} />
+  );
+}
+
+// ---- cx04..cx24: componente guiado por dados ----
+type Cfg = {
+  nome: string; preco: string; accent?: string; antes?: string; selo?: string;
+  align?: "center" | "flex-start"; lines?: number; nameK?: number; priceK?: number; shadow?: boolean;
+};
+
+const CFG: Record<string, Cfg> = {
+  cx04: { nome: "#F3D98B", preco: "#141414", selo: "#141414", nameK: 0.5 },
+  cx05: { nome: "#FFFFFF", preco: "#0A2F6E", align: "flex-start" },
+  cx06: { nome: "#7A2E00", preco: "#FFFFFF", accent: "#FFFFFF" },
+  cx07: { nome: "#5A1015", preco: "#F5E6C8", accent: "#F5E6C8" },
+  cx08: { nome: "#0B2E4B", preco: "#FFFFFF", accent: "#FFFFFF", align: "flex-start" },
+  cx09: { nome: "#2A0050", preco: "#2A0050", accent: "#2A0050" },
+  cx10: { nome: "#FFFFFF", preco: "#FFFFFF", accent: "#F2D675", nameK: 0.6 },
+  cx11: { nome: "#FFFFFF", preco: "#FFFFFF", accent: "#FFFFFF" },
+  cx12: { nome: "#0B2A6B", preco: "#FFFFFF", accent: "#FFFFFF", align: "flex-start" },
+  cx13: { nome: "#1A1A1A", preco: "#1A1A1A", accent: "#1A1A1A", align: "flex-start" },
+  cx14: { nome: "#FFFFFF", preco: "#2F4A2A", accent: "#2F4A2A", align: "flex-start" },
+  cx15: { nome: "#0E2F5A", preco: "#0E2F5A", accent: "#0E2F5A" },
+  cx16: { nome: "#5A0F1B", preco: "#FFFFFF", accent: "#FFFFFF", align: "flex-start" },
+  cx17: { nome: "#E8D3A2", preco: "#E8D3A2", accent: "#E8D3A2" },
+  cx18: { nome: "#FFFFFF", preco: "#FFFFFF", accent: "#FFFFFF" },
+  cx19: { nome: "#7A2F12", preco: "#FFFFFF", accent: "#FFFFFF" },
+  cx20: { nome: "#1F4D2E", preco: "#1F4D2E", accent: "#1F4D2E", align: "flex-start" },
+  cx21: { nome: "#1A1A1A", preco: "#D3121D", accent: "#D3121D", selo: "#FFFFFF" },
+  cx22: { nome: "#3A2A22", preco: "#3A2A22", accent: "#3A2A22" },
+  cx23: { nome: "#12544F", preco: "#12544F", accent: "#12544F", align: "flex-start" },
+  cx24: { nome: "#3A2A22", preco: "#B8481A", accent: "#B8481A" },
+};
+
+export function SvgBoxN({ id, t, item, w, h }: BoxProps & { id: string }): ReactElement {
+  const { box } = useSlots(id, w, h);
+  const c = CFG[id];
+  const f = box("foto")!;
+  const n = box("nome")!;
+  const p = box("preco")!;
+  const sel = box("selo");
+  const pc = pct(item);
+  const al = c.align ?? "center";
+  return (
+    <Camadas id={id} w={w} h={h} under={<Ph item={item} t={t} x={f.x} y={f.y} w={f.w} h={f.h} />} over={(
+      <Shell w={w} h={h} style={{ position: "absolute", left: 0, top: 0 }}>
+        <div style={abs(n.x, n.y, n.w, n.h, { alignItems: "center", justifyContent: al === "center" ? "center" : "flex-start" })}>
+          <Nome item={item} w={n.w} size={n.h * (c.nameK ?? (n.h > 120 ? 0.3 : n.w < 250 ? 0.5 : 0.85))} color={c.nome} align={al} lines={n.h > 120 ? 3 : n.w < 250 ? 2 : 1} gap={0.96} />
+        </div>
+        <div style={abs(p.x, p.y, p.w, p.h, { alignItems: "center", justifyContent: al === "center" ? "center" : "flex-start" })}>
+          <Preco item={item} maxW={p.w * 0.95} maxH={p.h * 1.02} color={c.preco} accent={c.accent} />
+        </div>
+        {sel ? (
+          <div style={abs(sel.x, sel.y, sel.w, sel.h, { alignItems: "center", justifyContent: "center" })}>
+            <Txt text={pc ? `-${pc}%` : "OFERTA"} size={sel.h * 0.7} color={c.selo ?? "#141414"} font={FONT_ANTON} ls={1} />
+          </div>
+        ) : null}
       </Shell>
     )} />
   );
