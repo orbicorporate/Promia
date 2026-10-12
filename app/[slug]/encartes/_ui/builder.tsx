@@ -861,6 +861,11 @@ export function EncarteBuilder({
           )}
         </AnimatePresence>
         {!previewUrl && !previewError && <div className="esqueleto absolute inset-0 rounded-none" />}
+        {items.length === 0 && previewUrl && !previewError && (
+          <span className="vidro-forte absolute inset-x-3 bottom-3 rounded-2xl px-3 py-2 text-center text-xs font-medium">
+            Exemplo com produtos de mentira. Escolha os seus no passo Produtos.
+          </span>
+        )}
         {previewError && (
           <div className="absolute inset-0 grid place-items-center p-6 text-center">
             <p className="text-sm text-[var(--ink-2)]">

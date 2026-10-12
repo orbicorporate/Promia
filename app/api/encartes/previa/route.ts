@@ -6,6 +6,7 @@ import { pageCount } from "@/lib/encarte/paginate";
 import { renderEncartePng } from "@/lib/encarte/png";
 import { sanitizePreviewInput } from "@/lib/encarte/sanitize";
 import sharp from "sharp";
+import { itensDeExemplo } from "@/lib/encarte/demo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -48,7 +49,10 @@ export async function POST(req: Request) {
     marketCache.set(marketId, { at: Date.now(), row: data as unknown as Record<string, unknown> });
   }
 
-  const data = { ...parsed.data, id: "previa", market: marketRowToEncarte(market) };
+  // encarte vazio: mostra produtos de exemplo no estilo escolhido
+  const vazio = parsed.data.items.length === 0;
+  const exemplo = vazio ? await itensDeExemplo() : null;
+  const data = { ...parsed.data, ...(exemplo ? { items: exemplo } : {}), id: "previa", market: marketRowToEncarte(market) };
   const total = pageCount(data);
   if (pageIndex >= total) return jsonError(404, `Esse encarte tem ${total} página${total > 1 ? "s" : ""}.`);
 
