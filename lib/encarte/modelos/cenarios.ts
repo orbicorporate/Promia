@@ -2,12 +2,42 @@
 // referência: palco, papel, cortinas, festas e departamentos. Sem arquivos de
 // imagem. Cada cenário tem cores próprias; o emblema vai por cima.
 
+import { MALHAS, MALHA_COLS, MALHA_ROWS, PISOS } from "./cenarios-malha";
+
 export type CenarioGrupo = "Palco" | "Papel" | "Cortinas" | "Festas" | "Departamentos";
-type Fam = "palco" | "papel" | "cortina" | "depto" | "festa";
+type Fam = "palco" | "papel" | "cortina" | "depto" | "festa" | "malha";
 type Mot = [string, ...string[]];
 type Def = { id: string; nome: string; grupo: CenarioGrupo; fam: Fam; c: [string, string, string]; banda?: string; mot?: Mot[] };
 
 const D = (id: string, nome: string, grupo: CenarioGrupo, fam: Fam, c: [string, string, string], banda?: string, mot?: Mot[]): Def => ({ id, nome, grupo, fam, c, banda, mot });
+
+// motivos por departamento (preenchido abaixo, depois de MOT)
+const MOT_DEPTO: Record<string, Mot[]> = {
+  dp01: [["raiosSol"], ["ramo", "#8ad63a", "#2f7a22"], ["ondaPiso", "#c8e87a"]],
+  dp02: [["raiosSol"], ["ramo", "#7ab83a", "#3a7a22", "ervas"], ["terra"]],
+  dp03: [["seda", "#ffffff"], ["brilhos", "#ffffff"], ["ondaPiso", "#ffd0d8"]],
+  dp04: [["geo", "#1a2640", "#d9895a"], ["ondaPiso", "#e8a070"]],
+  dp05: [["rasgadoCanto", "#f6ecd6", "#a8161c"], ["ondaPiso", "#e8c070"]],
+  dp06: [["ramo", "#7a8a3a", "#3a4a1a", "ervas"], ["luzLado", "#ffb85a"], ["ondaPiso", "#ffb060"]],
+  dp07: [["espuma"], ["raiosAgua"], ["ondaPiso", "#ffffff"]],
+  dp08: [["seda", "#a8d0ff"], ["brilhos", "#ffffff"], ["ondaPiso", "#ffe070"]],
+  dp09: [["seda", "#ffffff"], ["brilhos", "#ffffff"], ["ondaPiso", "#9fd0ff"]],
+  dp10: [["folhaCanto", "#f26a3a", "#7ab03a"]],
+  dp11: [["toldo", "#1f5a35", "#ffffff"], ["ramo", "#5a8a2a", "#1f4a18"], ["ondaPiso", "#f8e8a0"]],
+  dp12: [["rasgadoCanto", "#f3e0c4", "#b8501a"], ["ramo", "#a8602a", "#6a3010", "ervas"]],
+  dp13: [["caustica"], ["raiosAgua"], ["ondaPiso", "#7ae8ff"]],
+  dp14: [["cristais", "#b898f0"], ["brilhos", "#ffffff"], ["ondaPiso", "#c8b8ff"]],
+  dp15: [["diagonais", "#14203f", "#e0a43a"], ["ondaPiso", "#ffd070"]],
+  dp16: [["espuma"], ["gotas"], ["ondaPiso", "#4aa8ff"]],
+  dp17: [["flores", "#e8a0b8", "#fbe0e8"], ["curvasLado", "#e8b0c0"]],
+  dp18: [["bolasCanto", "#e8174f", "#ffd02a"], ["curvasLado", "#f4c040"], ["ondaPiso", "#ff4a7a"]],
+  dp19: [["ramo", "#7a7a2a", "#4a5a18", "oliva"], ["curvasLado", "#9a9a4a"]],
+  dp20: [["seda", "#ffd8e0"], ["brilhos", "#ffffff"], ["bokeh"], ["ondaPiso", "#ffc8d8"]],
+  dp21: [["pontosLaranja"], ["curvasLado", "#5a7a3a"], ["ondaPiso", "#ffb860"]],
+  dp22: [["flores", "#f6c8b0", "#fff2ea"], ["ondaPiso", "#bfe0cc"]],
+  dp23: [["origami", "#1f4fe0", "#ff7a4a"], ["ondaPiso", "#4a8aff"]],
+  dp24: [["cantosOuro"], ["brilhos", "#e8c872"], ["ondaPiso", "#d9b45a"]],
+};
 
 export const CENARIOS: Def[] = [
   // palco com piso
@@ -106,31 +136,8 @@ export const CENARIOS: Def[] = [
   D("fs39", "Pétalas", "Festas", "festa", ["#fad4d8", "#f4b8c4", "#a85a70"], undefined, [["petalas", "#f08aa8"], ["seda", "#ffffff"]]),
   D("fs40", "Sol vermelho", "Festas", "festa", ["#f02a12", "#c40a0a", "#4a0404"], undefined, [["raios"]]),
 
-  // departamentos
-  D("dp49", "Legumes", "Departamentos", "depto", ["#f2f6d8", "#d6e6b0", "#b4d088"], "#1f5a2a", [["folhas", "#7ed04a", "#2a7a26"]]),
-  D("dp50", "Carnes", "Departamentos", "depto", ["#f8e8da", "#f1d8c8", "#e0b8a0"], "#7a1a24", [["ripas"], ["pontos", "#8a1a24"]]),
-  D("dp51", "Limpeza", "Departamentos", "depto", ["#e4f4ff", "#cfe8fb", "#a8d4f4"], "#1a4fb8", [["bolhas"], ["respingo"]]),
-  D("dp52", "Frutas", "Departamentos", "depto", ["#fff0d0", "#fbe3b8", "#f8cf94"], "#e8503a", [["folhas", "#6cc04a", "#2a7a26"], ["frutas"]]),
-  D("dp53", "Padaria", "Departamentos", "depto", ["#f8ead0", "#f3dfc0", "#e6c898"], "#b84a2a", [["trigo"]]),
-  D("dp54", "Laticínios", "Departamentos", "depto", ["#f0f8ff", "#e4f1fb", "#c4def4"], "#1a4a9a", [["respingo"]]),
-  D("dp55", "Verduras", "Departamentos", "depto", ["#e4f2cc", "#d4e8b8", "#b4d494"], "#2a6a2a", [["folhas", "#8ad050", "#2a8a2a"]]),
-  D("dp56", "Peixaria", "Departamentos", "depto", ["#c8f0fa", "#aee4f2", "#7cd0e8"], "#0a5a8a", [["raiosAgua"]]),
-  D("dp57", "Mercearia", "Departamentos", "depto", ["#fbecc0", "#f6e0a0", "#ecc870"], "#c8901a", [["graos"]]),
-  D("dp58", "Bebidas", "Departamentos", "depto", ["#bff0fb", "#9fe0f2", "#60c4e8"], "#0a5a8a", [["gelo"], ["gotas"]]),
-  D("dp59", "Congelados", "Departamentos", "depto", ["#eceefd", "#dde0fb", "#bcc4f4"], "#2a3aa0", [["flocos"]]),
-  D("dp60", "Frios", "Departamentos", "depto", ["#fde8e4", "#fbdcd8", "#f4bcb8"], "#8a1a30", [["seda", "#f08a98"]]),
-  D("dp61", "Higiene", "Departamentos", "depto", ["#d4f2fc", "#bfeaf8", "#8adaf0"], "#0a8a98", [["bolhas"]]),
-  D("dp62", "Beleza", "Departamentos", "depto", ["#fbe4e4", "#f6d6d6", "#ecb8bc"], "#8a3a5a", [["seda", "#e8a0b0"], ["perolas"]]),
-  D("dp63", "Pet", "Departamentos", "depto", ["#ffe6b8", "#ffd9a0", "#ffc070"], "#d0701a", [["patas"]]),
-  D("dp64", "Bazar", "Departamentos", "depto", ["#f2f4f8", "#e8ecf2", "#d4dae6"], "#1a3fa0", [["diagonais", "#1a3fa0", "#f2c04a"]]),
-  D("dp65", "Bebês", "Departamentos", "depto", ["#fff0e4", "#fde4d0", "#f8d0b4"], "#e08a60", [["nuvens"]]),
-  D("dp66", "Saudáveis", "Departamentos", "depto", ["#f8f2c8", "#f3eab8", "#e8dc94"], "#5a7a2a", [["folhas", "#8ab83a", "#3a6a22"], ["graos"]]),
-  D("dp67", "Doces", "Departamentos", "depto", ["#fde8f0", "#fbd8e4", "#f4b8cc"], "#a8185a", [["perolas"], ["seda", "#f04a8a"]]),
-  D("dp68", "Churrasco", "Departamentos", "depto", ["#5a5450", "#403a36", "#221e1c"], "#0a0808", [["brasas"]]),
-  D("dp69", "Mulher", "Departamentos", "depto", ["#fbe2e6", "#f9d6dc", "#f0b4c0"], "#7a1a38", [["petalas", "#f08aa8"]]),
-  D("dp70", "Homem", "Departamentos", "depto", ["#cfdae6", "#b8c8d8", "#8aa0b8"], "#20283a", [["diagonais", "#2a3f6a", "#8aa4c4"]]),
-  D("dp71", "Casa", "Departamentos", "depto", ["#fbe6c8", "#f5dcb8", "#ecc490"], "#b8501a", [["cestos"]]),
-  D("dp72", "Gourmet", "Departamentos", "depto", ["#4a4440", "#2e2a28", "#121010"], "#050404", [["linhasOuro"], ["brilhos", "#e8c872"]]),
+  // departamentos: malha de cores amostrada das referências + motivos em vetor
+  ...MALHAS.map(([id, nome]) => D(id, ({ Acougue: "Açougue", Laticinios: "Laticínios", Saudaveis: "Saudáveis", Bebe: "Bebê" } as Record<string, string>)[nome] ?? nome, "Departamentos", "malha", ["#fff", "#fff", "#fff"], undefined, MOT_DEPTO[id] ?? [])),
 ];
 
 export const CENARIO_IDS = CENARIOS.map((c) => c.id);
@@ -537,6 +544,194 @@ const MOT: Record<string, Motivo> = {
     for (let i = 0; i < 40; i++) s += `<path d="M${r() * W} ${r() * 260 * u} q${30 * u} ${-20 * u} ${60 * u} 0" stroke="#fff" stroke-width="${2 * u}" fill="none" opacity="${0.15 + r() * 0.3}"/>`;
     return s;
   },
+
+  raiosSol: ({ W, H, u, r }) => {
+    let s = `<defs><radialGradient id="sg" cx="0.5" cy="0" r="0.6"><stop offset="0" stop-color="#fff8c0" stop-opacity="0.95"/><stop offset="1" stop-color="#fff8c0" stop-opacity="0"/></radialGradient></defs><ellipse cx="${W / 2}" cy="0" rx="${W * 0.34}" ry="${H * 0.2}" fill="url(#sg)"/>`;
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+      const a = (0.12 + (i / (n - 1)) * 0.76) * Math.PI;
+      const L = H * (0.35 + r() * 0.3);
+      const a2 = a + 0.03;
+      s += `<polygon points="${W / 2},0 ${W / 2 + Math.cos(a) * L},${Math.sin(a) * L} ${W / 2 + Math.cos(a2) * L},${Math.sin(a2) * L}" fill="#fff6b8" opacity="${0.1 + r() * 0.12}" filter="url(#bl3)"/>`;
+    }
+    for (let i = 0; i < 26; i++) s += `<circle cx="${W * 0.15 + r() * W * 0.7}" cy="${r() * H * 0.2}" r="${(6 + r() * 26) * u}" fill="#fff4b0" opacity="${0.15 + r() * 0.3}" filter="url(#bl2)"/>`;
+    return s;
+  },
+  ramo: ({ W, H, u, r }, [c1 = "#8ad63a", c2 = "#2f7a22", tipo = "folha"]) => {
+    let s = "";
+    const folha = (x: number, y: number, len: number, ang: number, desf: boolean) => {
+      const w = tipo === "ervas" ? len * 0.42 : tipo === "oliva" ? len * 0.16 : len * 0.34;
+      const tom = r() > 0.5 ? c1 : mix(c1, c2, 0.55);
+      const f = desf ? ` filter="url(#bl2)"` : "";
+      s += `<g transform="translate(${x} ${y}) rotate(${ang})"${f}><path d="M0 0 C${w} ${-len * 0.25} ${w} ${-len * 0.75} 0 ${-len} C${-w} ${-len * 0.75} ${-w} ${-len * 0.25} 0 0 Z" fill="${tom}"/><path d="M0 0 C${w} ${-len * 0.25} ${w} ${-len * 0.75} 0 ${-len} L0 0 Z" fill="${lighten(tom, 0.3)}" opacity="0.65"/><path d="M0 0 L0 ${-len * 0.95}" stroke="${darken(tom, 0.35)}" stroke-width="${len * 0.02}" opacity="0.7"/></g>`;
+    };
+    for (const side of [0, 1]) {
+      const dir = side ? -1 : 1;
+      for (let b = 0; b < 6; b++) {
+        const sx = side ? W + 10 * u : -10 * u;
+        const sy = (10 + b * 48 + r() * 40) * u;
+        const base = 25 + b * 15 + r() * 30;
+        const L = (240 + r() * 220) * u;
+        const ca = (base * Math.PI) / 180;
+        const ex = sx + dir * Math.cos(ca) * L;
+        const ey = sy + Math.sin(ca) * L;
+        s += `<path d="M${sx} ${sy} Q${(sx + ex) / 2 + dir * 20 * u} ${(sy + ey) / 2 - 24 * u} ${ex} ${ey}" stroke="${darken(c2, 0.3)}" stroke-width="${3 * u}" fill="none" opacity="0.85"/>`;
+        const k = 10;
+        for (let i = 1; i <= k; i++) {
+          const t = i / k;
+          const x = sx + (ex - sx) * t;
+          const y = sy + (ey - sy) * t;
+          const len = (60 + r() * 55) * u * (tipo === "oliva" ? 1.1 : 1);
+          const ang = (side ? -1 : 1) * (35 + r() * 70) * (i % 2 ? 1 : -1) + (side ? 0 : 0);
+          folha(x, y, len, ang * (side ? 1 : 1), b > 2 && r() > 0.5);
+        }
+      }
+    }
+    return s;
+  },
+  terra: ({ W, H, u, r }) => {
+    const y0 = H * 0.835;
+    let d = `M0 ${y0}`;
+    for (let i = 1; i <= 24; i++) d += ` L${(i / 24) * W} ${y0 + (r() - 0.5) * 26 * u}`;
+    let s = `<path d="${d} V${H} H0 Z" fill="#6a3a1a"/>`;
+    for (let i = 0; i < 520; i++) {
+      const x = r() * W;
+      const y = y0 + r() * (H - y0);
+      s += `<ellipse cx="${x}" cy="${y}" rx="${(4 + r() * 14) * u}" ry="${(3 + r() * 9) * u}" fill="${r() > 0.5 ? "#8a5428" : "#3e200c"}" opacity="${0.5 + r() * 0.5}"/>`;
+    }
+    return s + `<rect y="${y0 - 8 * u}" width="${W}" height="${16 * u}" fill="#6a3a1a" opacity="0.35" filter="url(#bl3)"/>`;
+  },
+  ondaPiso: ({ W, H, u }, [c = "#ffffff"]) => `<path d="M0 ${H * 0.865} C${W * 0.25} ${H * 0.845} ${W * 0.55} ${H * 0.9} ${W} ${H * 0.86}" fill="none" stroke="${c}" stroke-width="${3 * u}" opacity="0.7"/><path d="M0 ${H * 0.865} C${W * 0.25} ${H * 0.845} ${W * 0.55} ${H * 0.9} ${W} ${H * 0.86}" fill="none" stroke="${c}" stroke-width="${12 * u}" opacity="0.18" filter="url(#bl3)"/>`,
+  espuma: ({ W, H, u, r }) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      for (let i = 0; i < 38; i++) {
+        const x = side ? W - r() * W * 0.34 : r() * W * 0.34;
+        const y = r() * H * (0.1 + 0.1 * (1 - Math.abs((side ? W - x : x) / (W * 0.34) - 0.3)));
+        const rr = (4 + r() * 22) * u;
+        s += `<circle cx="${x}" cy="${y}" r="${rr}" fill="#fff" opacity="${0.55 + r() * 0.4}"/><circle cx="${x}" cy="${y}" r="${rr}" fill="none" stroke="#7ad0ff" stroke-width="${1.2 * u}" opacity="0.6"/>`;
+      }
+      s += `<path d="M${side ? W : 0} 0 Q${side ? W * 0.7 : W * 0.3} ${H * 0.04} ${side ? W * 0.62 : W * 0.38} ${H * 0.13}" stroke="#fff" stroke-width="${10 * u}" fill="none" opacity="0.6" stroke-linecap="round"/>`;
+    }
+    return s;
+  },
+  caustica: ({ W, H, u, r }) => {
+    let s = "";
+    for (let i = 0; i < 90; i++) {
+      const x = r() * W;
+      const y = r() * H * 0.42;
+      const l = (30 + r() * 80) * u;
+      s += `<path d="M${x} ${y} q${l * 0.5} ${-l * 0.4} ${l} ${(r() - 0.5) * l * 0.6}" stroke="#fff" stroke-width="${(1 + r() * 2.5) * u}" fill="none" opacity="${0.2 + r() * 0.4}" stroke-linecap="round"/>`;
+    }
+    return s;
+  },
+  geo: ({ W, H, u }, [c1 = "#1a2640", c2 = "#d9895a"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      s += `<polygon points="${p(0)},0 ${p(W * 0.26)},0 ${p(0)},${H * 0.22}" fill="${c1}" opacity="0.92"/><polygon points="${p(W * 0.26)},0 ${p(W * 0.34)},0 ${p(0)},${H * 0.3} ${p(0)},${H * 0.22}" fill="${c1}" opacity="0.6"/><path d="M${p(W * 0.26)} 0 L${p(0)} ${H * 0.22}" stroke="${c2}" stroke-width="${4 * u}"/><path d="M${p(W * 0.34)} 0 L${p(0)} ${H * 0.3}" stroke="${c2}" stroke-width="${2 * u}" opacity="0.8"/><path d="M${p(W * 0.02)} ${H * 0.28} L${p(W * 0.04)} ${H * 0.82}" stroke="${c2}" stroke-width="${2 * u}" opacity="0.35"/>`;
+    }
+    return s;
+  },
+  rasgadoCanto: ({ W, H, u, r }, [papel = "#f6ecd6", base = "#a8161c"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      const pts: [number, number][] = [];
+      const n = 26;
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        // curva do canto: de (0, 0.30H) até (0.34W, 0)
+        const x = (1 - t) * (1 - t) * 0 + 2 * (1 - t) * t * W * 0.06 + t * t * W * 0.34;
+        const y = (1 - t) * (1 - t) * H * 0.3 + 2 * (1 - t) * t * H * 0.12;
+        pts.push([x + (r() - 0.5) * 12 * u, y + (r() - 0.5) * 12 * u]);
+      }
+      const edge = pts.map(([x, y], i) => `${i ? "L" : "M"}${p(x)} ${y}`).join(" ");
+      s += `<path d="${edge} L${p(W * 0.34)} 0 L${p(0)} 0 Z" fill="${base}"/><path d="${edge}" fill="none" stroke="${papel}" stroke-width="${16 * u}" stroke-linejoin="round" opacity="0.95"/><path d="${edge}" fill="none" stroke="#d9a85a" stroke-width="${2 * u}" opacity="0.8" transform="translate(${side ? 14 * u : -14 * u} ${-10 * u})"/>`;
+    }
+    return s;
+  },
+  luzLado: ({ W, H, u }, [c = "#ffb85a"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      s += `<path d="M${p(W * 0.01)} 0 C${p(W * 0.03)} ${H * 0.2} ${p(W * 0.05)} ${H * 0.5} ${p(W * 0.02)} ${H * 0.82}" stroke="${c}" stroke-width="${6 * u}" fill="none" opacity="0.55" filter="url(#bl3)"/><path d="M${p(W * 0.12)} 0 C${p(W * 0.02)} ${H * 0.06} ${p(W * 0.02)} ${H * 0.12} ${p(0)} ${H * 0.16}" stroke="${c}" stroke-width="${4 * u}" fill="none" opacity="0.8"/>`;
+    }
+    return s;
+  },
+  folhaCanto: ({ W, H, u }, [c1 = "#f26a3a", c2 = "#7ab03a"]) => {
+    let s = `<path d="M${W} 0 H${W * 0.66} C${W * 0.78} ${H * 0.04} ${W * 0.9} ${H * 0.1} ${W} ${H * 0.2} Z" fill="${c1}" opacity="0.9"/><path d="M${W} 0 H${W * 0.8} C${W * 0.88} ${H * 0.05} ${W * 0.95} ${H * 0.1} ${W} ${H * 0.15} Z" fill="${c2}"/><path d="M0 0 H${W * 0.2} C${W * 0.1} ${H * 0.05} ${W * 0.04} ${H * 0.1} 0 ${H * 0.16} Z" fill="${c2}" opacity="0.9"/><path d="M${W} ${H * 0.1} C${W * 0.94} ${H * 0.2} ${W * 0.93} ${H * 0.3} ${W} ${H * 0.4} Z" fill="${c1}" opacity="0.8"/>`;
+    s += `<path d="M${W * 0.7} 0 C${W * 0.82} ${H * 0.05} ${W * 0.92} ${H * 0.12} ${W} ${H * 0.22}" stroke="#fff" stroke-width="${3 * u}" fill="none" opacity="0.5"/>`;
+    return s;
+  },
+  cristais: ({ W, H, u, r }, [c = "#b898f0"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      for (let i = 0; i < 9; i++) {
+        const x = r() * W * 0.22;
+        const y = r() * H * 0.14;
+        const k = (30 + r() * 70) * u;
+        s += `<polygon points="${p(x)},${y} ${p(x + k * 0.5)},${y + k * 0.35} ${p(x + k * 0.3)},${y + k} ${p(x - k * 0.3)},${y + k * 0.7}" fill="${lighten(c, 0.3 + r() * 0.3)}" opacity="${0.5 + r() * 0.4}" stroke="#fff" stroke-width="${1.5 * u}"/>`;
+      }
+    }
+    return s;
+  },
+  curvasLado: ({ W, H, u }, [c = "#e8b0c0"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      for (let k = 0; k < 2; k++) s += `<path d="M${p(W * (0.01 + k * 0.02))} ${H * 0.22} C${p(W * (0.05 + k * 0.02))} ${H * 0.45} ${p(W * (0.07 + k * 0.03))} ${H * 0.62} ${p(W * (0.14 + k * 0.04))} ${H * 0.8}" stroke="${c}" stroke-width="${(3 - k) * u}" fill="none" opacity="${0.8 - k * 0.3}"/>`;
+    }
+    return s;
+  },
+  flores: ({ W, H, u, r }, [c1 = "#e8a0b8", c2 = "#fbe0e8"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const cx = side ? W * 0.9 : W * 0.1;
+      for (let f = 0; f < 3; f++) {
+        const x = cx + (side ? -1 : 1) * (f * 60 - 20) * u + (r() - 0.5) * 30 * u;
+        const y = (30 + f * 36 + r() * 30) * u;
+        const R = (70 - f * 12) * u;
+        for (let k = 0; k < 8; k++) s += `<ellipse cx="${x}" cy="${y - R * 0.55}" rx="${R * 0.38}" ry="${R * 0.62}" fill="${k % 2 ? c2 : mix(c1, c2, 0.5)}" transform="rotate(${k * 45} ${x} ${y})" opacity="0.92"/>`;
+        s += `<circle cx="${x}" cy="${y}" r="${R * 0.2}" fill="${darken(c1, 0.1)}"/>`;
+      }
+      s += `<path d="M${side ? W : 0} ${H * 0.02} Q${side ? W * 0.84 : W * 0.16} ${H * 0.1} ${side ? W * 0.94 : W * 0.06} ${H * 0.26}" stroke="#8ab070" stroke-width="${4 * u}" fill="none" opacity="0.6"/>`;
+    }
+    return s;
+  },
+  bolasCanto: ({ W, H, u }, [c1 = "#e8174f", c2 = "#ffd02a"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      s += `<path d="M${p(0)} 0 H${p(W * 0.3)} C${p(W * 0.2)} ${H * 0.03} ${p(W * 0.08)} ${H * 0.06} ${p(0)} ${H * 0.2} Z" fill="${side ? c2 : c1}"/><circle cx="${p(W * 0.07)}" cy="${H * 0.1}" r="${22 * u}" fill="${side ? c1 : c2}"/><circle cx="${p(W * 0.13)}" cy="${H * 0.07}" r="${14 * u}" fill="${c2}"/><circle cx="${p(W * 0.04)}" cy="${H * 0.16}" r="${12 * u}" fill="${c1}"/>`;
+    }
+    return s;
+  },
+  pontosLaranja: ({ W, H, u }) => {
+    let s = `<path d="M0 0 H${W * 0.25} C${W * 0.14} ${H * 0.05} ${W * 0.05} ${H * 0.1} 0 ${H * 0.2} Z" fill="#ff7a14"/><path d="M${W} 0 H${W * 0.75} C${W * 0.86} ${H * 0.05} ${W * 0.95} ${H * 0.1} ${W} ${H * 0.2} Z" fill="#ff7a14"/>`;
+    for (const side of [0, 1]) for (let i = 0; i < 9; i++) for (let j = 0; j < 7; j++) s += `<circle cx="${side ? W - (14 + i * 20) * u : (14 + i * 20) * u}" cy="${(14 + j * 20) * u}" r="${3 * u}" fill="#ffb060" opacity="0.7"/>`;
+    return s + `<path d="M0 ${H * 0.2} C${W * 0.04} ${H * 0.4} ${W * 0.06} ${H * 0.6} ${W * 0.12} ${H * 0.8}" stroke="#6a8a3a" stroke-width="${9 * u}" fill="none" opacity="0.8"/><path d="M${W} ${H * 0.2} C${W * 0.96} ${H * 0.4} ${W * 0.94} ${H * 0.6} ${W * 0.88} ${H * 0.8}" stroke="#6a8a3a" stroke-width="${9 * u}" fill="none" opacity="0.8"/>`;
+  },
+  cantosOuro: ({ W, H, u }) => {
+    let s = "";
+    for (const [cx, cy, sx, sy] of [[0, 0, 1, 1], [W, 0, -1, 1], [0, H * 0.86, 1, -1], [W, H * 0.86, -1, -1]] as [number, number, number, number][]) {
+      for (let k = 0; k < 3; k++) {
+        const o = (14 + k * 14) * u;
+        const L = (170 - k * 40) * u;
+        s += `<path d="M${cx + sx * o} ${cy + sy * (o + L)} V${cy + sy * o} H${cx + sx * (o + L)}" stroke="#d9b45a" stroke-width="${(3 - k * 0.7) * u}" fill="none" opacity="${0.85 - k * 0.2}"/>`;
+      }
+    }
+    return s + `<path d="M${W * 0.2} ${H * 0.07} Q${W / 2} ${H * 0.0} ${W * 0.8} ${H * 0.07}" stroke="#f0d28a" stroke-width="${3 * u}" fill="none" opacity="0.7"/>`;
+  },
+  origami: ({ W, H, u }, [c1 = "#1f4fe0", c2 = "#ff7a4a"]) => {
+    let s = "";
+    for (const side of [0, 1]) {
+      const p = (x: number) => (side ? W - x : x);
+      s += `<polygon points="${p(W * 0.02)},0 ${p(W * 0.24)},0 ${p(W * 0.12)},${H * 0.12}" fill="${c1}"/><polygon points="${p(W * 0.12)},${H * 0.12} ${p(W * 0.24)},0 ${p(W * 0.2)},${H * 0.17}" fill="${darken(c1, 0.25)}"/><polygon points="${p(0)},${H * 0.1} ${p(W * 0.06)},${H * 0.2} ${p(0)},${H * 0.24}" fill="${c2}"/><polygon points="${p(W * 0.2)},${H * 0.17} ${p(W * 0.24)},0 ${p(W * 0.26)},${H * 0.1}" fill="${c2}" opacity="0.85"/>`;
+    }
+    return s;
+  },
   diagonaisPapel: () => "",
   frutas: ({ W, u }) =>
     `<circle cx="${W * 0.05}" cy="${50 * u}" r="${75 * u}" fill="#ff9a1a"/><circle cx="${W * 0.05}" cy="${50 * u}" r="${60 * u}" fill="none" stroke="#ffc460" stroke-width="${4 * u}" opacity="0.7"/><circle cx="${W * 0.95}" cy="${46 * u}" r="${62 * u}" fill="#e02a2a"/><ellipse cx="${W * 0.93}" cy="${26 * u}" rx="${16 * u}" ry="${8 * u}" fill="#fff" opacity="0.4"/>`,
@@ -618,6 +813,42 @@ export function cenarioSvg(W: number, H: number, id: string): string | null {
     base = `<rect width="${W}" height="${H}" fill="url(#g)"/><rect width="${W}" height="${H}" fill="url(#spot)"/>`;
     const yb = H * 0.82;
     frente = `<path d="M0 ${yb} Q${W / 2} ${yb - 70 * u} ${W} ${yb} V${H} H0 Z" fill="${darken(c2, 0.12)}"/><path d="M0 ${yb} Q${W / 2} ${yb - 70 * u} ${W} ${yb}" fill="none" stroke="#fff" stroke-width="${2.5 * u}" opacity="0.4"/><path d="M0 ${yb + 30 * u} Q${W / 2} ${yb - 30 * u} ${W} ${yb + 30 * u} V${H} H0 Z" fill="#000" opacity="0.22"/>`;
+  } else if (fam === "malha") {
+    const m = MALHAS.find((x) => x[0] === def.id)![2];
+    const px = (cx: number, cy: number, k: number) => parseInt(m.slice((cy * MALHA_COLS + cx) * 6 + k * 2, (cy * MALHA_COLS + cx) * 6 + k * 2 + 2), 16);
+    // amostra bilinear da malha em coordenadas 0..1
+    const amostra = (u0: number, v0: number) => {
+      const fx = Math.min(MALHA_COLS - 1.001, Math.max(0, u0 * (MALHA_COLS - 1)));
+      const fy = Math.min(MALHA_ROWS - 1.001, Math.max(0, v0 * (MALHA_ROWS - 1)));
+      const x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+      const c = [0, 1, 2].map((k) => Math.round((px(x0, y0, k) * (1 - tx) + px(x0 + 1, y0, k) * tx) * (1 - ty) + (px(x0, y0 + 1, k) * (1 - tx) + px(x0 + 1, y0 + 1, k) * tx) * ty));
+      return `#${c.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+    };
+    const N = 2 * (MALHA_COLS - 1) + 1;
+    const M = 2 * (MALHA_ROWS - 1) + 1;
+    const cw = W / (N - 1);
+    const ch = H / (M - 1);
+    let fino = "";
+    for (let ry = -1; ry <= M; ry++) {
+      for (let rx = -1; rx <= N; rx++) {
+        const u0 = Math.min(1, Math.max(0, rx / (N - 1)));
+        const v0 = Math.min(1, Math.max(0, ry / (M - 1)));
+        fino += `<rect x="${(rx * cw - cw / 2).toFixed(1)}" y="${(ry * ch - ch / 2).toFixed(1)}" width="${(cw + 1).toFixed(1)}" height="${(ch + 1).toFixed(1)}" fill="${amostra(u0, v0)}"/>`;
+      }
+    }
+    const pis = ["dp07", "dp13", "dp16"].includes(def.id) ? null : PISOS[def.id];
+    if (pis) {
+      const med = [...pis.ys].sort((a, b) => a - b)[4];
+      const lim = pis.ys.map((v) => (Math.abs(v - med) > 0.04 ? med : v));
+      const ys = lim.map((v, i) => (lim[Math.max(0, i - 1)] + v * 2 + lim[Math.min(lim.length - 1, i + 1)]) / 4);
+      const pts = [[0, ys[0]], ...ys.map((v, i) => [((i + 0.5) / ys.length) * W, v]), [W, ys[ys.length - 1]]].map(([x, v]) => [x, v * H]);
+      let d = `M${pts[0][0]} ${pts[0][1]}`;
+      for (let i = 1; i < pts.length - 1; i++) d += ` Q${pts[i][0]} ${pts[i][1]} ${(pts[i][0] + pts[i + 1][0]) / 2} ${(pts[i][1] + pts[i + 1][1]) / 2}`;
+      d += ` L${W} ${pts[pts.length - 1][1]}`;
+      const y0 = Math.min(...ys) * H;
+      frente = `<defs><linearGradient id="pg" gradientUnits="userSpaceOnUse" x1="0" y1="${y0}" x2="0" y2="${H}"><stop offset="0" stop-color="${pis.top}"/><stop offset="1" stop-color="${pis.bot}"/></linearGradient></defs><path d="${d} V${H} H0 Z" fill="url(#pg)"/><path d="${d}" fill="none" stroke="#fff" stroke-width="${2.5 * u}" opacity="0.4"/>`;
+    }
+    base = `<defs><g id="mf">${fino}</g></defs><use href="#mf"/><use href="#mf" filter="url(#mb)"/>`;
   } else if (fam === "depto") {
     const yb = H * 0.8;
     base = `<rect width="${W}" height="${H}" fill="url(#gr)"/>`;
@@ -647,9 +878,9 @@ export function cenarioSvg(W: number, H: number, id: string): string | null {
     `<radialGradient id="bb" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.7" stop-color="#bfe6ff" stop-opacity="0.12"/><stop offset="1" stop-color="#fff" stop-opacity="0.3"/></radialGradient>` +
     `<radialGradient id="gt" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#fff" stop-opacity="0.7"/><stop offset="1" stop-color="#9fe0ff" stop-opacity="0.25"/></radialGradient>` +
     `<radialGradient id="pl" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e8b8c8"/></radialGradient>` +
-    `<filter id="bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${22 * u}"/></filter>` +
+    `<filter id="mb" filterUnits="userSpaceOnUse" x="${-W * 0.3}" y="${-H * 0.3}" width="${W * 1.6}" height="${H * 1.6}"><feGaussianBlur stdDeviation="${(W / (2 * MALHA_COLS)) * 0.7}"/></filter><filter id="bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${22 * u}"/></filter>` +
     `<filter id="bl2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${8 * u}"/></filter>` +
     `<filter id="bl3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${3.5 * u}"/></filter>` +
-    `</defs>${base}${motivos}${frente}<rect width="${W}" height="${H}" fill="url(#vg)"/></svg>`
+    `</defs>${base}${motivos}${frente}${fam === "malha" ? "" : `<rect width="${W}" height="${H}" fill="url(#vg)"/>`}</svg>`
   );
 }
