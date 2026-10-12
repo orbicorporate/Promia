@@ -54,6 +54,54 @@ export function createImageCache(): Map<string, Promise<string | null>> {
   return new Map();
 }
 
+// Cache do processo: a prévia ao vivo pede o mesmo encarte dezenas de vezes
+// enquanto a pessoa monta. Buscar e recortar cada foto de novo era o maior
+// custo de cada atualização. Guarda só o que deu certo, com teto de memória
+// (as fotos mais antigas saem primeiro) e validade curta.
+const GLOBAL_TTL_MS = 10 * 60 * 1000;
+const GLOBAL_MAX_BYTES = 60 * 1024 * 1024;
+const globalImages = new Map<string, { promise: Promise<string | null>; at: number; size: number }>();
+let globalBytes = 0;
+
+function globalGet(key: string): Promise<string | null> | null {
+  const hit = globalImages.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > GLOBAL_TTL_MS) {
+    globalImages.delete(key);
+    globalBytes -= hit.size;
+    return null;
+  }
+  // reinsere para virar o mais recente
+  globalImages.delete(key);
+  globalImages.set(key, hit);
+  return hit.promise;
+}
+
+function globalPut(key: string, promise: Promise<string | null>) {
+  const entry = { promise, at: Date.now(), size: 0 };
+  globalImages.set(key, entry);
+  promise.then(
+    (v) => {
+      if (!v) {
+        if (globalImages.get(key) === entry) globalImages.delete(key);
+        return;
+      }
+      entry.size = v.length;
+      globalBytes += v.length;
+      while (globalBytes > GLOBAL_MAX_BYTES) {
+        const oldest = globalImages.keys().next().value;
+        if (oldest === undefined) break;
+        const o = globalImages.get(oldest)!;
+        globalImages.delete(oldest);
+        globalBytes -= o.size;
+      }
+    },
+    () => {
+      if (globalImages.get(key) === entry) globalImages.delete(key);
+    }
+  );
+}
+
 // Fila com limite de concorrência
 function limiter(concurrency: number) {
   let active = 0;
@@ -79,6 +127,8 @@ function limiter(concurrency: number) {
 export async function resolveEncarteImages(data: EncarteData, opts: ResolveImagesOptions = {}): Promise<EncarteData> {
   const { concurrency = 6, timeoutMs = 4000, maxBytes = 4 * 1024 * 1024, budgetMs = 9000, fetcher = fetchPublicImage } = opts;
   const cache = opts.cache ?? createImageCache();
+  // cache do processo só no caminho real (com o fetcher de verdade)
+  const useGlobal = !opts.cache && !opts.fetcher;
   const run = limiter(Math.max(1, concurrency));
   const deadline = Date.now() + budgetMs;
   const doCutout = opts.cutout ?? !!data.modelo;
@@ -88,6 +138,14 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
     if (!url) return Promise.resolve(null);
     const cached = cache.get(url);
     if (cached) return cached;
+    const gkey = `${doCutout && isProduct ? "c" : "r"}|${url}`;
+    if (useGlobal && url.startsWith("https://")) {
+      const g = globalGet(gkey);
+      if (g) {
+        cache.set(url, g);
+        return g;
+      }
+    }
     let promise: Promise<string | null>;
     if (url.startsWith("data:")) {
       promise = Promise.resolve(checkDataUri(url));
@@ -115,6 +173,7 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
       });
     }
     cache.set(url, promise);
+    if (useGlobal && url.startsWith("https://")) globalPut(gkey, promise);
     return promise;
   };
 

@@ -14,15 +14,15 @@ import {
   Check,
   ImageOff,
   Loader2,
-  Smartphone,
-  Square,
-  RectangleVertical,
-  FileText,
   LayoutGrid,
   Rows3,
   Sparkle,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
+  Eye,
+  TriangleAlert,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
@@ -74,7 +74,28 @@ export type BuilderInitial = {
   items: BuilderItem[];
 };
 
-type Tab = "produtos" | "estilo" | "previa";
+const PASSOS = [
+  { key: "produtos", nome: "Produtos", pergunta: "O que você vai anunciar?" },
+  { key: "destino", nome: "Onde vai", pergunta: "Onde você vai usar a arte?" },
+  { key: "visual", nome: "Visual", pergunta: "Escolha o visual" },
+  { key: "textos", nome: "Título e datas", pergunta: "Título e validade" },
+  { key: "revisar", nome: "Revisar", pergunta: "Está tudo certo?" },
+] as const;
+
+// Combinações prontas: um clique e a arte já sai com caixa, fundo e emblema que combinam.
+const VISUAIS_PRONTOS: { nome: string; modelo: EncarteModelo; fundo: EncarteFundo; emblema: string; themeKey: string }[] = [
+  { nome: "Ofertão de sábado", modelo: "cx01", fundo: "cs33" as EncarteFundo, emblema: "ofertao-de-sabado", themeKey: "ofertas" },
+  { nome: "Hortifruti", modelo: "cx02", fundo: "dp01" as EncarteFundo, emblema: "quarta-do-hortifruti", themeKey: "hortifruti" },
+  { nome: "Açougue", modelo: "cx07", fundo: "dp05" as EncarteFundo, emblema: "terca-da-carne", themeKey: "acougue" },
+  { nome: "Padaria", modelo: "cx19", fundo: "dp12" as EncarteFundo, emblema: "padaria", themeKey: "padaria" },
+  { nome: "Fim de semana", modelo: "cx05", fundo: "pp08" as EncarteFundo, emblema: "ofertas-de-fim-de-semana", themeKey: "fim-de-semana" },
+  { nome: "Black Friday", modelo: "cx04", fundo: "cs31" as EncarteFundo, emblema: "black-friday", themeKey: "black-friday" },
+  { nome: "Natal", modelo: "cx16", fundo: "fs25" as EncarteFundo, emblema: "natal-de-ofertas", themeKey: "natal" },
+  { nome: "Dia das mães", modelo: "cx22", fundo: "fs39" as EncarteFundo, emblema: "dia-das-maes", themeKey: "dia-das-maes" },
+];
+
+const FORMATO_NOME: Record<EncarteFormat, string> = { feed: "Feed", story: "Story", quadrado: "Quadrado", a4: "A4" };
+const FORMATO_PROP: Record<EncarteFormat, [number, number]> = { feed: [32, 40], story: [24, 42], quadrado: [36, 36], a4: [30, 42] };
 
 const money = (n: number | null | undefined) => (n == null ? "" : n.toFixed(2).replace(".", ","));
 const parseMoney = (s: string) => {
@@ -104,7 +125,8 @@ export function EncarteBuilder({
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const [tab, setTab] = useState<Tab>("produtos");
+  const [step, setStep] = useState(0);
+  const [verPrevia, setVerPrevia] = useState(false);
   const [name, setName] = useState(initial.name);
   const [headline, setHeadline] = useState(initial.headline);
   const [subheadline, setSubheadline] = useState(initial.subheadline);
@@ -226,8 +248,21 @@ export function EncarteBuilder({
   );
   const previewKey = JSON.stringify(previewData);
 
+  // Prévias já vistas ficam guardadas: voltar para uma opção anterior é instantâneo.
+  const cacheRef = useRef(new Map<string, { url: string; pages: number }>());
+
   const loadPreview = useCallback(
     async (page: number) => {
+      const ckey = `${page}|${previewKey}`;
+      const hit = cacheRef.current.get(ckey);
+      if (hit) {
+        abortRef.current?.abort();
+        setPreviewLoading(false);
+        setPreviewError(null);
+        setPreviewUrl(hit.url);
+        setPreviewPages(hit.pages);
+        return;
+      }
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -252,7 +287,15 @@ export function EncarteBuilder({
         const pages = Number(res.headers.get("x-encarte-paginas") || "1");
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        if (lastUrl.current) setTimeout((u: string) => URL.revokeObjectURL(u), 1500, lastUrl.current);
+        const cache = cacheRef.current;
+        cache.set(ckey, { url, pages });
+        // guarda as 14 mais recentes; as antigas liberam memória
+        while (cache.size > 14) {
+          const first = cache.keys().next().value as string;
+          const old = cache.get(first);
+          cache.delete(first);
+          if (old && old.url !== url) setTimeout(() => URL.revokeObjectURL(old.url), 2000);
+        }
         lastUrl.current = url;
         setPreviewUrl(url);
         setPreviewPages(pages);
@@ -266,7 +309,7 @@ export function EncarteBuilder({
   );
 
   useEffect(() => {
-    const t = setTimeout(() => loadPreview(previewPage), 550);
+    const t = setTimeout(() => loadPreview(previewPage), 220);
     return () => clearTimeout(t);
   }, [loadPreview, previewPage]);
 
@@ -274,18 +317,18 @@ export function EncarteBuilder({
   async function save() {
     if (!name.trim()) {
       toast.error("Dê um nome para o encarte.");
-      setTab("estilo");
+      setStep(3);
       return;
     }
     if (items.length === 0) {
       toast.error("Escolha pelo menos um produto.");
-      setTab("produtos");
+      setStep(0);
       return;
     }
     const semPreco = items.filter((i) => (i.promoPrice ?? byId.get(i.productId)?.price) == null);
     if (semPreco.length) {
       toast.error(`${plural(semPreco.length, "produto", "produtos")} sem preço. Informe o preço de oferta.`);
-      setTab("produtos");
+      setStep(0);
       setEditing(semPreco[0].productId);
       return;
     }
@@ -498,19 +541,55 @@ export function EncarteBuilder({
     </div>
   );
 
-  const stylePanel = (
-    <div className="space-y-5">
-      <Glass className="p-4 sm:p-5 space-y-4">
-        <h3 className="font-bold">Formato</h3>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(
-            [
-              ["feed", RectangleVertical],
-              ["story", Smartphone],
-              ["quadrado", Square],
-              ["a4", FileText],
-            ] as const
-          ).map(([key, Icon]) => (
+  // ------------------------------- avisos ------------------------------
+  const avisos = useMemo(() => {
+    const out: string[] = [];
+    const ativos = items.map((i) => ({ i, p: byId.get(i.productId) })).filter((x) => x.p);
+    const semFoto = ativos.filter((x) => !x.p!.image_url).length;
+    const semPreco = ativos.filter((x) => (x.i.promoPrice ?? x.p!.price) == null).length;
+    const longos = ativos.filter((x) => x.p!.name.length > 38).length;
+    if (semPreco) out.push(`${plural(semPreco, "produto está", "produtos estão")} sem preço. Abra em "Produtos" e informe o preço de oferta.`);
+    if (semFoto) out.push(`${plural(semFoto, "produto está", "produtos estão")} sem foto. A arte mostra a inicial do nome no lugar.`);
+    if (longos) out.push(`${plural(longos, "nome é longo", "nomes são longos")} e vão ficar pequenos na arte. Encurte o nome no cadastro para ler melhor.`);
+    if (!headline.trim() && !emblema) out.push("A arte está sem título. Escolha um emblema ou escreva um título.");
+    return out;
+  }, [items, byId, headline, emblema]);
+
+  function aplicarPronto(v: (typeof VISUAIS_PRONTOS)[number]) {
+    setModelo(v.modelo);
+    setLayout("grade");
+    setFundo(v.fundo);
+    setEmblema(v.emblema);
+    if (themes.some((t) => t.key === v.themeKey)) setThemeKey(v.themeKey);
+    setPreviewPage(1);
+  }
+
+  const podeAvancar = step !== 0 || items.length > 0;
+  function avancar() {
+    if (step === 0 && items.length === 0) {
+      toast.error("Escolha pelo menos um produto para continuar.");
+      return;
+    }
+    setStep((s) => Math.min(PASSOS.length - 1, s + 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function voltar() {
+    setStep((s) => Math.max(0, s - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const miniaturaClass = (on: boolean) =>
+    cn("group relative overflow-hidden rounded-2xl text-left ring-2 transition active:scale-[0.98]", on ? "ring-[var(--ink)]" : "ring-[var(--line)] hover:ring-[var(--line-strong)]");
+
+  // ------------------------------ passo 2: onde vai ------------------------------
+  const destinoPanel = (
+    <Glass className="p-4 sm:p-5 space-y-4">
+      <p className="text-sm text-[var(--ink-2)]">O tamanho muda conforme o uso. Dá para refazer em outro formato depois.</p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {(["feed", "story", "quadrado", "a4"] as const).map((key) => {
+          const [pw, ph] = FORMATO_PROP[key];
+          const on = format === key;
+          return (
             <button
               key={key}
               type="button"
@@ -518,81 +597,91 @@ export function EncarteBuilder({
                 setFormat(key);
                 setPreviewPage(1);
               }}
-              aria-pressed={format === key}
-              className={cn(
-                "flex flex-col items-start gap-2 rounded-2xl p-3 text-left ring-1 transition",
-                format === key ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-[var(--glass-strong)] ring-[var(--line)] hover:-translate-y-0.5"
-              )}
+              aria-pressed={on}
+              className={cn("flex flex-col items-center gap-3 rounded-2xl p-4 text-center ring-2 transition active:scale-[0.98]", on ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-[var(--glass-strong)] ring-[var(--line)] hover:-translate-y-0.5")}
             >
-              <Icon className="size-5" />
+              <span className="grid h-[52px] place-items-center">
+                <span className={cn("block rounded-[5px] border-2", on ? "border-[var(--bg)] bg-white/15" : "border-[var(--ink-3)] bg-[var(--line)]")} style={{ width: pw, height: ph }} />
+              </span>
               <span>
-                <span className="block text-sm font-semibold">{key === "a4" ? "A4" : key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                <span className={cn("block text-xs", format === key ? "opacity-70" : "text-[var(--ink-3)]")}>{FORMAT_HINT[key]}</span>
+                <span className="block text-sm font-semibold">{FORMATO_NOME[key]}</span>
+                <span className={cn("block text-xs", on ? "opacity-75" : "text-[var(--ink-3)]")}>{FORMAT_HINT[key]}</span>
               </span>
             </button>
-          ))}
+          );
+        })}
+      </div>
+    </Glass>
+  );
+
+  // ------------------------------ passo 3: visual ------------------------------
+  const caixaIds = (Object.keys(MODELO_LABELS) as EncarteModelo[]).filter((k) => k.startsWith("cx"));
+  const outrosModelos = (Object.keys(MODELO_LABELS) as EncarteModelo[]).filter((k) => !k.startsWith("cx"));
+  const miniEstilo = (key: EncarteModelo | null, rotulo: string) => {
+    const on = modelo === key;
+    return (
+      <button
+        key={key ?? "classico"}
+        type="button"
+        aria-pressed={on}
+        onClick={() => {
+          setModelo(key);
+          if (key) setLayout("grade");
+          setPreviewPage(1);
+        }}
+        className={miniaturaClass(on)}
+      >
+        <img src={`/miniaturas/estilo-${key ?? "classico"}.webp`} alt="" width={300} height={300} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+        <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{rotulo}</span>
+        {on && <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-3.5" strokeWidth={3} /></span>}
+      </button>
+    );
+  };
+  const miniFundo = (f: EncarteFundo | null, rotulo: string) => {
+    const on = fundo === f;
+    return (
+      <button key={f ?? "padrao"} type="button" aria-pressed={on} onClick={() => setFundo(f)} className={cn(miniaturaClass(on), "w-[104px] shrink-0")}>
+        {f ? (
+          <img src={`/miniaturas/fundo-${f}.webp`} alt="" width={300} height={300} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+        ) : (
+          <span className="grid aspect-square w-full place-items-center bg-[var(--line)] text-xs font-semibold text-[var(--ink-3)]">Do estilo</span>
+        )}
+        <span className={cn("block truncate px-1.5 py-1 text-[11px] font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{rotulo}</span>
+      </button>
+    );
+  };
+
+  const visualPanel = (
+    <div className="space-y-5">
+      <Glass className="p-4 sm:p-5 space-y-3">
+        <div>
+          <h3 className="flex items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Visuais prontos</h3>
+          <p className="text-sm text-[var(--ink-2)]">Um toque e a arte já sai combinada. Depois dá para trocar cada peça abaixo.</p>
         </div>
-        <div className="space-y-2">
-          <h4 className="text-sm font-semibold">Estilo da arte</h4>
-          <div className="grid max-h-[28rem] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-            {([null, ...(Object.keys(MODELO_LABELS) as EncarteModelo[])] as (EncarteModelo | null)[]).map((key) => {
-              const active = modelo === key;
-              return (
-                <button
-                  key={key ?? "classico"}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => {
-                    setModelo(key);
-                    if (key) setLayout("grade");
-                    setPreviewPage(1);
-                  }}
-                  className={cn("rounded-xl border px-3 py-2.5 text-left transition-colors", active ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}
-                >
-                  <span className="block text-sm font-semibold">{key ? MODELO_LABELS[key].label : "Clássico"}</span>
-                  <span className={cn("block text-xs", active ? "opacity-70" : "text-[var(--ink-3)]")}>{key ? MODELO_LABELS[key].hint : "Cartões brancos, escolha grade, destaque ou lista"}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
-        {modelo && modelo !== "feira" ? (
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Fundo</h4>
-            <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
-              {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
-                <div key={grupo} className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {ids.map((f) => (
-                      <button key={f ?? "padrao"} type="button" aria-pressed={fundo === f} onClick={() => setFundo(f)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors", fundo === f ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
-                        {f ? FUNDO_LABELS[f] : "Do modelo"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        {
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Emblema da campanha</h4>
-            <p className="text-xs text-[var(--ink-3)]">O emblema vira o título do encarte e define as cores do fundo e das etiquetas.</p>
-            <div className="grid max-h-72 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
-              <button type="button" aria-pressed={emblema === null} onClick={() => setEmblema(null)} className={cn("flex min-h-20 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold", emblema === null ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
-                Sem emblema
+        <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {VISUAIS_PRONTOS.map((v) => {
+            const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+            return (
+              <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[132px] shrink-0")}>
+                <img src={`/miniaturas/estilo-${v.modelo}.webp`} alt="" width={300} height={300} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+                <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
               </button>
-              {[...emblemasOrdenados.hit, ...emblemasOrdenados.rest].map((e) => (
-                <button key={e.slug} type="button" aria-pressed={emblema === e.slug} aria-label={e.nome} title={e.nome} onClick={() => setEmblema(e.slug)} className={cn("relative flex min-h-20 items-center justify-center rounded-xl border p-1.5", emblema === e.slug ? "border-[var(--ink)] bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
-                  <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading="lazy" className="max-h-16 w-full object-contain" />
-                  {emblemasOrdenados.hit.includes(e) ? <span className="absolute left-1 top-1 rounded-full bg-[var(--ink)] px-1.5 text-[10px] font-semibold text-white">Agora</span> : null}
-                </button>
-              ))}
-            </div>
-          </div>
-        }
+            );
+          })}
+        </div>
+      </Glass>
+
+      <Glass className="p-4 sm:p-5 space-y-3">
+        <h3 className="font-bold">Estilo dos produtos</h3>
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+          {miniEstilo(null, "Clássico")}
+          {caixaIds.map((k) => miniEstilo(k, MODELO_LABELS[k].label.slice(3)))}
+        </div>
+        <details className="group">
+          <summary className="cursor-pointer text-sm font-medium text-[var(--ink-2)]">Mais estilos</summary>
+          <div className="mt-2.5 grid grid-cols-3 gap-2.5 sm:grid-cols-4">{outrosModelos.map((k) => miniEstilo(k, MODELO_LABELS[k].label))}</div>
+        </details>
+        {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
         <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
           <Segmented
             label="Layout"
@@ -613,68 +702,143 @@ export function EncarteBuilder({
         </div>
       </Glass>
 
+      {modelo && modelo !== "feira" ? (
+        <Glass className="p-4 sm:p-5 space-y-3">
+          <h3 className="font-bold">Fundo</h3>
+          <div className="space-y-3">
+            {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
+              <div key={grupo} className="space-y-1.5">
+                <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
+                <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+              </div>
+            ))}
+          </div>
+        </Glass>
+      ) : null}
+
       <Glass className="p-4 sm:p-5 space-y-3">
-        <h3 className="font-bold">Tema</h3>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-          {orderedThemes.map((t, idx) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => {
-                setThemeKey(t.key);
-                if (!headline || themes.some((x) => x.headline === headline)) setHeadline(t.headline);
-              }}
-              aria-pressed={themeKey === t.key}
-              className={cn(
-                "group relative overflow-hidden rounded-2xl text-left ring-2 transition hover:-translate-y-0.5",
-                themeKey === t.key ? "ring-[var(--ink)]" : "ring-transparent"
-              )}
-            >
-              <span className="flex h-14 items-end px-3 pb-2" style={{ background: t.bg, color: t.text }}>
-                <span className="font-display text-sm font-extrabold leading-tight">{t.headline}</span>
-              </span>
-              <span className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: t.cardBg }}>
-                <span className="truncate text-xs font-medium text-[#1d2420]">{t.name}</span>
-                <span className="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold" style={{ background: t.tag, color: t.tagText }}>
-                  R$ 9,99
-                </span>
-              </span>
-              {idx < 2 && suggestedThemeKeys.includes(t.key) && t.key !== "ofertas" && (
-                <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-[#1d2420]">sugerido</span>
-              )}
+        <div>
+          <h3 className="font-bold">Emblema da campanha</h3>
+          <p className="text-sm text-[var(--ink-2)]">Vira o título da arte e define as cores do fundo e das etiquetas.</p>
+        </div>
+        <div className="grid max-h-80 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
+          <button type="button" aria-pressed={emblema === null} onClick={() => setEmblema(null)} className={cn("flex min-h-20 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold", emblema === null ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
+            Sem emblema
+          </button>
+          {[...emblemasOrdenados.hit, ...emblemasOrdenados.rest].map((e) => (
+            <button key={e.slug} type="button" aria-pressed={emblema === e.slug} aria-label={e.nome} title={e.nome} onClick={() => setEmblema(e.slug)} className={cn("relative flex min-h-20 items-center justify-center rounded-xl border p-1.5", emblema === e.slug ? "border-[var(--ink)] bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
+              <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading="lazy" decoding="async" className="max-h-16 w-full object-contain" />
+              {emblemasOrdenados.hit.includes(e) ? <span className="absolute left-1 top-1 rounded-full bg-[var(--ink)] px-1.5 text-[10px] font-semibold text-white">Agora</span> : null}
             </button>
           ))}
         </div>
       </Glass>
 
-      <Glass className="p-4 sm:p-5 space-y-4">
-        <h3 className="font-bold">Textos e validade</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nome do encarte" hint="Só para você achar depois" htmlFor="enc-nome">
-            <Input id="enc-nome" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ofertas da semana 41" />
-          </Field>
-          <Field label="Título na arte" htmlFor="enc-titulo">
-            <Input id="enc-titulo" value={headline} maxLength={80} onChange={(e) => setHeadline(e.target.value)} placeholder={theme?.headline} />
-          </Field>
-          <Field label="Frase de apoio" className="sm:col-span-2" htmlFor="enc-sub">
-            <Input id="enc-sub" value={subheadline} maxLength={120} onChange={(e) => setSubheadline(e.target.value)} placeholder="Preço baixo de verdade, toda semana" />
-          </Field>
-          <Field label="Válido de" htmlFor="enc-de">
-            <Input id="enc-de" type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
-          </Field>
-          <Field label="Até" htmlFor="enc-ate">
-            <Input id="enc-ate" type="date" value={validUntil} min={validFrom || undefined} onChange={(e) => setValidUntil(e.target.value)} />
-          </Field>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Chip on={false} onClick={() => { setValidFrom(today); setValidUntil(today); }}>Só hoje</Chip>
-          <Chip on={false} onClick={() => { setValidFrom(today); setValidUntil(addDays(today, 6)); }}>7 dias</Chip>
-          <Chip on={false} onClick={() => { const s = nextWeekday(today, 6); setValidFrom(s); setValidUntil(addDays(s, 1)); }}>Fim de semana</Chip>
-          <Chip on={false} onClick={() => { setValidFrom(""); setValidUntil(""); }}>Sem data</Chip>
-        </div>
+      <Glass className="p-4 sm:p-5">
+        <details>
+          <summary className="cursor-pointer font-bold">Cores do tema <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            {orderedThemes.map((t, idx) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setThemeKey(t.key);
+                  if (!headline || themes.some((x) => x.headline === headline)) setHeadline(t.headline);
+                }}
+                aria-pressed={themeKey === t.key}
+                className={cn("group relative overflow-hidden rounded-2xl text-left ring-2 transition hover:-translate-y-0.5", themeKey === t.key ? "ring-[var(--ink)]" : "ring-transparent")}
+              >
+                <span className="flex h-14 items-end px-3 pb-2" style={{ background: t.bg, color: t.text }}>
+                  <span className="font-display text-sm font-extrabold leading-tight">{t.headline}</span>
+                </span>
+                <span className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: t.cardBg }}>
+                  <span className="truncate text-xs font-medium text-[#1d2420]">{t.name}</span>
+                  <span className="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold" style={{ background: t.tag, color: t.tagText }}>R$ 9,99</span>
+                </span>
+                {idx < 2 && suggestedThemeKeys.includes(t.key) && t.key !== "ofertas" && (
+                  <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-[#1d2420]">sugerido</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </details>
       </Glass>
     </div>
   );
+
+  // ------------------------------ passo 4: textos ------------------------------
+  const textosPanel = (
+    <Glass className="p-4 sm:p-5 space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Nome do encarte" hint="Só para você achar depois" htmlFor="enc-nome">
+          <Input id="enc-nome" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ofertas da semana 41" />
+        </Field>
+        <Field label="Título na arte" htmlFor="enc-titulo">
+          <Input id="enc-titulo" value={headline} maxLength={80} onChange={(e) => setHeadline(e.target.value)} placeholder={theme?.headline} />
+        </Field>
+        <Field label="Frase de apoio" className="sm:col-span-2" htmlFor="enc-sub">
+          <Input id="enc-sub" value={subheadline} maxLength={120} onChange={(e) => setSubheadline(e.target.value)} placeholder="Preço baixo de verdade, toda semana" />
+        </Field>
+        <Field label="Válido de" htmlFor="enc-de">
+          <Input id="enc-de" type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+        </Field>
+        <Field label="Até" htmlFor="enc-ate">
+          <Input id="enc-ate" type="date" value={validUntil} min={validFrom || undefined} onChange={(e) => setValidUntil(e.target.value)} />
+        </Field>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <Chip on={false} onClick={() => { setValidFrom(today); setValidUntil(today); }}>Só hoje</Chip>
+        <Chip on={false} onClick={() => { setValidFrom(today); setValidUntil(addDays(today, 6)); }}>7 dias</Chip>
+        <Chip on={false} onClick={() => { const s = nextWeekday(today, 6); setValidFrom(s); setValidUntil(addDays(s, 1)); }}>Fim de semana</Chip>
+        <Chip on={false} onClick={() => { setValidFrom(""); setValidUntil(""); }}>Sem data</Chip>
+      </div>
+    </Glass>
+  );
+
+  // ------------------------------ passo 5: revisar ------------------------------
+  const estiloNome = modelo ? MODELO_LABELS[modelo].label.replace(/^\d+ /, "") : "Clássico";
+  const resumo: [string, string, number][] = [
+    ["Produtos", plural(items.length, "produto", "produtos"), 0],
+    ["Formato", `${FORMATO_NOME[format]}, ${plural(previewPages, "página", "páginas")}`, 1],
+    ["Estilo", estiloNome, 2],
+    ["Título", headline.trim() || (emblema ? "Do emblema" : "Sem título"), 3],
+    ["Validade", validFrom && validUntil ? `${validFrom.split("-").reverse().join("/")} a ${validUntil.split("-").reverse().join("/")}` : "Sem data", 3],
+  ];
+  const revisarPanel = (
+    <div className="space-y-4">
+      {avisos.length > 0 ? (
+        <Glass className="p-4 sm:p-5 space-y-2">
+          <h3 className="flex items-center gap-2 font-bold"><TriangleAlert className="size-4 text-[#b45309]" aria-hidden /> Para ajustar antes de salvar</h3>
+          <ul className="space-y-1.5 text-sm text-[var(--ink-2)]">
+            {avisos.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </Glass>
+      ) : (
+        <Glass className="p-4 sm:p-5">
+          <p className="flex items-center gap-2 text-sm font-medium"><Check className="size-4 text-[var(--folha)]" strokeWidth={3} aria-hidden /> Nada pendente. Confira a prévia e salve.</p>
+        </Glass>
+      )}
+      <Glass className="p-4 sm:p-5">
+        <h3 className="mb-2 font-bold">Resumo</h3>
+        <dl className="divide-y divide-[var(--line)]">
+          {resumo.map(([k, v, to]) => (
+            <div key={k} className="flex items-center justify-between gap-3 py-2 text-sm">
+              <dt className="text-[var(--ink-3)]">{k}</dt>
+              <dd className="flex items-center gap-3 font-medium">
+                {v}
+                <button type="button" onClick={() => setStep(to)} className="text-xs font-semibold text-[var(--folha)] underline-offset-2 hover:underline">Alterar</button>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Glass>
+    </div>
+  );
+
+  const passoPanels = [productsPanel, destinoPanel, visualPanel, textosPanel, revisarPanel];
 
   const previewPanel = (
     <div className="space-y-3">
@@ -743,51 +907,124 @@ export function EncarteBuilder({
     </div>
   );
 
+
+  const ultimo = step === PASSOS.length - 1;
+  const navegacao = (
+    <div className="flex items-center justify-between gap-3">
+      <Button variant="fantasma" onClick={voltar} disabled={step === 0} className={cn(step === 0 && "invisible")}>
+        <ArrowLeft className="size-4" /> Voltar
+      </Button>
+      {ultimo ? (
+        <Button size="lg" onClick={save} loading={saving}>
+          {initial.id ? "Salvar alterações" : "Salvar encarte"}
+        </Button>
+      ) : (
+        <Button size="lg" onClick={avancar} disabled={!podeAvancar}>
+          Continuar <ChevronRight className="size-4" />
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-5 pb-24 xl:pb-0">
-      {/* abas no celular */}
-      <div className="xl:hidden sticky top-[76px] lg:top-4 z-20">
-        <Segmented
-          label="Etapa"
-          value={tab}
-          onChange={setTab}
-          className="w-full [&>button]:flex-1"
-          options={[
-            { value: "produtos", label: `Produtos${items.length ? ` (${items.length})` : ""}` },
-            { value: "estilo", label: "Estilo" },
-            { value: "previa", label: "Prévia" },
-          ]}
-        />
-      </div>
+    <div className="space-y-5 pb-36 xl:pb-0">
+      {/* trilha de passos: é uma sequência de verdade, então vai numerada */}
+      <nav aria-label="Passos do encarte" className="sticky top-[76px] lg:top-4 z-20">
+        <ol className="vidro-forte flex items-center gap-1 rounded-2xl p-1.5">
+          {PASSOS.map((p, i) => {
+            const atual = i === step;
+            const feito = i < step;
+            return (
+              <li key={p.key} className="min-w-0 flex-1">
+                <button
+                  type="button"
+                  onClick={() => (i > 0 && items.length === 0 ? toast.error("Escolha pelo menos um produto primeiro.") : setStep(i))}
+                  aria-current={atual ? "step" : undefined}
+                  className={cn("flex h-11 w-full items-center justify-center gap-2 rounded-xl px-2 text-sm font-medium transition", atual ? "bg-[var(--ink)] text-[var(--bg)]" : "text-[var(--ink-2)] hover:bg-[var(--line)]")}
+                >
+                  <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold tabular", atual ? "bg-[var(--bg)] text-[var(--ink)]" : feito ? "bg-[var(--folha)] text-white" : "bg-[var(--line)]")}>
+                    {feito ? <Check className="size-3" strokeWidth={3.5} /> : i + 1}
+                  </span>
+                  <span className={cn("truncate", !atual && "hidden sm:inline")}>{p.nome}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
-        <div className="space-y-5">
-          {/* no celular a aba escolhida entra com a mesma subida curta das telas */}
-          <div key={`p-${tab === "produtos"}`} className={cn(tab !== "produtos" ? "hidden xl:block" : "surgir xl:animate-none")}>{productsPanel}</div>
-          <div key={`e-${tab === "estilo"}`} className={cn(tab !== "estilo" ? "hidden xl:block" : "surgir xl:animate-none")}>{stylePanel}</div>
-          <div className={cn("xl:hidden", tab !== "previa" ? "hidden" : "surgir")}>{previewPanel}</div>
+        <div className="space-y-4">
+          <h2 className="font-display text-xl font-extrabold">{PASSOS[step].pergunta}</h2>
+          <div key={step} className="surgir space-y-5">
+            {passoPanels[step]}
+          </div>
+          <div className="hidden xl:block">{navegacao}</div>
         </div>
         <aside className="hidden xl:block">
-          <div className="sticky top-8 space-y-4">
-            {previewPanel}
-            <Button size="lg" className="w-full" onClick={save} loading={saving}>
-              {initial.id ? "Salvar alterações" : "Salvar encarte"}
-            </Button>
-          </div>
+          <div className="sticky top-24 space-y-4">{previewPanel}</div>
         </aside>
       </div>
 
-      {/* barra de salvar no celular */}
+      {/* celular: miniatura da arte sempre à mão e navegação do passo */}
       <div className="xl:hidden fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 px-4 lg:bottom-6 lg:left-[272px]">
-        <div className="vidro-forte mx-auto flex max-w-md items-center gap-3 rounded-2xl p-2 pl-4">
-          <span className="min-w-0 flex-1 truncate text-sm text-[var(--ink-2)]">
-            {plural(items.length, "produto", "produtos")} · {plural(previewPages, "página", "páginas")}
+        <div className="vidro-forte mx-auto flex max-w-md items-center gap-2 rounded-2xl p-2">
+          <button
+            type="button"
+            onClick={() => setVerPrevia(true)}
+            aria-label="Ver a prévia da arte"
+            className="relative h-14 w-11 shrink-0 overflow-hidden rounded-lg ring-1 ring-[var(--line-strong)]"
+            style={{ background: theme?.cardBg }}
+          >
+            {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="esqueleto absolute inset-0 rounded-none" />}
+            <span className="absolute bottom-0.5 right-0.5 grid size-4 place-items-center rounded-full bg-black/60 text-white"><Eye className="size-2.5" /></span>
+          </button>
+          <span className="min-w-0 flex-1 truncate text-xs text-[var(--ink-2)]">
+            Passo {step + 1} de {PASSOS.length}
           </span>
-          <Button onClick={save} loading={saving}>
-            Salvar
-          </Button>
+          {step > 0 && (
+            <Button variant="fantasma" onClick={voltar} aria-label="Voltar um passo">
+              <ArrowLeft className="size-4" />
+            </Button>
+          )}
+          {ultimo ? (
+            <Button onClick={save} loading={saving}>Salvar</Button>
+          ) : (
+            <Button onClick={avancar} disabled={!podeAvancar}>Continuar</Button>
+          )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {verPrevia && (
+          <motion.div
+            className="xl:hidden fixed inset-0 z-50 flex items-end bg-black/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setVerPrevia(false)}
+            role="dialog"
+            aria-label="Prévia da arte"
+          >
+            <motion.div
+              className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-[var(--bg)] p-4 pb-8"
+              initial={{ y: 60 }}
+              animate={{ y: 0 }}
+              exit={{ y: 60 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-bold">Sua arte</h3>
+                <button type="button" onClick={() => setVerPrevia(false)} className="grid size-11 place-items-center rounded-xl hover:bg-[var(--line)]" aria-label="Fechar prévia">
+                  <X className="size-5" />
+                </button>
+              </div>
+              {previewPanel}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
