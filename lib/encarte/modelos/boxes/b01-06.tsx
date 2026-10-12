@@ -17,7 +17,7 @@ export function Box01({ t, item, w, h, s }: BoxProps): ReactElement {
       <div style={abs(w * 0.04, h * 0.545, w * 0.92, h * 0.15, { alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.9} size={h * 0.098} color="#111111" lines={2} />
       </div>
-      <div style={abs(-3 * s, barY - 3 * s, w, barH, { backgroundImage: "linear-gradient(180deg, #E8232D, #AD0C16)", borderRadius: `${r(22 * s)}px 0 ${r(10 * s)}px ${r(10 * s)}px` })} />
+      <div style={abs(-3 * s, barY - 3 * s, w, barH, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg, #E8232D, #AD0C16)", borderRadius: `${r(22 * s)}px 0 ${r(10 * s)}px ${r(10 * s)}px` })} />
       <div style={abs(-3 * s + 4 * s, barY - 3 * s + 3 * s, w - 8 * s, 3 * s, { backgroundColor: "rgba(255,255,255,0.55)", borderRadius: r(3 * s) })} />
       {p ? (
         <>
@@ -46,10 +46,10 @@ export function Box02({ t, item, w, h, s }: BoxProps): ReactElement {
   const p = pct(item);
   const bw = 6 * s;
   return (
-    <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg,#25A844,#0B6A22)", borderRadius: r(18 * s), boxShadow: sh(s, 0.35), border: `${r(2 * s)}px solid #7FE08E` }}>
+    <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#25A844,#0B6A22)", borderRadius: r(18 * s), boxShadow: sh(s, 0.35), border: `${r(2 * s)}px solid #7FE08E` }}>
       <div style={abs(bw, bw, w - bw * 2, h - bw * 2, { borderRadius: r(13 * s), backgroundImage: "radial-gradient(circle at 50% 40%, #FFFBE3, #F3DE8A 70%, #E3C25B)", overflow: "hidden" })} />
       <Ph item={item} t={t} x={w * 0.06} y={h * 0.16} w={w * 0.88} h={h * 0.6} />
-      <div style={abs(bw, bw, w - bw * 2, h * 0.17, { backgroundImage: "linear-gradient(180deg,#2FB04D,#127A2B)", borderRadius: `${r(13 * s)}px ${r(13 * s)}px 0 0`, alignItems: "center", justifyContent: "center" })}>
+      <div style={abs(bw, bw, w - bw * 2, h * 0.17, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#2FB04D,#127A2B)", borderRadius: `${r(13 * s)}px ${r(13 * s)}px 0 0`, alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.86} size={h * 0.095} color="#FFFFFF" lines={1} shadow={`0 ${r(2 * s)}px 0 rgba(0,0,0,0.45)`} />
       </div>
       <div style={abs(w * 0.34, h * 0.69, w * 0.62, h * 0.27, { backgroundImage: "linear-gradient(180deg,#FFE95E,#F5B500)", borderRadius: r(16 * s), border: `${r(3 * s)}px solid #FFFFFF`, boxShadow: sh(s, 0.35), alignItems: "center", justifyContent: "center" })}>
@@ -151,7 +151,7 @@ export function Box06({ t, item, w, h, s }: BoxProps): ReactElement {
       <div style={abs(w * 0.04, h * 0.5, w * 0.92, h * 0.15, { backgroundColor: "#FFF6E6", alignItems: "center", justifyContent: "center", borderBottom: `${r(3 * s)}px solid #1B2F6B` })}>
         <Nome item={item} w={w * 0.86} size={h * 0.08} color="#1B2F6B" lines={1} />
       </div>
-      <div style={abs(w * 0.06, h * 0.69, w * 0.88, h * 0.23, { backgroundImage: "linear-gradient(180deg,#FF7A1A,#E04C00)", borderRadius: r(12 * s), border: `${r(2.5 * s)}px solid #FFB067`, alignItems: "center", justifyContent: "center", boxShadow: "inset 0 0 0 0 transparent" })}>
+      <div style={abs(w * 0.06, h * 0.69, w * 0.88, h * 0.23, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#FF7A1A,#E04C00)", borderRadius: r(12 * s), border: `${r(2.5 * s)}px solid #FFB067`, alignItems: "center", justifyContent: "center", boxShadow: "inset 0 0 0 0 transparent" })}>
         <Preco item={item} maxW={w * 0.78} maxH={h * 0.18} color="#FFFFFF" accent="#FFFFFF" />
       </div>
     </Shell>

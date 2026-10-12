@@ -14,7 +14,7 @@ export function Box19({ t, item, w, h, s }: BoxProps): ReactElement {
       <div style={abs(w * 0.06, h * 0.6, w * 0.88, h * 0.1, { alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.86} size={h * 0.065} color="#5A2E1A" lines={1} ls={1 * s} />
       </div>
-      <div style={abs(w * 0.1, h * 0.73, w * 0.8, h * 0.2, { backgroundImage: "linear-gradient(180deg,#D9714A,#B04A28)", borderRadius: r(h), alignItems: "center", justifyContent: "center", boxShadow: sh(s, 0.3) })}>
+      <div style={abs(w * 0.1, h * 0.73, w * 0.8, h * 0.2, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#D9714A,#B04A28)", borderRadius: r(h), alignItems: "center", justifyContent: "center", boxShadow: sh(s, 0.3) })}>
         <Preco item={item} maxW={w * 0.66} maxH={h * 0.13} color="#FFFFFF" accent="#FFE6D2" font={FONT_ALFA} />
       </div>
     </Shell>
@@ -24,8 +24,8 @@ export function Box19({ t, item, w, h, s }: BoxProps): ReactElement {
 // ------------------------------------------------------------------ 20
 export function Box20({ t, item, w, h, s }: BoxProps): ReactElement {
   return (
-    <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg,#2F9A52,#126B33)", borderRadius: r(16 * s), boxShadow: sh(s, 0.3) }}>
-      <div style={abs(w * 0.04, h * 0.04, w * 0.92, h * 0.92, { backgroundImage: "linear-gradient(180deg,#46B86B,#1E8645)", borderRadius: r(12 * s) })} />
+    <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#2F9A52,#126B33)", borderRadius: r(16 * s), boxShadow: sh(s, 0.3) }}>
+      <div style={abs(w * 0.04, h * 0.04, w * 0.92, h * 0.92, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#46B86B,#1E8645)", borderRadius: r(12 * s) })} />
       <div style={abs(w * 0.08, h * 0.08, w * 0.84, h * 0.84, { backgroundImage: "linear-gradient(180deg,#F5FBF6,#D8EFDF)", borderRadius: r(10 * s) })} />
       <Ph item={item} t={t} x={w * 0.12} y={h * 0.1} w={w * 0.76} h={h * 0.5} />
       <div style={abs(w * 0.1, h * 0.6, w * 0.8, h * 0.1, { alignItems: "center", justifyContent: "center" })}>
@@ -83,7 +83,7 @@ export function Box23({ t, item, w, h, s }: BoxProps): ReactElement {
   const tw = w * 0.4;
   return (
     <Shell w={w} h={h} style={{ backgroundColor: "#FFFFFF", borderRadius: r(14 * s), boxShadow: sh(s), overflow: "hidden", border: `${r(1.5 * s)}px solid #D6EEEA` }}>
-      <div style={abs(0, 0, bw, h, { backgroundImage: "linear-gradient(180deg,#1FB5A5,#0E7F74)" })} />
+      <div style={abs(0, 0, bw, h, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#1FB5A5,#0E7F74)" })} />
       <Ph item={item} t={t} x={w * 0.1} y={h * 0.04} w={w * 0.8} h={h * 0.56} />
       <div style={abs(w * 0.07, h * 0.66, w * 0.5, h * 0.27, { flexDirection: "column", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.5} size={h * 0.075} color="#0C3F3A" align="flex-start" lines={2} />

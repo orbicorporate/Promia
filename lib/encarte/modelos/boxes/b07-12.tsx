@@ -22,7 +22,7 @@ export function Box07({ t, item, w, h, s }: BoxProps): ReactElement {
       <div style={abs(w * 0.04, h * 0.6, w * 0.92, h * 0.13, { alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.88} size={h * 0.082} color="#3B1B0F" lines={1} />
       </div>
-      <div style={abs(w * 0.08, h * 0.75, w * 0.84, h * 0.2, { backgroundImage: "linear-gradient(180deg,#9B2336,#4B0A16)", borderRadius: r(h), border: `${r(3 * s)}px solid #D9A06B`, alignItems: "center", justifyContent: "center", boxShadow: sh(s, 0.3) })}>
+      <div style={abs(w * 0.08, h * 0.75, w * 0.84, h * 0.2, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#9B2336,#4B0A16)", borderRadius: r(h), border: `${r(3 * s)}px solid #D9A06B`, alignItems: "center", justifyContent: "center", boxShadow: sh(s, 0.3) })}>
         <Preco item={item} maxW={w * 0.7} maxH={h * 0.13} color="#FFFFFF" accent="#FFE0B8" font={FONT_ALFA} />
       </div>
     </Shell>
@@ -80,7 +80,7 @@ export function Box10({ t, item, w, h, s }: BoxProps): ReactElement {
     <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg,#E2BE86,#C8975A)", borderRadius: r(6 * s), boxShadow: sh(s, 0.35) }}>
       <div style={abs(fr, fr, w - fr * 2, h - fr * 2, { backgroundImage: "radial-gradient(circle at 50% 35%, #FFF9EC, #F3E3C3)", borderRadius: r(4 * s), border: `${r(2 * s)}px solid #A87A42` })} />
       <Ph item={item} t={t} x={w * 0.1} y={h * 0.05} w={w * 0.8} h={h * 0.62} />
-      <div style={abs(w * 0.07, h * 0.62, w * 0.86, h * 0.33, { backgroundImage: "linear-gradient(180deg,#245C3D,#12341F)", borderRadius: r(14 * s), border: `${r(3 * s)}px solid #D8C89B`, boxShadow: sh(s, 0.4), flexDirection: "column", alignItems: "center", justifyContent: "center" })}>
+      <div style={abs(w * 0.07, h * 0.62, w * 0.86, h * 0.33, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#245C3D,#12341F)", borderRadius: r(14 * s), border: `${r(3 * s)}px solid #D8C89B`, boxShadow: sh(s, 0.4), flexDirection: "column", alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.74} size={h * 0.07} color="#F3E7C4" lines={1} ls={2 * s} />
         <div style={{ display: "flex", marginTop: r(4 * s) }}>
           <Preco item={item} maxW={w * 0.7} maxH={h * 0.15} color="#F3E7C4" accent="#F3E7C4" />
@@ -101,11 +101,11 @@ export function Box11({ t, item, w, h, s }: BoxProps): ReactElement {
     <Shell w={w} h={h} style={{ backgroundColor: "#FFFFFF", borderRadius: r(14 * s), border: `${r(3 * s)}px solid #FF5A52`, boxShadow: sh(s), overflow: "hidden" }}>
       <Ph item={item} t={t} x={w * 0.12} y={h * 0.03} w={w * 0.76} h={h * 0.56} />
       <div style={abs(-3 * s, -3 * s, w * 0.2, w * 0.2, { backgroundColor: "#FF5A52", borderRadius: `0 0 ${r(w * 0.2)}px 0` })} />
-      <div style={abs(-3 * s, by, w, h - by + 3 * s, { backgroundImage: "linear-gradient(180deg,#14305E,#0A1B3D)" })} />
+      <div style={abs(-3 * s, by, w, h - by + 3 * s, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#14305E,#0A1B3D)" })} />
       <div style={abs(w * 0.06, by + h * 0.03, w * 0.88, h * 0.14, { alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.86} size={h * 0.085} color="#FFFFFF" lines={1} />
       </div>
-      <div style={abs(w * 0.12, by + h * 0.175, w * 0.76, h * 0.17, { backgroundImage: "linear-gradient(180deg,#FF6E66,#E83C34)", borderRadius: r(h), alignItems: "center", justifyContent: "center", border: `${r(2 * s)}px solid #FFFFFF` })}>
+      <div style={abs(w * 0.12, by + h * 0.175, w * 0.76, h * 0.17, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#FF6E66,#E83C34)", borderRadius: r(h), alignItems: "center", justifyContent: "center", border: `${r(2 * s)}px solid #FFFFFF` })}>
         <Preco item={item} maxW={w * 0.66} maxH={h * 0.12} color="#FFFFFF" accent="#FFFFFF" />
       </div>
       {p ? <div style={abs(w * 0.76, h * 0.05, w * 0.2, h * 0.08, { backgroundColor: "#FFFFFF", borderRadius: r(h), border: `${r(2 * s)}px solid #FF5A52`, alignItems: "center", justifyContent: "center" })}><Txt text={`-${p}%`} size={h * 0.05} color="#E83C34" /></div> : null}
