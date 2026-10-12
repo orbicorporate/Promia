@@ -33,7 +33,7 @@ export function Box14({ t, item, w, h, s }: BoxProps): ReactElement {
   const sw = w * 0.27;
   return (
     <Shell w={w} h={h} style={{ backgroundColor: "#FFFFFF", borderRadius: r(14 * s), boxShadow: sh(s), overflow: "hidden", border: `${r(1.5 * s)}px solid #E3E9E3` }}>
-      <div style={abs(0, 0, sw, h * 0.7, { backgroundImage: "linear-gradient(180deg,#5B8760,#3E6A45)" })} />
+      <div style={abs(0, 0, sw, h * 0.7, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#5B8760,#3E6A45)" })} />
       <div style={abs(sw * 0.1, h * 0.06, sw * 0.82, h * 0.34, { flexDirection: "column", alignItems: "center" })}>
         <Nome item={item} w={sw * 0.84} size={h * 0.062} color="#FFFFFF" lines={3} />
       </div>
@@ -87,7 +87,7 @@ export function Box16({ t, item, w, h, s }: BoxProps): ReactElement {
 // ------------------------------------------------------------------ 17
 export function Box17({ t, item, w, h, s }: BoxProps): ReactElement {
   return (
-    <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg,#26262A,#0E0E10)", borderRadius: r(6 * s), border: `${r(2 * s)}px solid #C9AE7A`, boxShadow: sh(s, 0.4) }}>
+    <Shell w={w} h={h} style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#26262A,#0E0E10)", borderRadius: r(6 * s), border: `${r(2 * s)}px solid #C9AE7A`, boxShadow: sh(s, 0.4) }}>
       <div style={abs(w * 0.05, h * 0.045, w * 0.9, h * 0.62, { backgroundImage: "radial-gradient(circle at 50% 40%, #FFFFFF, #E9E2D2)", border: `${r(2 * s)}px solid #D8BF8C`, borderRadius: r(3 * s) })} />
       <Ph item={item} t={t} x={w * 0.12} y={h * 0.06} w={w * 0.76} h={h * 0.6} />
       <div style={abs(w * 0.07, h * 0.7, w * 0.86, h * 0.09, { alignItems: "center" })}>
@@ -108,7 +108,7 @@ export function Box18({ t, item, w, h, s }: BoxProps): ReactElement {
   const blk = `M0 0 H${pw - ph * 0.45} L${pw} ${ph} H0 Z`;
   return (
     <Shell w={w} h={h} style={{ backgroundColor: "#FFFFFF", borderRadius: r(12 * s), boxShadow: sh(s), overflow: "hidden" }}>
-      <div style={abs(0, 0, w, hh, { backgroundImage: "linear-gradient(180deg,#1E55D6,#0B2E8C)", alignItems: "center", justifyContent: "center" })}>
+      <div style={abs(0, 0, w, hh, { backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0) 52%), linear-gradient(180deg,#1E55D6,#0B2E8C)", alignItems: "center", justifyContent: "center" })}>
         <Nome item={item} w={w * 0.9} size={hh * 0.62} color="#FFFFFF" lines={1} />
       </div>
       <Ph item={item} t={t} x={w * 0.12} y={hh + h * 0.01} w={w * 0.76} h={h * 0.58} />

@@ -78,7 +78,7 @@ export function pct(item: EncarteItem): number | null {
 }
 
 export function Preco({ item, maxW, maxH, color, accent, font }: { item: EncarteItem; maxW: number; maxH: number; color: string; accent?: string; font?: string }) {
-  return <PrecoTexto price={item.price} unit={item.unit} maxW={maxW} maxH={maxH * 1.6} color={color} accent={accent} font={font} />;
+  return <PrecoTexto price={item.price} unit={item.unit} maxW={maxW} maxH={maxH * 1.5} color={color} accent={accent} font={font} />;
 }
 
 // foto do produto (recorte) dentro de uma área
