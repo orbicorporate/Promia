@@ -5,6 +5,7 @@ import { MARKET_ENCARTE_COLUMNS, marketRowToEncarte } from "@/lib/encarte/load";
 import { pageCount } from "@/lib/encarte/paginate";
 import { renderEncartePng } from "@/lib/encarte/png";
 import { sanitizePreviewInput } from "@/lib/encarte/sanitize";
+import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -15,6 +16,9 @@ export const maxDuration = 30;
 // themeKey, validFrom?, validUntil?, items: EncarteItem[] }, pagina? }
 // Prévia ao vivo enquanto o dono monta o encarte, sem salvar nada. O
 // mercado (nome, logo, cores, contatos) vem do banco, nunca do navegador.
+// Dados do mercado mudam pouco: 30 s de cache evita uma ida ao banco por prévia.
+const marketCache = new Map<string, { at: number; row: Record<string, unknown> }>();
+
 export async function POST(req: Request) {
   const body = await readJson(req);
   const guard = await requireMarketAccess(body.marketId);
@@ -28,13 +32,21 @@ export async function POST(req: Request) {
   if (typeof pagina !== "number" || !Number.isInteger(pagina) || pagina < 1 || pagina > 9999) return jsonError(400, "Página inválida.");
   const pageIndex = pagina - 1;
 
-  const admin = createAdminClient();
-  const { data: market, error } = await admin.from("markets").select(MARKET_ENCARTE_COLUMNS).eq("id", marketId).maybeSingle();
-  if (error) {
-    console.error("[encarte] previa market", error);
-    return jsonError(500, "Não consegui carregar os dados do mercado. Tente de novo.");
+  let market = (() => {
+    const hit = marketCache.get(marketId);
+    return hit && Date.now() - hit.at < 30_000 ? hit.row : null;
+  })() as Parameters<typeof marketRowToEncarte>[0] | null;
+  if (!market) {
+    const admin = createAdminClient();
+    const { data, error } = await admin.from("markets").select(MARKET_ENCARTE_COLUMNS).eq("id", marketId).maybeSingle();
+    if (error) {
+      console.error("[encarte] previa market", error);
+      return jsonError(500, "Não consegui carregar os dados do mercado. Tente de novo.");
+    }
+    if (!data) return jsonError(404, "Mercado não encontrado.");
+    market = data;
+    marketCache.set(marketId, { at: Date.now(), row: data as unknown as Record<string, unknown> });
   }
-  if (!market) return jsonError(404, "Mercado não encontrado.");
 
   const data = { ...parsed.data, id: "previa", market: marketRowToEncarte(market) };
   const total = pageCount(data);
@@ -44,7 +56,10 @@ export async function POST(req: Request) {
     const withImages = await resolveEncarteImages(data, { pageIndex, budgetMs: 7000 });
     const out = await renderEncartePng(withImages, pageIndex);
     if (!out) return jsonError(404, "Página não encontrada.");
-    return pngResponse(out.png, {
+    // a prévia segue em WebP: 5 a 10 vezes menor que o PNG, chega mais rápido
+    const webp = await sharp(out.png).webp({ quality: 84, effort: 1 }).toBuffer();
+    return pngResponse(new Uint8Array(webp), {
+      contentType: "image/webp",
       fileName: pageFileName(data.name, pageIndex + 1),
       download: false,
       pageIndex: out.pageIndex,

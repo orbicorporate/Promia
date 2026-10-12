@@ -51,11 +51,11 @@ export function parsePageParam(value: string | null): number | null {
   return n >= 1 ? n - 1 : null;
 }
 
-export function pngResponse(png: Uint8Array, opts: { fileName: string; download: boolean; pageIndex: number; pageCount: number; extraHeaders?: Record<string, string> }) {
+export function pngResponse(png: Uint8Array, opts: { fileName: string; download: boolean; pageIndex: number; pageCount: number; extraHeaders?: Record<string, string>; contentType?: string }) {
   return new Response(png as BodyInit, {
     status: 200,
     headers: {
-      "content-type": "image/png",
+      "content-type": opts.contentType ?? "image/png",
       "content-length": String(png.byteLength),
       "content-disposition": contentDisposition(opts.download ? "attachment" : "inline", opts.fileName),
       "cache-control": NO_STORE,
