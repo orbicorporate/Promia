@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { FORMATS } from "@/lib/encarte/formats";
+import { VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
@@ -81,18 +82,6 @@ const PASSOS = [
   { key: "textos", nome: "Título e datas", pergunta: "Título e validade" },
   { key: "revisar", nome: "Revisar", pergunta: "Está tudo certo?" },
 ] as const;
-
-// Combinações prontas: um clique e a arte já sai com caixa, fundo e emblema que combinam.
-const VISUAIS_PRONTOS: { nome: string; modelo: EncarteModelo; fundo: EncarteFundo; emblema: string; themeKey: string }[] = [
-  { nome: "Ofertão de sábado", modelo: "cx01", fundo: "cs33" as EncarteFundo, emblema: "ofertao-de-sabado", themeKey: "ofertas" },
-  { nome: "Hortifruti", modelo: "cx02", fundo: "dp01" as EncarteFundo, emblema: "quarta-do-hortifruti", themeKey: "hortifruti" },
-  { nome: "Açougue", modelo: "cx07", fundo: "dp05" as EncarteFundo, emblema: "terca-da-carne", themeKey: "acougue" },
-  { nome: "Padaria", modelo: "cx19", fundo: "dp12" as EncarteFundo, emblema: "padaria", themeKey: "padaria" },
-  { nome: "Fim de semana", modelo: "cx05", fundo: "pp08" as EncarteFundo, emblema: "ofertas-de-fim-de-semana", themeKey: "fim-de-semana" },
-  { nome: "Black Friday", modelo: "cx04", fundo: "cs31" as EncarteFundo, emblema: "black-friday", themeKey: "black-friday" },
-  { nome: "Natal", modelo: "cx16", fundo: "fs25" as EncarteFundo, emblema: "natal-de-ofertas", themeKey: "natal" },
-  { nome: "Dia das mães", modelo: "cx22", fundo: "fs39" as EncarteFundo, emblema: "dia-das-maes", themeKey: "dia-das-maes" },
-];
 
 const FORMATO_NOME: Record<EncarteFormat, string> = { feed: "Feed", story: "Story", quadrado: "Quadrado", a4: "A4" };
 const FORMATO_PROP: Record<EncarteFormat, [number, number]> = { feed: [32, 40], story: [24, 42], quadrado: [36, 36], a4: [30, 42] };
@@ -631,7 +620,7 @@ export function EncarteBuilder({
         }}
         className={miniaturaClass(on)}
       >
-        <img src={`/miniaturas/estilo-${key ?? "classico"}.webp`} alt="" width={300} height={300} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+        <img src={`/miniaturas/estilo-${key ?? "classico"}.webp`} alt="" width={440} height={330} loading="lazy" decoding="async" className="aspect-[4/3] w-full bg-[var(--line)] object-cover" />
         <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{rotulo}</span>
         {on && <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-3.5" strokeWidth={3} /></span>}
       </button>
@@ -640,11 +629,11 @@ export function EncarteBuilder({
   const miniFundo = (f: EncarteFundo | null, rotulo: string) => {
     const on = fundo === f;
     return (
-      <button key={f ?? "padrao"} type="button" aria-pressed={on} onClick={() => setFundo(f)} className={cn(miniaturaClass(on), "w-[104px] shrink-0")}>
+      <button key={f ?? "padrao"} type="button" aria-pressed={on} onClick={() => setFundo(f)} className={cn(miniaturaClass(on), "w-[124px] shrink-0")}>
         {f ? (
-          <img src={`/miniaturas/fundo-${f}.webp`} alt="" width={300} height={300} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+          <img src={`/miniaturas/fundo-${f}.webp`} alt="" width={440} height={330} loading="lazy" decoding="async" className="aspect-[4/3] w-full bg-[var(--line)] object-cover" />
         ) : (
-          <span className="grid aspect-square w-full place-items-center bg-[var(--line)] text-xs font-semibold text-[var(--ink-3)]">Do estilo</span>
+          <span className="grid aspect-[4/3] w-full place-items-center bg-[var(--line)] text-xs font-semibold text-[var(--ink-3)]">Do estilo</span>
         )}
         <span className={cn("block truncate px-1.5 py-1 text-[11px] font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{rotulo}</span>
       </button>
@@ -662,8 +651,8 @@ export function EncarteBuilder({
           {VISUAIS_PRONTOS.map((v) => {
             const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
             return (
-              <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[132px] shrink-0")}>
-                <img src={`/miniaturas/estilo-${v.modelo}.webp`} alt="" width={300} height={300} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+              <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[150px] shrink-0")}>
+                <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
                 <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
               </button>
             );
