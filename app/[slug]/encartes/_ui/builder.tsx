@@ -116,6 +116,7 @@ export function EncarteBuilder({
   const reduce = useReducedMotion();
   const [step, setStep] = useState(0);
   const [verPrevia, setVerPrevia] = useState(false);
+  const [grupoEmblema, setGrupoEmblema] = useState("Para agora");
   const [name, setName] = useState(initial.name);
   const [headline, setHeadline] = useState(initial.headline);
   const [subheadline, setSubheadline] = useState(initial.subheadline);
@@ -544,6 +545,26 @@ export function EncarteBuilder({
     return out;
   }, [items, byId, headline, emblema]);
 
+
+  // Logos agrupados: "Para agora" traz os do período do encarte; depois as pastas do catálogo.
+  const gruposEmblema = useMemo(() => {
+    const nomes: string[] = [];
+    for (const e of EMBLEMAS) if (!e.alternativa && !nomes.includes(e.grupo)) nomes.push(e.grupo);
+    return ["Para agora", ...nomes];
+  }, []);
+  const emblemasDoGrupo = useMemo(() => {
+    if (grupoEmblema === "Para agora") return [...emblemasOrdenados.hit, ...emblemasOrdenados.rest.filter((e) => e.grupo === "Campanhas recorrentes")];
+    return EMBLEMAS.filter((e) => !e.alternativa && e.grupo === grupoEmblema);
+  }, [grupoEmblema, emblemasOrdenados]);
+
+  function escolherEmblema(slug: string) {
+    setEmblema(slug);
+    const e = EMBLEMAS.find((x) => x.slug === slug);
+    const tema = e?.temas.find((k) => themes.some((t) => t.key === k));
+    if (tema) setThemeKey(tema);
+    setPreviewPage(1);
+  }
+
   function aplicarPronto(v: (typeof VISUAIS_PRONTOS)[number]) {
     setModelo(v.modelo);
     setLayout("grade");
@@ -644,20 +665,62 @@ export function EncarteBuilder({
     <div className="space-y-5">
       <Glass className="p-4 sm:p-5 space-y-3">
         <div>
-          <h3 className="flex items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Visuais prontos</h3>
-          <p className="text-sm text-[var(--ink-2)]">Um toque e a arte já sai combinada. Depois dá para trocar cada peça abaixo.</p>
+          <h3 className="font-bold">Campanha</h3>
+          <p className="text-sm text-[var(--ink-2)]">Comece pelo logo. Ele vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
         </div>
-        <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {VISUAIS_PRONTOS.map((v) => {
-            const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+        <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {gruposEmblema.map((g) => (
+            <Chip key={g} on={grupoEmblema === g} onClick={() => setGrupoEmblema(g)}>
+              {g}
+            </Chip>
+          ))}
+        </div>
+        <div className="grid max-h-[26rem] grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-3">
+          {emblemasDoGrupo.map((e) => {
+            const on = emblema === e.slug;
             return (
-              <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[150px] shrink-0")}>
-                <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
-                <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
+              <button
+                key={e.slug}
+                type="button"
+                aria-pressed={on}
+                onClick={() => escolherEmblema(e.slug)}
+                className={cn("relative overflow-hidden rounded-2xl text-left ring-2 transition active:scale-[0.98]", on ? "ring-[var(--ink)]" : "ring-[var(--line)] hover:ring-[var(--line-strong)]")}
+              >
+                <span className="grid aspect-[4/3] w-full place-items-center bg-[linear-gradient(160deg,#fbfaf7,#e4e0d6)] p-2">
+                  <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
+                </span>
+                <span className={cn("flex items-center justify-between gap-1 px-2.5 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
+                  <span className="truncate">{e.nome}</span>
+                  {on && <Check className="size-3.5 shrink-0" strokeWidth={3} />}
+                </span>
+                {emblemasOrdenados.hit.includes(e) ? <span className="absolute left-1.5 top-1.5 rounded-full bg-[var(--ink)] px-2 py-0.5 text-[10px] font-semibold text-[var(--bg)]">Agora</span> : null}
               </button>
             );
           })}
         </div>
+        {emblema ? (
+          <button type="button" onClick={() => setEmblema(null)} className="text-sm font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline">
+            Tirar o logo e usar só o título
+          </button>
+        ) : null}
+      </Glass>
+
+      <Glass className="p-4 sm:p-5">
+        <details>
+          <summary className="flex cursor-pointer items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Combinações prontas <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
+          <p className="mt-1 text-sm text-[var(--ink-2)]">Logo, estilo e fundo já combinados. Dá para ajustar depois.</p>
+          <div className="rolagem -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+            {VISUAIS_PRONTOS.map((v) => {
+              const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+              return (
+                <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[150px] shrink-0")}>
+                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+                  <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
+                </button>
+              );
+            })}
+          </div>
+        </details>
       </Glass>
 
       <Glass className="p-4 sm:p-5 space-y-3">
@@ -692,9 +755,10 @@ export function EncarteBuilder({
       </Glass>
 
       {modelo && modelo !== "feira" ? (
-        <Glass className="p-4 sm:p-5 space-y-3">
-          <h3 className="font-bold">Fundo</h3>
-          <div className="space-y-3">
+        <Glass className="p-4 sm:p-5">
+          <details>
+          <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
+          <div className="mt-3 space-y-3">
             {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
               <div key={grupo} className="space-y-1.5">
                 <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
@@ -702,26 +766,9 @@ export function EncarteBuilder({
               </div>
             ))}
           </div>
+          </details>
         </Glass>
       ) : null}
-
-      <Glass className="p-4 sm:p-5 space-y-3">
-        <div>
-          <h3 className="font-bold">Emblema da campanha</h3>
-          <p className="text-sm text-[var(--ink-2)]">Vira o título da arte e define as cores do fundo e das etiquetas.</p>
-        </div>
-        <div className="grid max-h-80 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
-          <button type="button" aria-pressed={emblema === null} onClick={() => setEmblema(null)} className={cn("flex min-h-20 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold", emblema === null ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
-            Sem emblema
-          </button>
-          {[...emblemasOrdenados.hit, ...emblemasOrdenados.rest].map((e) => (
-            <button key={e.slug} type="button" aria-pressed={emblema === e.slug} aria-label={e.nome} title={e.nome} onClick={() => setEmblema(e.slug)} className={cn("relative flex min-h-20 items-center justify-center rounded-xl border p-1.5", emblema === e.slug ? "border-[var(--ink)] bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]" : "border-[var(--line)] bg-white/60 hover:bg-white")}>
-              <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading="lazy" decoding="async" className="max-h-16 w-full object-contain" />
-              {emblemasOrdenados.hit.includes(e) ? <span className="absolute left-1 top-1 rounded-full bg-[var(--ink)] px-1.5 text-[10px] font-semibold text-white">Agora</span> : null}
-            </button>
-          ))}
-        </div>
-      </Glass>
 
       <Glass className="p-4 sm:p-5">
         <details>
