@@ -1,17 +1,18 @@
 import type { ReactElement } from "react";
-import { Box01, Box02, Box03, Box04, Box05, Box06 } from "./b01-06";
+import { Box04, Box05, Box06 } from "./b01-06";
 import { Box07, Box08, Box09, Box10, Box11, Box12 } from "./b07-12";
 import { Box13, Box14, Box15, Box16, Box17, Box18 } from "./b13-18";
 import { Box19, Box20, Box21, Box22, Box23, Box24 } from "./b19-24";
 import type { BoxProps } from "./kit";
+import { SvgBox01, SvgBox02, SvgBox03 } from "./svgboxes";
 
 export type BoxDef = { id: string; nome: string; aspect: number; render: (p: BoxProps) => ReactElement };
 
 // proporção (largura/altura) de cada box, como nas referências
 export const BOXES: BoxDef[] = [
-  { id: "cx01", nome: "Vermelho clássico", aspect: 0.88, render: Box01 },
-  { id: "cx02", nome: "Verde e amarelo", aspect: 1, render: Box02 },
-  { id: "cx03", nome: "Vermelho faixa 3D", aspect: 0.95, render: Box03 },
+  { id: "cx01", nome: "Vermelho clássico", aspect: 0.9, render: SvgBox01 },
+  { id: "cx02", nome: "Verde e amarelo", aspect: 0.9, render: SvgBox02 },
+  { id: "cx03", nome: "Vermelho faixa 3D", aspect: 0.9, render: SvgBox03 },
   { id: "cx04", nome: "Preto e dourado", aspect: 0.95, render: Box04 },
   { id: "cx05", nome: "Azul circular", aspect: 1, render: Box05 },
   { id: "cx06", nome: "Laranja cupom", aspect: 0.92, render: Box06 },
