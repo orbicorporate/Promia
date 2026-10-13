@@ -34,7 +34,8 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
         slug={slug}
         marketId={market.id}
         hasAddress={!!(market.address || market.city)}
-        competitors={(competitors ?? []).map((c) => ({ ...c, rating: c.rating == null ? null : Number(c.rating) }))}
+        origem={{ name: market.name, address: market.address, city: market.city }}
+        competitors={(competitors ?? []).map((c) => ({ ...c, rating: c.rating == null ? null : Number(c.rating), latitude: c.latitude == null ? null : Number(c.latitude), longitude: c.longitude == null ? null : Number(c.longitude) }))}
         flyers={flyers ?? []}
         compare={cmp}
         unmatched={unmatched}
