@@ -30,7 +30,7 @@ import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
 import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
-import { VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
+import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
@@ -125,6 +125,9 @@ export function EncarteBuilder({
   const [step, setStep] = useState(0);
   const [verPrevia, setVerPrevia] = useState(false);
   const [grupoEmblema, setGrupoEmblema] = useState("Para agora");
+  const [temaPronto, setTemaPronto] = useState<string | null>(null);
+  const [buscaPronto, setBuscaPronto] = useState("");
+  const [limitePronto, setLimitePronto] = useState(8);
   const [name, setName] = useState(initial.name);
   const [headline, setHeadline] = useState(initial.headline);
   const [subheadline, setSubheadline] = useState(initial.subheadline);
@@ -724,11 +727,96 @@ export function EncarteBuilder({
     );
   };
 
+  const prontosFiltrados = useMemo(() => {
+    const q = normalizarBusca(buscaPronto.trim());
+    let lista = VISUAIS_PRONTOS;
+    if (temaPronto) lista = lista.filter((v) => v.tema === temaPronto);
+    if (q) {
+      const palavras = q.split(/\s+/);
+      return lista.filter((v) => palavras.every((w) => v.busca.includes(w)));
+    }
+    // sem filtro: uma de cada tema primeiro, para mostrar a variedade
+    return temaPronto ? lista : [...lista.filter((v) => v.slug.endsWith("-1")), ...lista.filter((v) => !v.slug.endsWith("-1"))];
+  }, [temaPronto, buscaPronto]);
+
+  const prontosPanel = (
+    <Glass className="space-y-3 p-4 sm:p-5">
+      <div>
+        <h3 className="flex items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Comece por uma combinação pronta</h3>
+        <p className="text-sm text-[var(--ink-2)]">Logo, fundo e caixa já combinados. Escolha o tema ou digite o que você vai anunciar. Dá para ajustar tudo depois.</p>
+      </div>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
+        <Input
+          value={buscaPronto}
+          onChange={(e) => {
+            setBuscaPronto(e.target.value);
+            setLimitePronto(8);
+          }}
+          placeholder="Digite o tema: carne, natal, sábado, bebidas..."
+          className="pl-10"
+          aria-label="Buscar combinação pronta"
+        />
+      </div>
+      <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <Chip
+          on={!temaPronto}
+          onClick={() => {
+            setTemaPronto(null);
+            setLimitePronto(8);
+          }}
+        >
+          Todos
+        </Chip>
+        {TEMAS_PRONTOS.map((t) => (
+          <Chip
+            key={t.id}
+            on={temaPronto === t.id}
+            onClick={() => {
+              setTemaPronto(temaPronto === t.id ? null : t.id);
+              setLimitePronto(8);
+            }}
+          >
+            {t.nome}
+          </Chip>
+        ))}
+      </div>
+      {prontosFiltrados.length === 0 ? (
+        <p className="py-6 text-center text-sm text-[var(--ink-3)]">Nenhuma combinação com esse tema. Tente carne, natal, sábado, hortifruti ou bebidas.</p>
+      ) : (
+        <>
+          <p className="text-xs text-[var(--ink-3)]">{plural(prontosFiltrados.length, "combinação", "combinações")}</p>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {prontosFiltrados.slice(0, limitePronto).map((v) => {
+              const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+              return (
+                <button key={v.slug} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={miniaturaClass(on)}>
+                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+                  <span className={cn("block px-2 py-1.5 text-left", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
+                    <span className="block truncate text-xs font-semibold">{v.nome}</span>
+                    <span className={cn("block truncate text-[11px]", on ? "opacity-75" : "text-[var(--ink-3)]")}>{v.fundoNome}</span>
+                  </span>
+                  {on && <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-3.5" strokeWidth={3} /></span>}
+                </button>
+              );
+            })}
+          </div>
+          {prontosFiltrados.length > limitePronto && (
+            <Button variant="vidro" onClick={() => setLimitePronto((n) => n + 12)} className="w-full">
+              Ver mais ({prontosFiltrados.length - limitePronto})
+            </Button>
+          )}
+        </>
+      )}
+    </Glass>
+  );
+
   const objetivoPanel = (
     <div className="space-y-5">
+      {prontosPanel}
       <Glass className="p-4 sm:p-5 space-y-3">
         <div>
-          <h3 className="font-bold">Campanha</h3>
+          <h3 className="font-bold">Ou escolha só o logo da campanha</h3>
           <p className="text-sm text-[var(--ink-2)]">Escolha a campanha. O logo dela vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
         </div>
         <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
@@ -858,24 +946,6 @@ export function EncarteBuilder({
             {LAYOUT_HINT[layout]}, {capacityLabel}
           </span>
         </div>
-      </Glass>
-
-      <Glass className="p-4 sm:p-5">
-        <details>
-          <summary className="flex cursor-pointer items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Combinações prontas <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
-          <p className="mt-1 text-sm text-[var(--ink-2)]">Logo, estilo e fundo já combinados. Dá para ajustar depois.</p>
-          <div className="rolagem -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
-            {VISUAIS_PRONTOS.map((v) => {
-              const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
-              return (
-                <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[150px] shrink-0")}>
-                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
-                  <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
-                </button>
-              );
-            })}
-          </div>
-        </details>
       </Glass>
 
     </div>
