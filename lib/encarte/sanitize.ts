@@ -85,6 +85,7 @@ export function sanitizePreviewInput(raw: unknown): SanitizeResult {
       fundo: isEncarteFundo(r.fundo) ? r.fundo : null,
       emblema: typeof r.emblema === "string" && emblemaPorSlug(r.emblema) ? r.emblema : null,
       themeKey: r.themeKey,
+      esqueleto: r.esqueleto === true,
       validFrom: isISODate(r.validFrom) ? r.validFrom : null,
       validUntil: isISODate(r.validUntil) ? r.validUntil : null,
       items,

@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { loadEncarteFonts } from "./fonts";
 import { renderModelo } from "./modelos";
+import { renderEsqueleto } from "./modelos/esqueleto";
 import { renderEncartePage } from "./render";
 import type { EncarteData } from "./types";
 
@@ -12,7 +13,7 @@ import type { EncarteData } from "./types";
 export type EncartePng = { png: Uint8Array; width: number; height: number; pageIndex: number; pageCount: number };
 
 export async function renderEncartePng(data: EncarteData, pageIndex: number): Promise<EncartePng | null> {
-  const page = (data.modelo ? renderModelo(data, pageIndex) : null) ?? renderEncartePage(data, pageIndex);
+  const page = (data.esqueleto ? renderEsqueleto(data, pageIndex) : null) ?? (data.modelo ? renderModelo(data, pageIndex) : null) ?? renderEncartePage(data, pageIndex);
   if (!page) return null;
   const fonts = await loadEncarteFonts();
   const response = new ImageResponse(page.element, { width: page.width, height: page.height, fonts });

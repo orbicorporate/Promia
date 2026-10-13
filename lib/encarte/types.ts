@@ -76,6 +76,7 @@ export type EncarteData = {
   fundo?: EncarteFundo | null;
   emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
+  esqueleto?: boolean; // prévia só com fundo, logo e a marcação das 12 caixas (passos 1 e 2 do montador)
   themeKey: string;
   validFrom?: string | null; // YYYY-MM-DD
   validUntil?: string | null; // YYYY-MM-DD

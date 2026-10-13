@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isUuid } from "@/lib/auth";
 import { pageCount } from "@/lib/encarte/paginate";
 import { validityLabel } from "@/lib/encarte/text";
-import { isEncarteFormat, isEncarteLayout, type EncarteItem } from "@/lib/encarte/types";
+import { isEncarteFormat, isEncarteLayout, isEncarteModelo, type EncarteItem } from "@/lib/encarte/types";
 import { FORMATS } from "@/lib/encarte/formats";
 import { FORMAT_SHORT, LAYOUT_SHORT } from "@/lib/encarte/labels";
 import { getTheme } from "@/lib/encarte/themes";
@@ -29,7 +29,7 @@ export default async function EncartePage({ params, searchParams }: PageProps<"/
   const admin = createAdminClient();
   const { data: t } = await admin
     .from("tabloids")
-    .select("id, name, format, layout, theme_key, valid_from, valid_until, updated_at, tabloid_products(highlight, promo_price, products(price))")
+    .select("id, name, format, layout, modelo, theme_key, valid_from, valid_until, updated_at, tabloid_products(highlight, promo_price, products(price))")
     .eq("id", id)
     .eq("market_id", market.id)
     .maybeSingle();
@@ -39,7 +39,7 @@ export default async function EncartePage({ params, searchParams }: PageProps<"/
   const layout = isEncarteLayout(t.layout) ? t.layout : "grade";
   const rows = (t.tabloid_products ?? []) as { highlight: boolean | null; promo_price: number | null; products: { price: number | null } | null }[];
   const priced = rows.filter((r) => (r.promo_price ?? r.products?.price) != null);
-  const pages = pageCount({ format, layout, items: priced.map((r) => ({ highlight: !!r.highlight }) as EncarteItem) });
+  const pages = pageCount({ format, layout, modelo: isEncarteModelo(t.modelo) ? t.modelo : null, items: priced.map((r) => ({ highlight: !!r.highlight }) as EncarteItem) });
   const validade = validityLabel(t.valid_from, t.valid_until);
   const { data: camp } = await admin.from("campaigns").select("content").eq("tabloid_id", id).maybeSingle();
   const f = FORMATS[format];

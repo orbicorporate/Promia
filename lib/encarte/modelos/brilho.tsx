@@ -1,6 +1,6 @@
 import { cenarioSvg } from "./cenarios";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { FORMATS } from "../formats";
+import { capacidadeGrade, FORMATS } from "../formats";
 import { getPage } from "../paginate";
 import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
 import { marketInitials } from "../render";
@@ -387,7 +387,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const W = spec.width;
   const H = spec.height;
   const s = W / 1080;
-  const cap = spec.capacity.grade;
+  const cap = capacidadeGrade(data.format, !!data.modelo);
   const cols = cfg.cols?.(data.format) ?? cap.columns;
   const capRows = Math.ceil(cap.perPage / cols);
   const items = page.items.slice(0, cap.perPage);
