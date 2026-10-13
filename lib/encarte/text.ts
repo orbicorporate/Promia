@@ -91,6 +91,17 @@ export function validityLabel(from: string | null | undefined, until: string | n
   return null;
 }
 
+// A mesma informação em duas partes, para o selo de validade da arte:
+// { rotulo: "VÁLIDO", datas: "13/10 a 19/10" }
+export function validityParts(from: string | null | undefined, until: string | null | undefined): { rotulo: string; datas: string } | null {
+  const f = from ? ddmm(from) : null;
+  const u = until ? ddmm(until) : null;
+  if (f && u) return f === u ? { rotulo: "SÓ HOJE", datas: f } : { rotulo: "VÁLIDO", datas: `${f} a ${u}` };
+  if (u) return { rotulo: "ATÉ", datas: u };
+  if (f) return { rotulo: "A PARTIR DE", datas: f };
+  return null;
+}
+
 // "Encarte Semana 40!" -> "encarte-semana-40"
 export function slugify(value: string, fallback = "encarte"): string {
   const slug = value
