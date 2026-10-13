@@ -21,83 +21,16 @@ const sem = (...dias: number[]): Quando => ({ kind: "semana", dias });
 
 export const PLANEJADOS: Planejado[] = [
   // Dias da semana e ofertões
-  { nome: "Ofertão de Domingo", tipo: "ofertao", prioridade: 2, ideia: "Mesma família dos ofertões, faixa DOMINGO", quando: sem(0) },
-  { nome: "Ofertão de Janeiro a Dezembro (11 meses)", tipo: "ofertao", prioridade: 3, ideia: "Mesma família, um por mês, só se o cliente quiser o nome do mês", quando: { kind: "sempre" } },
-  { nome: "Sexta do Churrasco", tipo: "dia-da-semana", prioridade: 2, ideia: "Variante da Terça da Carne com brasa e linguiça", quando: sem(5) },
-  { nome: "Segunda da Limpeza", tipo: "dia-da-semana", prioridade: 3, ideia: "Balde, esponja e bolhas, letras azuis e verdes", quando: sem(1) },
-  { nome: "Quinta da Padaria", tipo: "dia-da-semana", prioridade: 3, ideia: "Pão quente com vapor e trigo", quando: sem(4) },
-  { nome: "Domingo de Ofertas", tipo: "periodo", prioridade: 2, ideia: "Variante com sol e cesta", quando: sem(0) },
-  { nome: "Última Chance", tipo: "periodo", prioridade: 2, ideia: "Ampulheta e seta, vermelho e preto" },
-  { nome: "Estoque Limitado", tipo: "periodo", prioridade: 2, ideia: "Caixas quase vazias e placa de aviso" },
 
   // Condições comerciais
-  { nome: "Compre 1 Leve 2", tipo: "condicao", prioridade: 2, ideia: "Duas sacolas de compras, +1 grande" },
-  { nome: "Super Oferta", tipo: "condicao", prioridade: 2, ideia: "Capa de herói, letras com raio" },
-  { nome: "Mega Oferta", tipo: "condicao", prioridade: 3, ideia: "Explosão amarela e letras azuis" },
-  { nome: "Preço de Atacado", tipo: "condicao", prioridade: 2, ideia: "Fardo e caixa fechada, etiqueta ATACADO" },
-  { nome: "2ª Unidade com Desconto", tipo: "condicao", prioridade: 2, ideia: "Dois produtos e percentual na segunda" },
-  { nome: "Compre e Ganhe", tipo: "condicao", prioridade: 2, ideia: "Caixa de presente com laço" },
-  { nome: "Preço Mínimo Garantido", tipo: "condicao", prioridade: 2, ideia: "Escudo com selo de garantia e seta para baixo" },
-  { nome: "Ofertas do App", tipo: "condicao", prioridade: 2, ideia: "Celular com cupom e raio" },
-  { nome: "Ofertas pelo WhatsApp", tipo: "condicao", prioridade: 2, ideia: "Balão verde de conversa com sacola" },
-  { nome: "Cashback", tipo: "condicao", prioridade: 3, ideia: "Moedas voltando para a carteira" },
-  { nome: "Cartão da Casa", tipo: "condicao", prioridade: 3, ideia: "Cartão dourado com coroa, na linha do Clube de Ofertas" },
-  { nome: "Vence Logo", tipo: "condicao", prioridade: 3, ideia: "Relógio e etiqueta de validade para produtos perto do vencimento" },
 
   // Datas comemorativas
-  { nome: "Semana Santa e Bacalhau", tipo: "data", prioridade: 2, ideia: "Bacalhau, azeite e cruz discreta, tons de azul e dourado", feriados: ["Páscoa"], quando: { kind: "feriado", titulo: "Páscoa", antes: 10 } },
-  { nome: "Halloween", tipo: "data", prioridade: 2, ideia: "Abóbora e guloseimas, laranja e roxo", quando: { kind: "periodo", de: "10-20", ate: "10-31" } },
-  { nome: "Dia dos Avós", tipo: "data", prioridade: 2, ideia: "Cesta de café da tarde, óculos e xícara", quando: { kind: "periodo", de: "07-15", ate: "07-26" } },
-  { nome: "Dia do Amigo", tipo: "data", prioridade: 3, ideia: "Brinde com cerveja e petisco", quando: { kind: "periodo", de: "07-14", ate: "07-20" } },
-  { nome: "Dia do Chocolate", tipo: "data", prioridade: 3, ideia: "Barras e calda de chocolate", quando: { kind: "periodo", de: "07-01", ate: "07-07" } },
-  { nome: "Dia da Pizza", tipo: "data", prioridade: 3, ideia: "Pizza fumegante com queijo esticando", quando: { kind: "periodo", de: "07-04", ate: "07-10" } },
-  { nome: "Dia do Café", tipo: "data", prioridade: 3, ideia: "Xícara com vapor e grãos", quando: { kind: "periodo", de: "05-18", ate: "05-24" } },
-  { nome: "Dia do Trabalhador", tipo: "data", prioridade: 3, ideia: "Feriado com churrasco e capacete amarelo", quando: { kind: "periodo", de: "04-24", ate: "05-01" } },
-  { nome: "Oktoberfest", tipo: "data", prioridade: 3, ideia: "Canecas de chopp, pretzel e xadrez azul e branco", quando: { kind: "periodo", de: "10-01", ate: "10-20" } },
-  { nome: "Cyber Monday", tipo: "campanha", prioridade: 3, ideia: "Mouse e carrinho, azul elétrico", feriados: ["Black Friday"] },
-  { nome: "Aniversário da Cidade", tipo: "data", prioridade: 2, ideia: "Bandeirolas e brasão genérico, personalizável com o nome da cidade", motivo: "Mercado de bairro e de interior ama a data local" },
-  { nome: "Festival de Inverno", tipo: "campanha", prioridade: 2, ideia: "Caldos, fondue, cobertor e vapor, vinho tinto", quando: { kind: "periodo", de: "06-15", ate: "08-15" } },
-  { nome: "Verão e Praia", tipo: "campanha", prioridade: 2, ideia: "Sol, guarda-sol, sorvete e bebida gelada", quando: { kind: "periodo", de: "12-10", ate: "02-28" } },
-  { nome: "Dia de Jogo", tipo: "campanha", prioridade: 2, ideia: "Bola, bandeirinhas e petiscos, sem marcas de campeonato", motivo: "Substitui as Ofertas da Copa fora do período" },
 
   // Setores e departamentos
-  { nome: "Peixaria e Pescados", tipo: "setor", prioridade: 2, ideia: "Peixes sobre gelo e ondas, azul e laranja" },
-  { nome: "Rotisseria e Pratos Prontos", tipo: "setor", prioridade: 2, ideia: "Frango assado, marmita e vapor" },
-  { nome: "Doces e Chocolates", tipo: "setor", prioridade: 2, ideia: "Bombons, barras e calda" },
-  { nome: "Matinal e Café", tipo: "setor", prioridade: 2, ideia: "Café, leite, cereal e pão" },
-  { nome: "Vinhos", tipo: "setor", prioridade: 2, ideia: "Garrafas, taça e uvas, vinho e dourado" },
-  { nome: "Cervejas", tipo: "setor", prioridade: 2, ideia: "Latas e long necks no gelo (a Sexta da Cerveja cobre só um dia)" },
-  { nome: "Bebê e Infantil", tipo: "setor", prioridade: 2, ideia: "Fraldas, mamadeira e ursinho" },
-  { nome: "Perfumaria e Beleza", tipo: "setor", prioridade: 2, ideia: "Perfume, batom e esmalte, rosa e dourado" },
-  { nome: "Sorvetes", tipo: "setor", prioridade: 2, ideia: "Casquinha e picolé, cores vivas" },
-  { nome: "Fruta da Estação", tipo: "setor", prioridade: 2, ideia: "Cesta de frutas da estação, versão sem dia da semana" },
-  { nome: "Massas e Molhos", tipo: "setor", prioridade: 3, ideia: "Macarrão, molho de tomate e queijo ralado" },
-  { nome: "Aves e Frango", tipo: "setor", prioridade: 3, ideia: "Frango assado e coxinha da asa" },
-  { nome: "Ovos", tipo: "setor", prioridade: 3, ideia: "Bandeja de ovos e galinha" },
-  { nome: "Orgânicos e Naturais", tipo: "setor", prioridade: 3, ideia: "Folhas, selo verde e cesta de palha" },
-  { nome: "Lanches e Salgadinhos", tipo: "setor", prioridade: 3, ideia: "Pacotes, biscoitos e refrigerante" },
-  { nome: "Utilidades e Descartáveis", tipo: "setor", prioridade: 3, ideia: "Copos, pratos e talheres de festa" },
-  { nome: "Papelaria e Escolar", tipo: "setor", prioridade: 3, ideia: "Cadernos e lápis, no estilo do Volta às Aulas" },
-  { nome: "Eletro e Ventilação", tipo: "setor", prioridade: 3, ideia: "Ventilador, liquidificador e fritadeira" },
 
   // Loja e calendário do cliente
-  { nome: "Semana do Aniversário", tipo: "loja", prioridade: 2, ideia: "Bolo com velas e balões, faixa SEMANA" },
-  { nome: "Nova Loja", tipo: "loja", prioridade: 3, ideia: "Fachada e faixa de abertura" },
-  { nome: "Delivery e Compre Online", tipo: "loja", prioridade: 2, ideia: "Moto de entrega e sacola" },
-  { nome: "Hora do Pão Quente", tipo: "loja", prioridade: 2, ideia: "Pão saindo do forno e relógio", motivo: "Chama o cliente no horário certo e cabe em story" },
-  { nome: "Cliente Fiel", tipo: "loja", prioridade: 2, ideia: "Medalha, coração e estrelas" },
-  { nome: "Plantão de Feriado", tipo: "loja", prioridade: 3, ideia: "Placa ABERTO e relógio", feriados: ["Feriado prolongado"] },
-  { nome: "Semana do Salário", tipo: "calendario", prioridade: 2, ideia: "Pilha de moedas e sacola, versão de uma semana", quando: { kind: "diaDoMes", dias: [10], antes: 8 } },
-  { nome: "Dia 10 Ofertas", tipo: "calendario", prioridade: 3, ideia: "Mesma família do Dia 5 e Dia 20", quando: { kind: "diaDoMes", dias: [10], antes: 3 } },
-  { nome: "Dia 15 Ofertas", tipo: "calendario", prioridade: 3, ideia: "Mesma família do Dia 5 e Dia 20", quando: { kind: "diaDoMes", dias: [15], antes: 3 } },
-  { nome: "Dia 30 Ofertas", tipo: "calendario", prioridade: 3, ideia: "Mesma família do Dia 5 e Dia 20", quando: { kind: "diaDoMes", dias: [30], antes: 3 } },
 
   // Sugestões de mercado (lote 3): o que supermercado de bairro e rede média costuma usar e ainda não estava na lista
-  { nome: "Lanche Escolar", tipo: "campanha", prioridade: 3, ideia: "Lancheira aberta com suco, fruta e biscoito", feriados: ["Volta às aulas"], quando: { kind: "periodo", de: "01-10", ate: "02-20" } },
-  { nome: "Retirada na Loja", tipo: "condicao", prioridade: 3, ideia: "Sacola com seta e relógio, compre online e retire", motivo: "Só serve para mercado com pedido online" },
-  { nome: "Carvão, Gelo e Espetos", tipo: "setor", prioridade: 3, ideia: "Saco de carvão, gelo e espetos cruzados", quando: sem(5, 6), motivo: "Complemento do churrasco, bom para o fim de semana" },
-  { nome: "Produtos da Região", tipo: "setor", prioridade: 3, ideia: "Mapa estilizado com coração e selo de feito aqui", motivo: "Orgulho local vende bem em cidade pequena" },
-  { nome: "Sopas e Caldos", tipo: "setor", prioridade: 3, ideia: "Panela fumegante e colher, tons quentes", quando: { kind: "periodo", de: "05-15", ate: "08-31" }, motivo: "Inverno é a época da categoria" },
 ];
 
 // Peças que não são logo de campanha e saem em código (selos de preço,

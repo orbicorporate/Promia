@@ -40,7 +40,7 @@ describe("catálogo de emblemas", () => {
   it("filtros por tipo, tema, feriado e data", () => {
     const hoje = "2026-10-07";
     const f = (p: Partial<typeof FILTRO_VAZIO>) => filtrarEmblemas(EMBLEMAS, { ...FILTRO_VAZIO, ...p }, hoje).map((e) => e.slug);
-    expect(f({ tipo: "ofertao" })).toHaveLength(8);
+    expect(f({ tipo: "ofertao" })).toHaveLength(20);
     expect(f({ tema: "hortifruti" })).toEqual(expect.arrayContaining(["hortifruti", "quarta-do-hortifruti", "dia-de-feira"]));
     expect(f({ tema: "sem-tema" })).toContain("pet");
     expect(f({ feriado: "Natal" })).toEqual(expect.arrayContaining(["natal-de-ofertas", "ceia-de-natal"]));
@@ -63,7 +63,7 @@ describe("catálogo de emblemas", () => {
     }
     const prontos = new Set(EMBLEMAS.map((e) => e.nome));
     for (const p of PLANEJADOS) expect(prontos.has(p.nome)).toBe(false);
-    expect(EMBLEMAS).toHaveLength(83);
+    expect(EMBLEMAS).toHaveLength(160);
     // todos os emblemas foram recriados em alta resolução
     expect(EMBLEMAS.filter((e) => e.baixaResolucao)).toHaveLength(0);
   });
