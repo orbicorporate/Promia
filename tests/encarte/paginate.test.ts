@@ -70,3 +70,12 @@ describe("paginate", () => {
     }
   });
 });
+
+describe("paginate com caixa escolhida", () => {
+  it("leva 12 produtos por página em qualquer formato", () => {
+    for (const format of ["feed", "story", "quadrado", "a4"] as const) {
+      const pages = paginate({ format, layout: "grade", modelo: "cx01", items: items(25) });
+      expect(pages.map((p) => p.items.length)).toEqual([12, 12, 1]);
+    }
+  });
+});

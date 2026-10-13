@@ -50,9 +50,13 @@ export async function POST(req: Request) {
   }
 
   // encarte vazio: mostra produtos de exemplo no estilo escolhido
-  const vazio = parsed.data.items.length === 0;
-  const exemplo = vazio ? await itensDeExemplo() : null;
-  const data = { ...parsed.data, ...(exemplo ? { items: exemplo } : {}), id: "previa", market: marketRowToEncarte(market) };
+  // (no esqueleto os produtos nem entram: só a marcação das 12 caixas)
+  const esqueleto = parsed.data.esqueleto === true;
+  const vazio = !esqueleto && parsed.data.items.length === 0;
+  const base = vazio ? await itensDeExemplo() : null;
+  // com caixa escolhida a página tem 12 posições: repete os 6 exemplos
+  const exemplo = base && parsed.data.modelo ? [...base, ...base] : base;
+  const data = { ...parsed.data, ...(esqueleto ? { items: [] } : {}), ...(exemplo ? { items: exemplo } : {}), id: "previa", market: marketRowToEncarte(market) };
   const total = pageCount(data);
   if (pageIndex >= total) return jsonError(404, `Esse encarte tem ${total} página${total > 1 ? "s" : ""}.`);
 

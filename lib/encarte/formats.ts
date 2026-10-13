@@ -99,6 +99,17 @@ export const FORMATS: Record<EncarteFormat, FormatSpec> = {
   },
 };
 
+// Com uma caixa de arte escolhida (modelos cx01 a cx24, feira, vitrine...)
+// o encarte segue a lógica de 12 produtos por página: 4 colunas por 3
+// linhas, ou 3 por 4 no story, que é alto. As caixas têm proporção quase
+// quadrada, então essa grade as deixa maiores que 3x4 num feed.
+export const PRODUTOS_POR_ENCARTE = 12;
+
+export function capacidadeGrade(format: EncarteFormat, comModelo: boolean): LayoutCapacity {
+  if (!comModelo) return FORMATS[format].capacity.grade;
+  return { perPage: PRODUTOS_POR_ENCARTE, columns: format === "story" ? 3 : 4 };
+}
+
 // tamanho de página A4 em pontos PDF (1 pt = 1/72 pol)
 export const A4_PDF_SIZE = { width: 595.28, height: 841.89 } as const;
 

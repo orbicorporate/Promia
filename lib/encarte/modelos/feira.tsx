@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement } from "react";
 import { mix } from "../color";
-import { FORMATS } from "../formats";
+import { capacidadeGrade, FORMATS } from "../formats";
 import { getPage } from "../paginate";
 import { discountLabel, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
 import { marketInitials } from "../render";
@@ -127,7 +127,7 @@ export function renderFeira(data: EncarteData, pageIndex: number): Pg | null {
   const s = W / 1080;
   const t = tokensFor(data.themeKey, data.market);
   const theme = getTheme(data.themeKey);
-  const cap = spec.capacity.grade;
+  const cap = capacidadeGrade(data.format, !!data.modelo);
   const cols = cap.columns;
   const capRows = Math.ceil(cap.perPage / cols);
   const items = page.items.slice(0, cap.perPage);

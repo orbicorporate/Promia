@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
 import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
-import { FORMATS } from "@/lib/encarte/formats";
+import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
 import { VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
@@ -81,12 +81,15 @@ export type BuilderInitial = {
 };
 
 const PASSOS = [
-  { key: "produtos", nome: "Produtos", pergunta: "O que você vai anunciar?" },
-  { key: "destino", nome: "Onde vai", pergunta: "Onde você vai usar a arte?" },
-  { key: "visual", nome: "Visual", pergunta: "Escolha o visual" },
+  { key: "objetivo", nome: "Objetivo", pergunta: "Qual é o objetivo do encarte?" },
+  { key: "fundo", nome: "Fundo", pergunta: "Escolha o fundo" },
+  { key: "caixas", nome: "Caixas", pergunta: "Escolha o estilo das caixas" },
+  { key: "produtos", nome: "Produtos", pergunta: "Quais produtos entram?" },
   { key: "textos", nome: "Título e datas", pergunta: "Título e validade" },
   { key: "revisar", nome: "Revisar", pergunta: "Está tudo certo?" },
 ] as const;
+const P_PRODUTOS = 3;
+const P_TEXTOS = 4;
 
 const FORMATO_NOME: Record<EncarteFormat, string> = { feed: "Feed", story: "Story", quadrado: "Quadrado", a4: "A4" };
 const FORMATO_PROP: Record<EncarteFormat, [number, number]> = { feed: [32, 40], story: [24, 42], quadrado: [36, 36], a4: [30, 42] };
@@ -235,7 +238,9 @@ export function EncarteBuilder({
       themeKey,
       validFrom: validFrom || null,
       validUntil: validUntil || null,
-      items: items
+      // nos dois primeiros passos a prévia é só o esqueleto das 12 caixas
+      esqueleto: step <= 1,
+      items: (step <= 1 ? [] : items)
         .map((i) => {
           const p = byId.get(i.productId);
           const price = i.promoPrice ?? p?.price ?? null;
@@ -255,7 +260,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, fundo, themeKey, validFrom, validUntil, items, byId]
+    [name, headline, subheadline, format, layout, modelo, emblema, fundo, themeKey, validFrom, validUntil, items, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -328,18 +333,18 @@ export function EncarteBuilder({
   async function save() {
     if (!name.trim()) {
       toast.error("Dê um nome para o encarte.");
-      setStep(3);
+      setStep(P_TEXTOS);
       return;
     }
     if (items.length === 0) {
       toast.error("Escolha pelo menos um produto.");
-      setStep(0);
+      setStep(P_PRODUTOS);
       return;
     }
     const semPreco = items.filter((i) => (i.promoPrice ?? byId.get(i.productId)?.price) == null);
     if (semPreco.length) {
       toast.error(`${plural(semPreco.length, "produto", "produtos")} sem preço. Informe o preço de oferta.`);
-      setStep(0);
+      setStep(P_PRODUTOS);
       setEditing(semPreco[0].productId);
       return;
     }
@@ -366,12 +371,15 @@ export function EncarteBuilder({
   }
 
   const f = FORMATS[format];
-  const capacity = f.capacity[layout];
+  const capacity = modelo && layout === "grade" ? capacidadeGrade(format, true) : f.capacity[layout];
   const capacityLabel = layout === "destaque" ? `1 grande + ${capacity.perPage - 1} por página` : `${capacity.perPage} por página`;
 
   // ------------------------------- partes -----------------------------
   const productsPanel = (
     <div className="space-y-5">
+      <p className="text-sm text-[var(--ink-2)]">
+        Cada página leva {capacity.perPage} produtos. {items.length === 0 ? "Escolha os que entram." : `Você escolheu ${plural(items.length, "produto", "produtos")}, ${plural(Math.max(1, Math.ceil(items.length / capacity.perPage)), "página", "páginas")}.`}
+      </p>
       <Glass className="p-4 sm:p-5 space-y-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-[var(--ink-3)]" />
@@ -631,9 +639,9 @@ export function EncarteBuilder({
     setPreviewPage(1);
   }
 
-  const podeAvancar = step !== 0 || items.length > 0;
+  const podeAvancar = step !== P_PRODUTOS || items.length > 0;
   function avancar() {
-    if (step === 0 && items.length === 0) {
+    if (step === P_PRODUTOS && items.length === 0) {
       toast.error("Escolha pelo menos um produto para continuar.");
       return;
     }
@@ -649,10 +657,8 @@ export function EncarteBuilder({
     cn("group relative overflow-hidden rounded-2xl text-left ring-2 transition active:scale-[0.98]", on ? "ring-[var(--ink)]" : "ring-[var(--line)] hover:ring-[var(--line-strong)]");
 
   // ------------------------------ passo 2: onde vai ------------------------------
-  const destinoPanel = (
-    <Glass className="p-4 sm:p-5 space-y-4">
-      <p className="text-sm text-[var(--ink-2)]">O tamanho muda conforme o uso. Dá para refazer em outro formato depois.</p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+  const destinoGrid = (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {(["feed", "story", "quadrado", "a4"] as const).map((key) => {
           const [pw, ph] = FORMATO_PROP[key];
           const on = format === key;
@@ -678,7 +684,6 @@ export function EncarteBuilder({
           );
         })}
       </div>
-    </Glass>
   );
 
   // ------------------------------ passo 3: visual ------------------------------
@@ -718,12 +723,12 @@ export function EncarteBuilder({
     );
   };
 
-  const visualPanel = (
+  const objetivoPanel = (
     <div className="space-y-5">
       <Glass className="p-4 sm:p-5 space-y-3">
         <div>
           <h3 className="font-bold">Campanha</h3>
-          <p className="text-sm text-[var(--ink-2)]">Comece pelo logo. Ele vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
+          <p className="text-sm text-[var(--ink-2)]">Escolha a campanha. O logo dela vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
         </div>
         <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           {gruposEmblema.map((g) => (
@@ -762,24 +767,67 @@ export function EncarteBuilder({
         ) : null}
       </Glass>
 
+      <Glass className="p-4 sm:p-5 space-y-3">
+        <div>
+          <h3 className="font-bold">Onde vai usar</h3>
+          <p className="text-sm text-[var(--ink-2)]">O tamanho muda conforme o uso. Cada página leva 12 produtos.</p>
+        </div>
+        {destinoGrid}
+      </Glass>
+    </div>
+  );
+
+  const fundoPanel = (
+    <div className="space-y-5">
+      <p className="text-sm text-[var(--ink-2)]">A prévia mostra onde cada uma das 12 caixas vai ficar. Os produtos entram nos próximos passos.</p>
+        <Glass className="p-4 sm:p-5">
+          <details open>
+          <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
+          <div className="mt-3 space-y-3">
+            {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
+              <div key={grupo} className="space-y-1.5">
+                <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
+                <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+              </div>
+            ))}
+          </div>
+          </details>
+        </Glass>
       <Glass className="p-4 sm:p-5">
         <details>
-          <summary className="flex cursor-pointer items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Combinações prontas <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
-          <p className="mt-1 text-sm text-[var(--ink-2)]">Logo, estilo e fundo já combinados. Dá para ajustar depois.</p>
-          <div className="rolagem -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
-            {VISUAIS_PRONTOS.map((v) => {
-              const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
-              return (
-                <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[150px] shrink-0")}>
-                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
-                  <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
-                </button>
-              );
-            })}
+          <summary className="cursor-pointer font-bold">Cores do tema <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            {orderedThemes.map((t, idx) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setThemeKey(t.key);
+                  if (!headline || themes.some((x) => x.headline === headline)) setHeadline(t.headline);
+                }}
+                aria-pressed={themeKey === t.key}
+                className={cn("group relative overflow-hidden rounded-2xl text-left ring-2 transition hover:-translate-y-0.5", themeKey === t.key ? "ring-[var(--ink)]" : "ring-transparent")}
+              >
+                <span className="flex h-14 items-end px-3 pb-2" style={{ background: t.bg, color: t.text }}>
+                  <span className="font-display text-sm font-extrabold leading-tight">{t.headline}</span>
+                </span>
+                <span className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: t.cardBg }}>
+                  <span className="truncate text-xs font-medium text-[#1d2420]">{t.name}</span>
+                  <span className="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold" style={{ background: t.tag, color: t.tagText }}>R$ 9,99</span>
+                </span>
+                {idx < 2 && suggestedThemeKeys.includes(t.key) && t.key !== "ofertas" && (
+                  <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-[#1d2420]">sugerido</span>
+                )}
+              </button>
+            ))}
           </div>
         </details>
       </Glass>
+    </div>
+  );
 
+  const caixasPanel = (
+    <div className="space-y-5">
       <Glass className="p-4 sm:p-5 space-y-3">
         <h3 className="font-bold">Estilo dos produtos</h3>
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
@@ -811,52 +859,24 @@ export function EncarteBuilder({
         </div>
       </Glass>
 
-      {modelo && modelo !== "feira" ? (
-        <Glass className="p-4 sm:p-5">
-          <details>
-          <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
-          <div className="mt-3 space-y-3">
-            {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
-              <div key={grupo} className="space-y-1.5">
-                <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
-                <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
-              </div>
-            ))}
-          </div>
-          </details>
-        </Glass>
-      ) : null}
-
       <Glass className="p-4 sm:p-5">
         <details>
-          <summary className="cursor-pointer font-bold">Cores do tema <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-            {orderedThemes.map((t, idx) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => {
-                  setThemeKey(t.key);
-                  if (!headline || themes.some((x) => x.headline === headline)) setHeadline(t.headline);
-                }}
-                aria-pressed={themeKey === t.key}
-                className={cn("group relative overflow-hidden rounded-2xl text-left ring-2 transition hover:-translate-y-0.5", themeKey === t.key ? "ring-[var(--ink)]" : "ring-transparent")}
-              >
-                <span className="flex h-14 items-end px-3 pb-2" style={{ background: t.bg, color: t.text }}>
-                  <span className="font-display text-sm font-extrabold leading-tight">{t.headline}</span>
-                </span>
-                <span className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: t.cardBg }}>
-                  <span className="truncate text-xs font-medium text-[#1d2420]">{t.name}</span>
-                  <span className="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold" style={{ background: t.tag, color: t.tagText }}>R$ 9,99</span>
-                </span>
-                {idx < 2 && suggestedThemeKeys.includes(t.key) && t.key !== "ofertas" && (
-                  <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-[#1d2420]">sugerido</span>
-                )}
-              </button>
-            ))}
+          <summary className="flex cursor-pointer items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Combinações prontas <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
+          <p className="mt-1 text-sm text-[var(--ink-2)]">Logo, estilo e fundo já combinados. Dá para ajustar depois.</p>
+          <div className="rolagem -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+            {VISUAIS_PRONTOS.map((v) => {
+              const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+              return (
+                <button key={v.nome} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={cn(miniaturaClass(on), "w-[150px] shrink-0")}>
+                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+                  <span className={cn("block truncate px-2 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome}</span>
+                </button>
+              );
+            })}
           </div>
         </details>
       </Glass>
+
     </div>
   );
 
@@ -892,11 +912,11 @@ export function EncarteBuilder({
   // ------------------------------ passo 5: revisar ------------------------------
   const estiloNome = modelo ? MODELO_LABELS[modelo].label.replace(/^\d+ /, "") : "Clássico";
   const resumo: [string, string, number][] = [
-    ["Produtos", plural(items.length, "produto", "produtos"), 0],
-    ["Formato", `${FORMATO_NOME[format]}, ${plural(previewPages, "página", "páginas")}`, 1],
-    ["Estilo", estiloNome, 2],
-    ["Título", headline.trim() || (emblema ? "Do emblema" : "Sem título"), 3],
-    ["Validade", validFrom && validUntil ? `${validFrom.split("-").reverse().join("/")} a ${validUntil.split("-").reverse().join("/")}` : "Sem data", 3],
+    ["Produtos", plural(items.length, "produto", "produtos"), P_PRODUTOS],
+    ["Formato", `${FORMATO_NOME[format]}, ${plural(previewPages, "página", "páginas")}`, 0],
+    ["Estilo das caixas", estiloNome, 2],
+    ["Título", headline.trim() || (emblema ? "Do emblema" : "Sem título"), P_TEXTOS],
+    ["Validade", validFrom && validUntil ? `${validFrom.split("-").reverse().join("/")} a ${validUntil.split("-").reverse().join("/")}` : "Sem data", P_TEXTOS],
   ];
   const revisarPanel = (
     <div className="space-y-4">
@@ -931,7 +951,7 @@ export function EncarteBuilder({
     </div>
   );
 
-  const passoPanels = [productsPanel, destinoPanel, visualPanel, textosPanel, revisarPanel];
+  const passoPanels = [objetivoPanel, fundoPanel, caixasPanel, productsPanel, textosPanel, revisarPanel];
 
   const previewPanel = (
     <div className="space-y-3">
@@ -954,9 +974,14 @@ export function EncarteBuilder({
           )}
         </AnimatePresence>
         {!previewUrl && !previewError && <div className="esqueleto absolute inset-0 rounded-none" />}
-        {items.length === 0 && previewUrl && !previewError && (
+        {step <= 1 && previewUrl && !previewError && (
           <span className="vidro-forte absolute inset-x-3 bottom-3 rounded-2xl px-3 py-2 text-center text-xs font-medium">
-            Exemplo com produtos de mentira. Escolha os seus no passo Produtos.
+            As 12 caixas tracejadas são onde os produtos vão ficar.
+          </span>
+        )}
+        {step === 2 && items.length === 0 && previewUrl && !previewError && (
+          <span className="vidro-forte absolute inset-x-3 bottom-3 rounded-2xl px-3 py-2 text-center text-xs font-medium">
+            Exemplo com produtos de mentira. Você escolhe os seus no próximo passo.
           </span>
         )}
         {previewError && (
@@ -1036,7 +1061,7 @@ export function EncarteBuilder({
               <li key={p.key} className="min-w-0 flex-1">
                 <button
                   type="button"
-                  onClick={() => (i > 0 && items.length === 0 ? toast.error("Escolha pelo menos um produto primeiro.") : setStep(i))}
+                  onClick={() => (i > P_PRODUTOS && items.length === 0 ? toast.error("Escolha pelo menos um produto primeiro.") : setStep(i))}
                   aria-current={atual ? "step" : undefined}
                   className={cn("flex h-11 w-full items-center justify-center gap-2 rounded-xl px-2 text-sm font-medium transition", atual ? "bg-[var(--ink)] text-[var(--bg)]" : "text-[var(--ink-2)] hover:bg-[var(--line)]")}
                 >

@@ -35,7 +35,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     subheadline: "",
     format: "feed",
     layout: "grade",
-    modelo: null,
+    modelo: "cx01",
     emblema: null,
     fundo: null,
     themeKey,

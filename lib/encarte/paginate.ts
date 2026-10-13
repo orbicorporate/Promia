@@ -1,4 +1,4 @@
-import { FORMATS } from "./formats";
+import { capacidadeGrade, FORMATS } from "./formats";
 import type { EncarteData, EncarteFormat, EncarteItem, EncarteLayout } from "./types";
 
 // Divide os produtos do encarte em páginas.
@@ -19,7 +19,7 @@ export type EncartePage = {
   items: EncarteItem[]; // grade/lista: todos; destaque: os pequenos
 };
 
-type PaginateInput = { format: EncarteFormat; layout: EncarteLayout; items: EncarteItem[] };
+type PaginateInput = { format: EncarteFormat; layout: EncarteLayout; items: EncarteItem[]; modelo?: string | null };
 
 function splitByHighlight(items: EncarteItem[]) {
   return { highlights: items.filter((i) => i.highlight), others: items.filter((i) => !i.highlight) };
@@ -31,7 +31,7 @@ export function orderItems(items: EncarteItem[]): EncarteItem[] {
 }
 
 export function paginate(data: PaginateInput): EncartePage[] {
-  const { perPage } = FORMATS[data.format].capacity[data.layout];
+  const { perPage } = data.modelo ? capacidadeGrade(data.format, true) : FORMATS[data.format].capacity[data.layout];
   const pages: Omit<EncartePage, "total">[] = [];
 
   if (data.layout === "destaque") {
@@ -62,7 +62,7 @@ export function pageCount(data: PaginateInput): number {
 }
 
 // pageIndex é 0-based; fora do intervalo devolve null
-export function getPage(data: Pick<EncarteData, "format" | "layout" | "items">, pageIndex: number): EncartePage | null {
+export function getPage(data: Pick<EncarteData, "format" | "layout" | "items" | "modelo">, pageIndex: number): EncartePage | null {
   const pages = paginate(data);
   if (!Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= pages.length) return null;
   return pages[pageIndex];
