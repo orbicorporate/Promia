@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -10,8 +10,12 @@ import { toJpeg } from "@/lib/client/image";
 import { Button, Field, Glass, Input, Segmented, Select, cn } from "@/components/ui";
 import type { CompareRow } from "@/lib/competition/compare";
 import { plural } from "@/lib/plural";
+import { distanceKm } from "@/lib/competition/places";
 
-type Competitor = { id: string; name: string; address: string | null; rating: number | null; reviews: number | null; category: string | null };
+type Competitor = { id: string; name: string; address: string | null; rating: number | null; reviews: number | null; category: string | null; latitude: number | null; longitude: number | null };
+type Coords = { latitude: number; longitude: number };
+const RAIOS = [1, 2, 3, 5, 10];
+const km = (n: number) => `${n.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km`;
 type Flyer = { id: string; competitor_name: string; observed_on: string; items: number; valid_until: string | null };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -23,6 +27,7 @@ export function ConcorrenciaView({
   slug,
   marketId,
   hasAddress,
+  origem,
   competitors,
   flyers,
   compare,
@@ -31,6 +36,7 @@ export function ConcorrenciaView({
   slug: string;
   marketId: string;
   hasAddress: boolean;
+  origem: { name: string; address: string | null; city: string | null };
   competitors: Competitor[];
   flyers: Flyer[];
   compare: { rows: CompareRow[]; index: number | null; cheaper: number; pricier: number };
@@ -50,14 +56,55 @@ export function ConcorrenciaView({
   const [filtro, setFiltro] = useState<Filtro>("acao");
   const [applied, setApplied] = useState<Record<string, number>>({});
   const fileRef = useRef<HTMLInputElement>(null);
+  const [radiusKm, setRadiusKm] = useState(3);
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const radiusKey = `promia:raio:${marketId}`;
+
+  // raio escolhido da última vez e coordenadas do endereço do mercado analisado
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem(radiusKey));
+      if (RAIOS.includes(saved)) queueMicrotask(() => setRadiusKm(saved));
+    } catch {}
+    if (!hasAddress) return;
+    let alive = true;
+    fetch("/api/concorrencia/origem", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId }) })
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && d?.origin) setCoords(d.origin);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [marketId, hasAddress, radiusKey]);
+
+  function pickRadius(r: number) {
+    setRadiusKm(r);
+    try {
+      localStorage.setItem(radiusKey, String(r));
+    } catch {}
+  }
+
+  // distância de cada concorrente ao endereço do mercado; fora do raio some da lista
+  const perto = useMemo(() => {
+    const withDist = competitors.map((c) => ({
+      ...c,
+      dist: coords && c.latitude != null && c.longitude != null ? distanceKm(coords, { latitude: c.latitude, longitude: c.longitude }) : null,
+    }));
+    const dentro = withDist.filter((c) => c.dist == null || c.dist <= radiusKm).sort((a, b) => (a.dist ?? 99) - (b.dist ?? 99));
+    return { dentro, fora: withDist.length - dentro.length };
+  }, [competitors, coords, radiusKm]);
+  const enderecoCompleto = [origem.address, origem.city].filter(Boolean).join(", ");
 
   async function findCompetitors() {
     setSearching(true);
     try {
-      const res = await fetch("/api/concorrencia/buscar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId }) });
+      const res = await fetch("/api/concorrencia/buscar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId, radiusKm }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) return toast.error(d.error || "Não consegui buscar.");
-      toast.success(d.found ? `${plural(d.found, "mercado encontrado", "mercados encontrados")} por perto.` : "Nenhum mercado encontrado por perto.");
+      if (d.origin) setCoords(d.origin);
+      toast.success(d.found ? `${plural(d.found, "mercado encontrado", "mercados encontrados")} em até ${radiusKm} km.` : `Nenhum mercado encontrado em até ${radiusKm} km.`);
       router.refresh();
     } finally {
       setSearching(false);
@@ -186,21 +233,51 @@ export function ConcorrenciaView({
               <h2 id="perto" className="flex items-center gap-2 text-lg font-bold">
                 <MapPin className="size-5 text-[var(--tomate)]" /> Mercados por perto
               </h2>
-              <p className="text-sm text-[var(--ink-2)]">{hasAddress ? "Achados pelo endereço do seu mercado." : "Coloque o endereço em Mercado para achar."}</p>
+              <p className="text-sm text-[var(--ink-2)]">{hasAddress ? "Concorrentes em volta do endereço abaixo." : "Coloque o endereço em Mercado para achar."}</p>
             </div>
             <Button size="sm" variant="vidro" onClick={findCompetitors} loading={searching} disabled={!hasAddress} icon={<Search className="size-4" />}>
               {competitors.length ? "Atualizar" : "Buscar"}
             </Button>
           </div>
-          {competitors.length === 0 ? (
-            <p className="text-sm text-[var(--ink-3)]">Nenhum concorrente ainda.</p>
+          {hasAddress && (
+            <div className="space-y-3 rounded-2xl bg-white/60 p-3.5 ring-1 ring-[var(--line)]">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--tomate)] text-white"><MapPin className="size-5" aria-hidden /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[var(--ink-3)]">Ponto de partida: o mercado analisado</p>
+                  <p className="font-semibold">{origem.name}</p>
+                  <p className="text-sm text-[var(--ink-2)]">{enderecoCompleto}</p>
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${origem.name} ${enderecoCompleto}`)}`} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[var(--folha)] hover:underline">
+                    Ver no mapa <ExternalLink className="size-3" aria-hidden />
+                  </a>
+                </div>
+              </div>
+              <div>
+                <p className="mb-1.5 text-xs font-semibold text-[var(--ink-3)]">Raio da busca</p>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Raio da busca">
+                  {RAIOS.map((r) => (
+                    <button key={r} type="button" onClick={() => pickRadius(r)} aria-pressed={radiusKm === r} className={cn("h-10 rounded-full px-3.5 text-sm font-semibold ring-1 transition", radiusKm === r ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-white/70 ring-[var(--line)] hover:bg-white")}>
+                      {r} km
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-sm text-[var(--ink-2)]">
+                  Mostrando mercados em até <strong className="font-semibold">{radiusKm} km</strong> deste endereço
+                  {perto.fora > 0 ? `. ${plural(perto.fora, "mercado fica", "mercados ficam")} fora do raio e não aparece${perto.fora > 1 ? "m" : ""}. Aumente o raio para ver.` : "."}
+                  {!coords && competitors.length > 0 ? " Calculando as distâncias..." : ""}
+                </p>
+              </div>
+            </div>
+          )}
+          {perto.dentro.length === 0 ? (
+            <p className="text-sm text-[var(--ink-3)]">{competitors.length ? `Nenhum concorrente em até ${radiusKm} km. Aumente o raio.` : "Nenhum concorrente ainda."}</p>
           ) : (
             <ul className="rolagem max-h-[340px] divide-y divide-[var(--line)] overflow-y-auto">
-              {competitors.map((c) => (
+              {perto.dentro.map((c) => (
                 <li key={c.id} className="flex items-start justify-between gap-3 py-2.5">
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{c.name}</span>
-                    <span className="block truncate text-xs text-[var(--ink-3)]">{c.address}</span>
+                    <span className="block truncate text-xs text-[var(--ink-3)]">{c.dist != null ? <strong className="font-semibold text-[var(--ink-2)]">{km(c.dist)} · </strong> : null}{c.address}</span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2 text-sm">
                     {c.rating != null && (
