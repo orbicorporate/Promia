@@ -5,7 +5,7 @@ import { getPage } from "../paginate";
 import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
 import { marketInitials } from "../render";
 import { getTheme } from "../themes";
-import { measureText, validityLabel, wrapMeasured } from "../text";
+import { measureText, validityLabel, validityParts, wrapMeasured } from "../text";
 import type { EncarteData, EncarteFundo, EncarteItem, EncarteMarket } from "../types";
 import type { CoresEmblema } from "./emblema";
 import { Selo, fitFont } from "./formas";
@@ -397,13 +397,14 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const theme = getTheme(data.themeKey);
   const headline = (data.headline && data.headline.trim()) || theme.headline;
   const validity = validityLabel(data.validFrom, data.validUntil);
+  const vp = validityParts(data.validFrom, data.validUntil);
 
   const padX = r((cfg.padX ?? 36) * s);
   const gap = r((cfg.gap ?? 24) * s);
   const footerH = r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
   const heroH = r(H * heroFrac) + spec.safeTop;
-  const validH = validity ? r(56 * s) : 0;
+  const validH = validity ? r(84 * s) : 0;
   const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
   const areaH = H - areaTop - footerH - r(14 * s) - (cfg.rodape === "cerca" ? r(52 * s) : 0);
   const cardW = r((W - padX * 2 - gap * (cols - 1)) / cols);
@@ -458,9 +459,12 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       </div>
 
       {/* validade */}
-      {validity ? (
-        <div style={{ ...row, position: "absolute", left: 0, top: heroH + r(4 * s), width: W, height: validH, alignItems: "center", justifyContent: "center" }}>
-          <div style={{ ...row, alignItems: "center", height: r(46 * s), padding: `0 ${r(26 * s)}px`, borderRadius: r(30 * s), backgroundColor: "rgba(0,0,0,0.38)", border: `${r(2.5 * s)}px solid ${t.gold}`, fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(26 * s), color: "#fff", whiteSpace: "nowrap" }}>{validity}</div>
+      {vp ? (
+        <div style={{ ...row, position: "absolute", left: 0, top: heroH + r(8 * s), width: W, height: validH - r(8 * s), alignItems: "center", justifyContent: "center" }}>
+          <div style={{ ...row, alignItems: "stretch", height: r(58 * s), borderRadius: r(14 * s), overflow: "hidden", boxShadow: `0 ${r(8 * s)}px ${r(20 * s)}px rgba(0,0,0,0.35)`, border: `${r(2.5 * s)}px solid ${t.gold}` }}>
+            <div style={{ ...row, alignItems: "center", padding: `0 ${r(20 * s)}px`, backgroundColor: t.gold, color: t.ink, fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), letterSpacing: 1.5 * s, whiteSpace: "nowrap" }}>{vp.rotulo}</div>
+            <div style={{ ...row, alignItems: "center", padding: `0 ${r(26 * s)}px`, backgroundColor: "rgba(8,12,24,0.78)", color: "#fff", fontFamily: FONT_ANTON, fontSize: r(32 * s), letterSpacing: 1 * s, whiteSpace: "nowrap" }}>{vp.datas}</div>
+          </div>
         </div>
       ) : null}
 
