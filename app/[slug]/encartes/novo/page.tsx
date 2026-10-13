@@ -25,7 +25,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
   const ate = one(sp.ate);
   const copiar = one(sp.copiar);
   const produtos = (one(sp.produtos) ?? "").split(",").filter(isUuid).slice(0, 200);
-  const themeKey = isThemeKey(tema) ? tema : data.suggested[0];
+  const themeKey = isThemeKey(tema) ? tema : isThemeKey("ofertas") ? "ofertas" : data.suggested[0];
   const validFrom = isISODate(de) ? de : data.today;
   const validUntil = isISODate(ate) && ate >= validFrom ? ate : addDaysISO(validFrom, 6);
 
@@ -36,7 +36,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     format: "feed",
     layout: "grade",
     modelo: "cx01",
-    emblema: null,
+    emblema: "ofertas-da-semana",
     fundo: null,
     themeKey,
     validFrom,
