@@ -250,7 +250,8 @@ export function EncarteBuilder({
             name: p.name,
             brand: p.brand,
             unit: p.unit,
-            imageUrl: p.image_url,
+            // achou foto mas ainda não confirmou: usa a primeira sugestão de cara, nunca em branco
+            imageUrl: p.image_url ?? p.image_candidates?.[0] ?? null,
             price,
             oldPrice: old,
             highlight: i.highlight,
