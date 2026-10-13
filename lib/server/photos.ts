@@ -13,7 +13,7 @@ export type PhotoProduct = { id: string; name: string; brand: string | null; ean
 
 export type PhotoOutcome =
   | { status: "encontrada"; origin: "banco" | "catalogo" | "web"; imageUrl: string; sourceUrl: string | null; candidates: string[]; usedAi: boolean }
-  | { status: "revisar" | "nao_encontrada"; sourceUrl: string | null; candidates: string[]; usedAi: boolean }
+  | { status: "revisar" | "nao_encontrada"; sourceUrl: string | null; candidates: string[]; usedAi: boolean; imageUrl?: string }
   | { status: "erro" };
 
 // Ordem de busca, da mais barata e certeira para a mais cara:
@@ -66,21 +66,41 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
     // não deu pra copiar: as opções ficam para o dono escolher
     return { status: "revisar", sourceUrl: found.sourceUrl, candidates: [found.imageUrl, ...found.candidates], usedAi: true };
   }
+  // sem confirmação: a primeira opção que abrir entra como palpite, para o dono confirmar
+  for (const url of found.candidates.slice(0, 4)) {
+    const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, url);
+    if (stored) return { status: "revisar", imageUrl: stored.url, sourceUrl: url, candidates: found.candidates.filter((c) => c !== url), usedAi: true };
+  }
   return { status: found.status === "nao_encontrada" ? "nao_encontrada" : "revisar", sourceUrl: found.sourceUrl, candidates: found.candidates, usedAi: true };
 }
 
-// confiança mínima para aplicar a foto sozinha; abaixo disso vira opção
+// confiança mínima para aplicar a foto sozinha com status "encontrada".
+// Item sem embalagem (fruta, carne, verdura) aceita menos: qualquer foto boa
+// do alimento serve. Abaixo disso, a melhor candidata ainda entra como
+// "palpite" (status revisar, com a foto já aplicada) para o dono confirmar.
 export const AUTO_APPLY_CONFIDENCE = 0.7;
+export const AUTO_APPLY_CONFIDENCE_GENERIC = 0.35;
 
 async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan): Promise<PhotoOutcome | null> {
   const first = await searchOnce(admin, marketId, p, plan, plan.query);
   if (first === null) return null; // Serper fora do ar: segue para a busca antiga
-  if (first.status === "encontrada" || !plan.alt) return first;
-  // a primeira busca não trouxe a foto certa: tenta a busca alternativa
-  const second = await searchOnce(admin, marketId, p, plan, plan.alt);
-  if (second?.status === "encontrada") return second;
-  // junta as opções das duas, sem repetir
-  const merged = [...new Set([...("candidates" in first ? first.candidates : []), ...(second && "candidates" in second ? second.candidates : [])])];
+  if (first.status === "encontrada") return first;
+  // a primeira busca não trouxe a foto certa: tenta a alternativa e, por fim,
+  // uma busca simples só com o nome e fundo branco
+  const buscas = [plan.alt, `${[p.name, p.brand].filter(Boolean).join(" ")} fundo branco`].filter((q): q is string => !!q && q !== plan.query);
+  const outcomes = [first];
+  for (const q of buscas) {
+    const next = await searchOnce(admin, marketId, p, plan, q);
+    if (next?.status === "encontrada") return next;
+    if (next) outcomes.push(next);
+  }
+  // nenhuma foi confirmada: junta as opções e aplica a melhor como palpite,
+  // para o produto nunca ficar sem imagem; o dono confirma ou troca
+  const merged = [...new Set(outcomes.flatMap((o) => ("candidates" in o ? o.candidates : [])))].slice(0, 8);
+  for (const url of merged.slice(0, 4)) {
+    const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, url);
+    if (stored) return { status: "revisar", imageUrl: stored.url, sourceUrl: url, candidates: merged.filter((c) => c !== url).slice(0, 6), usedAi: true };
+  }
   return { status: merged.length ? "revisar" : "nao_encontrada", sourceUrl: null, candidates: merged.slice(0, 6), usedAi: true };
 }
 
@@ -100,7 +120,8 @@ async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan:
   const ordered = verdict ? [...verdict.order.map((i) => hits[i]), ...hits.filter((_, i) => !verdict.order.includes(i))] : hits;
   const candidates = ordered.map((h) => h.imageUrl);
 
-  if (verdict && verdict.best !== null && verdict.confidence >= AUTO_APPLY_CONFIDENCE) {
+  const minimo = plan.generic ? AUTO_APPLY_CONFIDENCE_GENERIC : AUTO_APPLY_CONFIDENCE;
+  if (verdict && verdict.best !== null && verdict.confidence >= minimo) {
     // tenta copiar a escolhida; se o site bloquear, a próxima que a IA aprovou
     for (const i of verdict.order.slice(0, 5)) {
       const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, hits[i].imageUrl);
@@ -160,8 +181,8 @@ export async function rememberInBank(admin: Admin, ean: string, imageUrl: string
 export function outcomeToUpdate(o: Exclude<PhotoOutcome, { status: "erro" }>) {
   return {
     image_status: o.status,
-    image_url: o.status === "encontrada" ? o.imageUrl : null,
-    image_origin: o.status === "encontrada" ? o.origin : null,
+    image_url: o.status === "encontrada" ? o.imageUrl : o.status === "revisar" ? (o.imageUrl ?? null) : null,
+    image_origin: o.status === "encontrada" ? o.origin : o.status === "revisar" && o.imageUrl ? "web" : null,
     image_source_url: o.sourceUrl,
     image_candidates: (o.candidates.length ? o.candidates.slice(0, 6) : null) as Json,
     image_claimed_at: null,

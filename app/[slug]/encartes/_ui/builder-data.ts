@@ -12,7 +12,7 @@ export async function loadBuilderData(marketId: string, extraTitles: string[] = 
   const [{ data: products }, { data: weekly }] = await Promise.all([
     admin
       .from("products")
-      .select("id, name, brand, category, price, unit, image_url")
+      .select("id, name, brand, category, price, unit, image_url, image_status, image_candidates")
       .eq("market_id", marketId)
       .eq("active", true)
       .order("name")
@@ -28,6 +28,8 @@ export async function loadBuilderData(marketId: string, extraTitles: string[] = 
     price: p.price == null ? null : Number(p.price),
     unit: p.unit,
     image_url: p.image_url,
+    image_status: p.image_status,
+    image_candidates: Array.isArray(p.image_candidates) ? (p.image_candidates as unknown[]).filter((c): c is string => typeof c === "string") : null,
   }));
 
   const occasions = upcomingOccasions(today, weekly ?? [], 14);

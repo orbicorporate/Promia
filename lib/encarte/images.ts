@@ -1,5 +1,6 @@
 import { fetchPublicImage, type FetchedImage } from "@/lib/net";
 import { cutoutProductPhoto } from "./cutout";
+import { ilustracaoUri } from "./ilustra";
 import { carregarEmblema } from "./modelos/emblema";
 import { getPage } from "./paginate";
 import type { EncarteData, EncarteItem } from "./types";
@@ -46,6 +47,7 @@ export type ResolveImagesOptions = {
   budgetMs?: number; // tempo total: depois disso, o que faltar vira placeholder
   pageIndex?: number; // só as imagens dessa página (0-based)
   fetcher?: ImageFetcher; // para testes
+  ilustrar?: boolean; // sem foto, usar a ilustração do tipo do produto (padrão: não)
   cutout?: boolean; // recortar o fundo das fotos de produto (modelos de arte); padrão: quando o encarte tem modelo
   cache?: Map<string, Promise<string | null>>; // reaproveitar entre páginas (PDF)
 };
@@ -189,10 +191,19 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
     ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl, true))),
   ]);
 
+  // sem foto (ou foto que não abriu): ilustração do tipo do produto, para o
+  // cartão nunca ficar só com uma letra. Só nas fotos da página pedida.
+  const finais = await Promise.all(
+    data.items.map(async (item, i) => {
+      if (!opts.ilustrar || images[i] || (wanted && !wanted.has(item))) return images[i];
+      return ilustracaoUri(item.name).catch(() => null);
+    })
+  );
+
   return {
     ...data,
     market: { ...data.market, logoUrl },
     emblemaImg,
-    items: data.items.map((item, i) => ({ ...item, imageUrl: images[i] })),
+    items: data.items.map((item, i) => ({ ...item, imageUrl: finais[i] })),
   };
 }

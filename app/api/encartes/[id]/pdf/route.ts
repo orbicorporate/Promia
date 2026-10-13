@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   try {
     // as fotos são buscadas uma vez só para o documento inteiro
-    const withImages = await resolveEncarteImages(data, { cache: createImageCache(), budgetMs: 15000 });
+    const withImages = await resolveEncarteImages(data, { cache: createImageCache(), budgetMs: 15000, ilustrar: true });
     const total = pageCount(withImages);
     const size = pdfPageSize(data.format);
     const pdf = await PDFDocument.create();

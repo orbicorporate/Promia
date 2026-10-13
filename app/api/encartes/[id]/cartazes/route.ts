@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: RouteContext<"/api/encartes
 
   try {
     const ordered = { ...data, items: orderItems(data.items).slice(0, MAX_POSTERS) };
-    const withImages = await resolveEncarteImages(ordered, { cache: createImageCache(), budgetMs: 20000 });
+    const withImages = await resolveEncarteImages(ordered, { cache: createImageCache(), budgetMs: 20000, ilustrar: true });
     const fonts = await loadEncarteFonts();
     const pdf = await PDFDocument.create();
     pdf.setTitle(`Cartazes ${data.name}`);

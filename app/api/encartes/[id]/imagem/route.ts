@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (pageIndex >= total) return jsonError(404, `Esse encarte tem ${total} página${total > 1 ? "s" : ""}.`);
 
   try {
-    const withImages = await resolveEncarteImages(data, { pageIndex });
+    const withImages = await resolveEncarteImages(data, { pageIndex, ilustrar: true });
     const out = await renderEncartePng(withImages, pageIndex);
     if (!out) return jsonError(404, "Página não encontrada.");
     return pngResponse(out.png, {
