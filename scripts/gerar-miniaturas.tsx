@@ -2,9 +2,9 @@
 //   estilo-<id>   a caixa (ou os cartões do estilo) em destaque, 4:3
 //   fundo-<id>    só o fundo, sem título nem produtos, 4:3
 //   pronto-<slug> a arte completa de cada visual pronto, quadrada
-// Uso: npx tsx --tsconfig tsconfig.json scripts/gerar-miniaturas.tsx
+// Uso: npx tsx --tsconfig tsconfig.json scripts/gerar-miniaturas.tsx [prontos]
 // As frutas são desenhos em código no lugar de fotos reais.
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { ImageResponse } from "next/og";
@@ -74,12 +74,20 @@ async function pagina(d: EncarteData, fonts: Fonts) {
 }
 
 (async () => {
-  rmSync(OUT, { recursive: true, force: true });
-  mkdirSync(OUT, { recursive: true });
+  // "prontos" gera só as combinações prontas e deixa o resto como está
+  const soProntos = process.argv.includes("prontos");
+  if (soProntos) {
+    mkdirSync(OUT, { recursive: true });
+    for (const f of readdirSync(OUT)) if (f.startsWith("pronto-")) rmSync(path.join(OUT, f));
+  } else {
+    rmSync(OUT, { recursive: true, force: true });
+    mkdirSync(OUT, { recursive: true });
+  }
   const fonts = await loadEncarteFonts();
   const its = await itens();
   const t = brilhoTokens(null, MARKET, "ofertas");
 
+  if (!soProntos) {
   // caixas: as duas caixas lado a lado sobre um fundo neutro, bem grandes
   for (const b of BOXES) {
     const bw = 196;
@@ -112,6 +120,8 @@ async function pagina(d: EncarteData, fonts: Fonts) {
       </div>
     );
     await salvar(`fundo-${f}.webp`, await png(el, 440, 330, fonts), 440);
+  }
+
   }
 
   // visuais prontos: a arte completa
