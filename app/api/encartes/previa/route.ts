@@ -57,7 +57,7 @@ export async function POST(req: Request) {
   if (pageIndex >= total) return jsonError(404, `Esse encarte tem ${total} página${total > 1 ? "s" : ""}.`);
 
   try {
-    const withImages = await resolveEncarteImages(data, { pageIndex, budgetMs: 7000 });
+    const withImages = await resolveEncarteImages(data, { pageIndex, budgetMs: 7000, ilustrar: true });
     const out = await renderEncartePng(withImages, pageIndex);
     if (!out) return jsonError(404, "Página não encontrada.");
     // a prévia segue em WebP: 5 a 10 vezes menor que o PNG, chega mais rápido

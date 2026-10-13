@@ -23,8 +23,11 @@ import {
   Eye,
   TriangleAlert,
   Sparkles,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
+import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { FORMATS } from "@/lib/encarte/formats";
 import { VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
@@ -46,6 +49,8 @@ export type CatalogProduct = {
   price: number | null;
   unit: string | null;
   image_url: string | null;
+  image_status: string | null;
+  image_candidates: string[] | null;
 };
 
 export type ThemeOption = { key: string; name: string; headline: string; bg: string; text: string; tag: string; tagText: string; cardBg: string };
@@ -134,22 +139,29 @@ export function EncarteBuilder({
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
-  const byId = useMemo(() => new Map(catalog.map((p) => [p.id, p])), [catalog]);
+  // cópia local do catálogo: trocar a foto de um produto atualiza a lista e a prévia na hora
+  const [cat, setCat] = useState<CatalogProduct[]>(catalog);
+  const [catBase, setCatBase] = useState(catalog);
+  if (catBase !== catalog) {
+    setCatBase(catalog);
+    setCat(catalog);
+  }
+  const byId = useMemo(() => new Map(cat.map((p) => [p.id, p])), [cat]);
   const selected = useMemo(() => new Set(items.map((i) => i.productId)), [items]);
   const theme = themes.find((t) => t.key === themeKey) ?? themes[0];
 
   const categories = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const p of catalog) if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    for (const p of cat) if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
-  }, [catalog]);
+  }, [cat]);
 
   const filtered = useMemo(() => {
     const q = norm(query.trim());
-    return catalog
+    return cat
       .filter((p) => (!category || p.category === category) && (!q || norm(`${p.name} ${p.brand ?? ""} ${p.category ?? ""}`).includes(q)))
       .slice(0, 200);
-  }, [catalog, query, category]);
+  }, [cat, query, category]);
 
   // emblemas do período do encarte primeiro (pela data de início ou hoje)
   const emblemasOrdenados = useMemo(() => {
@@ -166,6 +178,15 @@ export function EncarteBuilder({
     };
     return [...themes].sort((a, b) => rank(a.key) - rank(b.key));
   }, [themes, suggestedThemeKeys]);
+
+  function patchProduct(id: string, change: Partial<CatalogProduct>) {
+    setCat((prev) => prev.map((p) => (p.id === id ? { ...p, ...change } : p)));
+  }
+  const semFoto = (p: CatalogProduct | undefined) => !!p && !p.image_url;
+  const paraConfirmar = (p: CatalogProduct | undefined) => !!p && !!p.image_url && p.image_status === "revisar";
+  const selecionadosSemFoto = items.filter((i) => semFoto(byId.get(i.productId))).length;
+  const selecionadosConfirmar = items.filter((i) => paraConfirmar(byId.get(i.productId))).length;
+  const selecionadosPendentes = items.filter((i) => byId.get(i.productId)?.image_status === "pendente").length;
 
   function toggle(p: CatalogProduct) {
     setItems((prev) =>
@@ -357,7 +378,7 @@ export function EncarteBuilder({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Buscar entre ${catalog.length} produtos`}
+            placeholder={`Buscar entre ${cat.length} produtos`}
             className="pl-10"
             aria-label="Buscar produtos"
           />
@@ -392,7 +413,10 @@ export function EncarteBuilder({
                   <Thumb url={p.image_url} name={p.name} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{p.name}</span>
-                    <span className="block truncate text-xs text-[var(--ink-3)]">{[p.brand, p.category].filter(Boolean).join(" · ") || "sem categoria"}</span>
+                    <span className="block truncate text-xs text-[var(--ink-3)]">
+                      {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : null}
+                      {[p.brand, p.category].filter(Boolean).join(" · ") || "sem categoria"}
+                    </span>
                   </span>
                   <PriceTag value={p.price} unit={p.unit} size="sm" />
                   <span
@@ -423,6 +447,22 @@ export function EncarteBuilder({
         {items.length === 0 ? (
           <p className="mt-2 text-sm text-[var(--ink-2)]">Toque nos produtos acima para colocar no encarte. A estrela deixa o produto em destaque.</p>
         ) : (
+          <>
+            <p className="mt-1 text-sm text-[var(--ink-2)]">Toque em Editar para trocar a foto, o preço e o selo de cada produto. Arraste pelo ícone da esquerda para mudar a ordem.</p>
+            {(selecionadosSemFoto > 0 || selecionadosConfirmar > 0) && (
+              <div className="mt-3 rounded-2xl bg-[#fff4dc] p-3 text-sm text-[#7a4a05] ring-1 ring-[#f0d9a8]">
+                <p className="flex items-center gap-2 font-semibold"><TriangleAlert className="size-4" aria-hidden /> Fotos para resolver</p>
+                <p className="mt-1">
+                  {selecionadosSemFoto > 0 ? `${plural(selecionadosSemFoto, "produto está sem foto", "produtos estão sem foto")} (a arte usa um desenho do tipo do produto). ` : ""}
+                  {selecionadosConfirmar > 0 ? `${plural(selecionadosConfirmar, "foto é um palpite", "fotos são palpites")} da busca: confira se é o produto certo. ` : ""}
+                  Toque em Editar no produto para enviar uma foto, colar um link ou escolher entre as opções.
+                </p>
+              </div>
+            )}
+            {selecionadosPendentes > 0 && <div className="mt-3"><FindPhotos marketId={marketId} pending={selecionadosPendentes} /></div>}
+          </>
+        )}
+        {items.length > 0 && (
           <Reorder.Group axis="y" values={items} onReorder={setItems} className="mt-3 space-y-2">
             {items.map((it) => {
               const p = byId.get(it.productId);
@@ -441,16 +481,24 @@ export function EncarteBuilder({
                       <GripVertical className="size-5" />
                     </span>
                     <Thumb url={p.image_url} name={p.name} />
-                    <button type="button" onClick={() => setEditing(open ? null : it.productId)} className="min-w-0 flex-1 text-left">
+                    <button type="button" onClick={() => setEditing(open ? null : it.productId)} className="min-w-0 flex-1 text-left" aria-expanded={open}>
                       <span className="block truncate text-[15px] font-medium">{p.name}</span>
-                      <span className="block text-xs text-[var(--ink-3)]">
+                      <span className="block truncate text-xs text-[var(--ink-3)]">
+                        {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : paraConfirmar(p) ? <span className="font-semibold text-[#b45309]">Confira a foto · </span> : null}
                         {it.oldPrice ? `de R$ ${money(it.oldPrice)} · ` : ""}
                         {it.label ?? ""}
                         {it.limitQty ? ` · limite ${it.limitQty}` : ""}
-                        {!it.oldPrice && !it.label && !it.limitQty ? "Toque para ajustar preço e selo" : ""}
                       </span>
                     </button>
                     {price == null ? <span className="text-xs font-medium text-[var(--perigo)]">sem preço</span> : <PriceTag value={price} unit={p.unit} size="sm" />}
+                    <button
+                      type="button"
+                      onClick={() => setEditing(open ? null : it.productId)}
+                      aria-pressed={open}
+                      className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold ring-1 transition", open ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-[var(--glass-strong)] ring-[var(--line)] hover:bg-[var(--line)]")}
+                    >
+                      <Pencil className="size-4" aria-hidden /> <span className="hidden sm:inline">{open ? "Fechar" : "Editar"}</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => patch(it.productId, { highlight: !it.highlight })}
@@ -477,7 +525,16 @@ export function EncarteBuilder({
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
+                        <div className="space-y-2 border-t border-[var(--line)] p-3">
+                          <h4 className="text-sm font-semibold">Foto do produto</h4>
+                          <PhotoEditor
+                            compact
+                            product={{ id: p.id, name: p.name, image_url: p.image_url, image_status: p.image_status, image_candidates: p.image_candidates }}
+                            onChange={(patchP) => patchProduct(p.id, patchP)}
+                          />
+                        </div>
                         <div className="grid grid-cols-2 gap-3 border-t border-[var(--line)] p-3 sm:grid-cols-4">
+                          <h4 className="col-span-full text-sm font-semibold">Preço e selo nesta oferta</h4>
                           <div className="col-span-full flex items-center gap-2 text-sm text-[var(--ink-2)]">
                             <span className="flex-1">Ordem no encarte: {items.indexOf(it) + 1} de {items.length}</span>
                             <button type="button" onClick={() => move(it.productId, -1)} disabled={items.indexOf(it) === 0} className="grid size-11 place-items-center rounded-xl hover:bg-[var(--line)] disabled:opacity-35" aria-label="Subir uma posição">
