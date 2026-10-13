@@ -157,6 +157,106 @@ export function cutoutPixels(img: Rgba, tolerance = 34): Rgba | null {
   return { data: cropped, width: cw, height: ch };
 }
 
+
+// Segunda tentativa, para fundo que não é liso: estúdio com vinheta, degradê
+// cinza, sombra grande. O fundo é tudo que é neutro (cinza ou branco) e liga
+// à borda passando só por pequenas mudanças de um pixel para o vizinho. O
+// produto, quase sempre colorido ou bem mais escuro, para o preenchimento.
+export function cutoutGradient(img: Rgba): Rgba | null {
+  const { data, width: w, height: h } = img;
+  const spreadAt = (i: number) => Math.max(data[i], data[i + 1], data[i + 2]) - Math.min(data[i], data[i + 1], data[i + 2]);
+  const lumaAt = (i: number) => 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+  const neutral = (i: number) => spreadAt(i) <= 30 && lumaAt(i) >= 110;
+
+  // a moldura precisa ser de fato um fundo neutro
+  let ok = 0;
+  let total = 0;
+  const edge = (x: number, y: number) => {
+    total++;
+    if (neutral(idx(x, y, w))) ok++;
+  };
+  for (let x = 0; x < w; x++) {
+    edge(x, 0);
+    edge(x, h - 1);
+  }
+  for (let y = 1; y < h - 1; y++) {
+    edge(0, y);
+    edge(w - 1, y);
+  }
+  if (ok / total < 0.85) return null;
+
+  const isBg = new Uint8Array(w * h);
+  const queue = new Int32Array(w * h);
+  let head = 0;
+  let tail = 0;
+  const STEP = 9;
+  const tryPush = (from: number, x: number, y: number) => {
+    const p = y * w + x;
+    if (isBg[p]) return;
+    const i = p * 4;
+    if (!neutral(i)) return;
+    if (from >= 0) {
+      const j = from * 4;
+      if (Math.max(Math.abs(data[i] - data[j]), Math.abs(data[i + 1] - data[j + 1]), Math.abs(data[i + 2] - data[j + 2])) > STEP) return;
+    }
+    isBg[p] = 1;
+    queue[tail++] = p;
+  };
+  for (let x = 0; x < w; x++) {
+    tryPush(-1, x, 0);
+    tryPush(-1, x, h - 1);
+  }
+  for (let y = 0; y < h; y++) {
+    tryPush(-1, 0, y);
+    tryPush(-1, w - 1, y);
+  }
+  while (head < tail) {
+    const p = queue[head++];
+    const x = p % w;
+    const y = (p - x) / w;
+    if (x > 0) tryPush(p, x - 1, y);
+    if (x < w - 1) tryPush(p, x + 1, y);
+    if (y > 0) tryPush(p, x, y - 1);
+    if (y < h - 1) tryPush(p, x, y + 1);
+  }
+  const removed = tail / (w * h);
+  if (removed < 0.1 || removed > 0.975) return null;
+
+  const out = Buffer.from(data);
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = y * w + x;
+      const i = p * 4;
+      if (isBg[p]) {
+        out[i + 3] = 0;
+        continue;
+      }
+      const touches = (x > 0 && isBg[p - 1]) || (x < w - 1 && isBg[p + 1]) || (y > 0 && isBg[p - w]) || (y < h - 1 && isBg[p + w]);
+      if (touches) out[i + 3] = 100; // borda suave, sem serrilhado
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < 0) return null;
+  // o produto precisa ocupar uma parte razoável da foto, senão o recorte errou
+  if ((maxX - minX + 1) * (maxY - minY + 1) < w * h * 0.04) return null;
+  const padX = Math.round((maxX - minX) * 0.03);
+  const padY = Math.round((maxY - minY) * 0.03);
+  const x0 = Math.max(0, minX - padX);
+  const y0 = Math.max(0, minY - padY);
+  const cw = Math.min(w - 1, maxX + padX) - x0 + 1;
+  const ch = Math.min(h - 1, maxY + padY) - y0 + 1;
+  const cropped = Buffer.alloc(cw * ch * 4);
+  for (let y = 0; y < ch; y++) out.copy(cropped, y * cw * 4, idx(x0, y0 + y, w), idx(x0, y0 + y, w) + cw * 4);
+  return { data: cropped, width: cw, height: ch };
+}
+
 // bytes de uma foto (png, jpeg, webp...) -> PNG recortado, ou null se a foto não for recortável
 export async function cutoutProductPhoto(input: Uint8Array | Buffer, opts: CutoutOptions = {}): Promise<Buffer | null> {
   const { maxSize = 720, tolerance = 34 } = opts;
@@ -168,7 +268,8 @@ export async function cutoutProductPhoto(input: Uint8Array | Buffer, opts: Cutou
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    const cut = cutoutPixels({ data, width: info.width, height: info.height }, tolerance);
+    const raw = { data, width: info.width, height: info.height };
+    const cut = cutoutPixels(raw, tolerance) ?? cutoutGradient(raw);
     if (!cut) return null;
     return await sharp(cut.data, { raw: { width: cut.width, height: cut.height, channels: 4 } }).png({ compressionLevel: 9, palette: false }).toBuffer();
   } catch {
