@@ -33,6 +33,7 @@ import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
+import { FUNDOS_ARTE } from "@/lib/encarte/modelos/fundos-arte";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
@@ -873,7 +874,7 @@ export function EncarteBuilder({
           <details open>
           <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
           <div className="mt-3 space-y-3">
-            {[{ grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
+            {[{ grupo: "Cabeçalhos temáticos (herói inteiro, corpo em degradê)", ids: FUNDOS_ARTE.map((a) => a.id as EncarteFundo) }, { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
               <div key={grupo} className="space-y-1.5">
                 <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
                 <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>

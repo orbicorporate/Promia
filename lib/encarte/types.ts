@@ -1,4 +1,5 @@
 import { CENARIO_IDS } from "./modelos/cenarios";
+import { ARTE_IDS } from "./modelos/fundos-arte";
 // Tipos do motor de encarte (tabloide promocional de supermercado).
 //
 // O encarte é desenhado no servidor (lib/encarte/render.tsx + next/og) a
@@ -18,7 +19,7 @@ export const ENCARTE_MODELOS = ["feira", "vitrine", "painel", "pomar", "vidro", 
 export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
 
 // Fundo da arte (só nos modelos brilhantes; nulo = o fundo padrão do modelo).
-export const ENCARTE_FUNDOS = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira", ...CENARIO_IDS] as const;
+export const ENCARTE_FUNDOS = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira", ...CENARIO_IDS, ...ARTE_IDS] as const;
 export type EncarteFundo = (typeof ENCARTE_FUNDOS)[number];
 
 export function isEncarteFundo(value: unknown): value is EncarteFundo {
@@ -37,6 +38,8 @@ export type EncarteEmblemaImg = {
   horizontal: EncarteEmblemaArquivo | null;
   cores: { hue: number; sat: number; hue2: number; neutro: boolean; quente: boolean; dourado: number };
 };
+
+export type EncarteFundoArte = { id: string; topo: EncarteEmblemaArquivo; base: EncarteEmblemaArquivo; faixa: string };
 
 export type EncarteItem = {
   name: string;
@@ -76,6 +79,7 @@ export type EncarteData = {
   fundo?: EncarteFundo | null;
   emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
+  fundoArte?: EncarteFundoArte | null; // cabeçalho e rodapé do fundo de arte, resolvidos no servidor
   esqueleto?: boolean; // prévia só com fundo, logo e a marcação das 12 caixas (passos 1 e 2 do montador)
   themeKey: string;
   validFrom?: string | null; // YYYY-MM-DD

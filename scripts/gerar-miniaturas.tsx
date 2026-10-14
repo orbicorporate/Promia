@@ -11,6 +11,8 @@ import { ImageResponse } from "next/og";
 import { loadEncarteFonts } from "@/lib/encarte/fonts";
 import { renderModelo } from "@/lib/encarte/modelos";
 import { renderEncartePage } from "@/lib/encarte/render";
+import { FUNDOS_ARTE } from "@/lib/encarte/modelos/fundos-arte";
+import { carregarFundoArte } from "@/lib/encarte/modelos/fundo-arte";
 import { CENARIO_IDS } from "@/lib/encarte/modelos/cenarios";
 import { BOXES } from "@/lib/encarte/modelos/boxes";
 import { brilhoTokens, fundoBrilho, Img } from "@/lib/encarte/modelos/brilho";
@@ -47,6 +49,7 @@ async function dados(modelo: string | null, fundo: string | null, emblema: strin
     fundo: fundo as EncarteData["fundo"],
     emblema,
     emblemaImg: emblema ? await carregarEmblema(emblema) : null,
+    fundoArte: fundo && fundo.startsWith("ar") ? await carregarFundoArte(fundo) : null,
     themeKey,
     validFrom: "2026-10-14",
     validUntil: "2026-10-14",
@@ -122,6 +125,13 @@ async function pagina(d: EncarteData, fonts: Fonts) {
     await salvar(`fundo-${f}.webp`, await png(el, 440, 330, fonts), 440);
   }
 
+  }
+
+  // fundos de arte: o cabeçalho sobre a cor do corpo
+  for (const a of FUNDOS_ARTE) {
+    const topo = await sharp(path.join(process.cwd(), "public", "fundos", "arte", `${a.slug}-topo.webp`)).resize({ width: 440 }).png().toBuffer();
+    const img = await sharp({ create: { width: 440, height: 330, channels: 3, background: a.meio } }).composite([{ input: topo, top: 0, left: 0 }]).webp({ quality: 82 }).toBuffer();
+    writeFileSync(path.join(OUT, `fundo-${a.id}.webp`), img);
   }
 
   // visuais prontos: a arte completa
