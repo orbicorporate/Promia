@@ -743,8 +743,8 @@ export function EncarteBuilder({
   const prontosPanel = (
     <Glass className="space-y-3 p-4 sm:p-5">
       <div>
-        <h3 className="flex items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Comece por uma combinação pronta</h3>
-        <p className="text-sm text-[var(--ink-2)]">Logo, fundo e caixa já combinados. Escolha o tema ou digite o que você vai anunciar. Dá para ajustar tudo depois.</p>
+        <h3 className="flex items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Combinações prontas</h3>
+        <p className="text-sm text-[var(--ink-2)]">Cada combinação já traz tema, logo, fundo e caixa de produto juntos, com 12 produtos de exemplo. Escolha uma e troque o que quiser depois.</p>
       </div>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
@@ -754,7 +754,7 @@ export function EncarteBuilder({
             setBuscaPronto(e.target.value);
             setLimitePronto(8);
           }}
-          placeholder="Digite o tema: carne, natal, sábado, bebidas..."
+          placeholder="Buscar combinação: carne, natal, sábado, bebidas..."
           className="pl-10"
           aria-label="Buscar combinação pronta"
         />
@@ -786,16 +786,17 @@ export function EncarteBuilder({
         <p className="py-6 text-center text-sm text-[var(--ink-3)]">Nenhuma combinação com esse tema. Tente carne, natal, sábado, hortifruti ou bebidas.</p>
       ) : (
         <>
-          <p className="text-xs text-[var(--ink-3)]">{plural(prontosFiltrados.length, "combinação", "combinações")}</p>
+          <p className="text-xs text-[var(--ink-3)]">{plural(prontosFiltrados.length, "combinação pronta", "combinações prontas")}. Os produtos da miniatura são só exemplo.</p>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             {prontosFiltrados.slice(0, limitePronto).map((v) => {
               const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
               return (
                 <button key={v.slug} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={miniaturaClass(on)}>
-                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={360} height={360} loading="lazy" decoding="async" className="aspect-square w-full bg-[var(--line)] object-cover" />
+                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={480} height={600} loading="lazy" decoding="async" className="aspect-[4/5] w-full bg-[var(--line)] object-cover" />
+                  <span className="absolute left-1.5 top-1.5 rounded-full bg-[var(--ink)]/85 px-2 py-0.5 text-[10px] font-bold text-[var(--bg)] backdrop-blur">Combinação</span>
                   <span className={cn("block px-2 py-1.5 text-left", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
                     <span className="block truncate text-xs font-semibold">{v.nome}</span>
-                    <span className={cn("block truncate text-[11px]", on ? "opacity-75" : "text-[var(--ink-3)]")}>{v.fundoNome}</span>
+                    <span className={cn("block truncate text-[11px]", on ? "opacity-75" : "text-[var(--ink-3)]")}>{v.fundoNome} + logo + caixa</span>
                   </span>
                   {on && <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-3.5" strokeWidth={3} /></span>}
                 </button>
