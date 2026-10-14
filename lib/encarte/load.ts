@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { emblemaPorSlug } from "@/lib/emblemas/catalog";
+import { lerEmblema } from "./emblema-escala";
 import { effectiveOldPrice } from "./price";
 import { DEFAULT_THEME_KEY, isThemeKey } from "./themes";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteData, type EncarteItem, type EncarteMarket } from "./types";
@@ -106,7 +107,8 @@ export async function loadEncarte(admin: Admin, tabloidId: string): Promise<Load
       layout: isEncarteModelo(tabloid.modelo) ? "grade" : isEncarteLayout(tabloid.layout) ? tabloid.layout : "grade",
       modelo: isEncarteModelo(tabloid.modelo) ? tabloid.modelo : null,
       fundo: isEncarteFundo(tabloid.fundo) ? tabloid.fundo : null,
-      emblema: tabloid.emblema && emblemaPorSlug(tabloid.emblema) ? tabloid.emblema : null,
+      emblema: lerEmblema(tabloid.emblema).slug && emblemaPorSlug(lerEmblema(tabloid.emblema).slug!) ? lerEmblema(tabloid.emblema).slug : null,
+      emblemaEscala: lerEmblema(tabloid.emblema).escala,
       themeKey: isThemeKey(tabloid.theme_key) ? tabloid.theme_key : DEFAULT_THEME_KEY,
       validFrom: tabloid.valid_from,
       validUntil: tabloid.valid_until,
