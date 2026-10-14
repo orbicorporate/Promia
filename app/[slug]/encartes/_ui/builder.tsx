@@ -865,37 +865,6 @@ export function EncarteBuilder({
           })}
         </div>
         {emblema ? (
-          <div className="space-y-2 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
-            <div className="flex items-center justify-between gap-2">
-              <label htmlFor="tam-logo" className="text-sm font-semibold">Tamanho do logo</label>
-              <button type="button" onClick={() => setEmblemaEscala(1)} disabled={emblemaEscala === 1} className="text-xs font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline disabled:no-underline disabled:opacity-50">
-                Voltar ao tamanho automático
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label="Diminuir o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v - EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala <= EMBLEMA_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
-                <Minus className="size-4" aria-hidden />
-              </button>
-              <input
-                id="tam-logo"
-                type="range"
-                min={EMBLEMA_ESCALA_MIN}
-                max={EMBLEMA_ESCALA_MAX}
-                step={EMBLEMA_ESCALA_PASSO}
-                value={emblemaEscala}
-                onChange={(e) => setEmblemaEscala(clampEscala(Number(e.target.value)))}
-                className="h-11 w-full accent-[var(--ink)]"
-                aria-valuetext={`${Math.round(emblemaEscala * 100)}%`}
-              />
-              <button type="button" aria-label="Aumentar o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v + EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala >= EMBLEMA_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
-                <Plus className="size-4" aria-hidden />
-              </button>
-              <span className="w-12 shrink-0 text-right text-sm tabular-nums text-[var(--ink-2)]">{Math.round(emblemaEscala * 100)}%</span>
-            </div>
-            <p className="text-xs text-[var(--ink-3)]">A proporção do logo nunca muda, só o tamanho.</p>
-          </div>
-        ) : null}
-        {emblema ? (
           <button type="button" onClick={() => setEmblema(null)} className="text-sm font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline">
             Tirar o logo e usar só o título
           </button>
@@ -1070,6 +1039,39 @@ export function EncarteBuilder({
 
   const passoPanels = [objetivoPanel, fundoPanel, caixasPanel, productsPanel, textosPanel, revisarPanel];
 
+  // tamanho do logo: fica ao lado da prévia, ajustável do passo 1 ao 3 (objetivo, fundo e caixas)
+  const tamanhoLogo =
+    emblema && step <= 2 ? (
+          <div className="space-y-2 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold">Tamanho do logo</span>
+              <button type="button" onClick={() => setEmblemaEscala(1)} disabled={emblemaEscala === 1} className="text-xs font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline disabled:no-underline disabled:opacity-50">
+                Automático
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label="Diminuir o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v - EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala <= EMBLEMA_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+                <Minus className="size-4" aria-hidden />
+              </button>
+              <input
+                aria-label="Tamanho do logo"
+                type="range"
+                min={EMBLEMA_ESCALA_MIN}
+                max={EMBLEMA_ESCALA_MAX}
+                step={EMBLEMA_ESCALA_PASSO}
+                value={emblemaEscala}
+                onChange={(e) => setEmblemaEscala(clampEscala(Number(e.target.value)))}
+                className="h-11 w-full accent-[var(--ink)]"
+                aria-valuetext={`${Math.round(emblemaEscala * 100)}%`}
+              />
+              <button type="button" aria-label="Aumentar o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v + EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala >= EMBLEMA_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+                <Plus className="size-4" aria-hidden />
+              </button>
+              <span className="w-12 shrink-0 text-right text-sm tabular-nums text-[var(--ink-2)]">{Math.round(emblemaEscala * 100)}%</span>
+            </div>
+          </div>
+    ) : null;
+
   const previewPanel = (
     <div className="space-y-3">
       <div
@@ -1144,6 +1146,7 @@ export function EncarteBuilder({
           <ChevronRight className="size-5" />
         </button>
       </div>
+      {tamanhoLogo}
     </div>
   );
 
