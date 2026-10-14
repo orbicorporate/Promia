@@ -408,6 +408,7 @@ export type ConfigModelo = {
   estilo: EstiloFundo;
   Card: (p: CardProps) => ReactElement;
   gap?: number; // entre cartões, em px de 1080
+  aspect?: number; // proporção (largura/altura) da caixa: as caixas ficam coladas, com o mesmo respiro dos dois lados
   padX?: number;
   cardMaxRatio?: number; // altura máxima do cartão em relação à altura nominal
   heroScale?: number; // fração da altura da página para o emblema
@@ -436,7 +437,8 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const vp = validityParts(data.validFrom, data.validUntil);
 
   const padX = r((cfg.padX ?? 36) * s);
-  const gap = r((cfg.gap ?? 24) * s);
+  const tight = !!cfg.aspect;
+  const gap = r((tight ? 14 : (cfg.gap ?? 24)) * s);
   // fundo de arte: o cabeçalho e o rodapé são imagens, o corpo é degradê
   const arte = data.fundoArte ? fundoArtePorId(data.fundoArte.id) : null;
   const ak = arte ? W / arte.w : 1;
@@ -452,9 +454,10 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const validH = validity ? r(84 * s) : 0;
   const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
   const areaH = H - areaTop - footerH - r(14 * s) - (cfg.rodape === "cerca" ? r(52 * s) : 0);
-  const cardW = r((W - padX * 2 - gap * (cols - 1)) / cols);
+  const cellW = r((W - padX * 2 - gap * (cols - 1)) / cols);
   const nominalH = (areaH - gap * (capRows - 1)) / capRows;
-  const cardH = r(Math.min(nominalH * (cfg.cardMaxRatio ?? 1.2), (areaH - gap * (rows - 1)) / rows));
+  const cardH = tight ? r(Math.min(nominalH, cellW / cfg.aspect!)) : r(Math.min(nominalH * (cfg.cardMaxRatio ?? 1.2), (areaH - gap * (rows - 1)) / rows));
+  const cardW = tight ? r(cardH * cfg.aspect!) : cellW;
   const wide = cardW / cardH > 1.15;
 
   // emblema: escolhe a versão que fica maior na área do cabeçalho
@@ -480,9 +483,9 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
     const slice = items.slice(rIdx * cols, rIdx * cols + cols);
     if (!slice.length) break;
     grid.push(
-      <div key={rIdx} style={{ ...row, justifyContent: slice.length < cols ? "center" : "space-between", marginTop: rIdx === 0 ? 0 : gap }}>
+      <div key={rIdx} style={{ ...row, justifyContent: tight || slice.length < cols ? "center" : "space-between", marginTop: rIdx === 0 ? 0 : gap }}>
         {slice.map((it, i) => (
-          <div key={i} style={{ display: "flex", marginLeft: slice.length < cols && i > 0 ? gap : 0 }}>
+          <div key={i} style={{ display: "flex", marginLeft: (tight || slice.length < cols) && i > 0 ? gap : 0 }}>
             {cfg.Card({ t, tk, item: it, w: cardW, h: cardH, s, wide, index: rIdx * cols + i, claro: arte?.claro })}
           </div>
         ))}
