@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import type { EncarteData, EncarteItem } from "../types";
 import { compor, type CardProps, type Pg } from "./brilho";
 import { PRODUTOS_POR_ENCARTE } from "../formats";
+import { BOXES } from "./boxes";
 
 // Esqueleto do encarte: fundo, logo e título já no lugar, e cada caixa de
 // produto só marcada em linhas tracejadas e sombra, com o número da posição.
@@ -49,5 +50,5 @@ function CardEsqueleto({ w, h, s, index, claro }: CardProps): ReactElement {
 export function renderEsqueleto(data: EncarteData, pageIndex: number): Pg | null {
   // um modelo qualquer só para valer a regra de 12 por página; a arte das caixas não entra
   const d: EncarteData = { ...data, modelo: data.modelo ?? "cx01", layout: "grade", items: Array.from({ length: PRODUTOS_POR_ENCARTE }, () => VAZIO) };
-  return compor(d, pageIndex, { estilo: "vinheta", Card: CardEsqueleto, gap: 22, padX: 34, cardMaxRatio: 1.25 });
+  return compor(d, pageIndex, { estilo: "vinheta", Card: CardEsqueleto, gap: 22, padX: 34, cardMaxRatio: 1.25, aspect: BOXES.find((b) => b.id === d.modelo)?.aspect });
 }

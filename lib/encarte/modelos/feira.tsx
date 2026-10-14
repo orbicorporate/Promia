@@ -147,7 +147,7 @@ export function renderFeira(data: EncarteData, pageIndex: number): Pg | null {
   const headerH = topPad + lockupH + r(14 * s) + plankH + subH + r(18 * s);
   const areaTop = headerH - r(26 * s);
   const areaH = H - headerH - footerH + r(26 * s);
-  const gap = r(22 * s);
+  const gap = r(14 * s);
   const cardW = r((W - pad * 2 - gap * (cols - 1)) / cols);
   const nominalH = (areaH - gap * (capRows - 1) - r(20 * s)) / capRows;
   const cardH = r(Math.min(nominalH * 1.25, (areaH - gap * (rows - 1) - r(20 * s)) / rows));

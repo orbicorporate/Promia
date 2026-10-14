@@ -51,5 +51,5 @@ export function CardPomar({ t, item, w, h, s, wide }: CardProps) {
 }
 
 export function renderPomar(data: EncarteData, pageIndex: number) {
-  return compor(data, pageIndex, { estilo: "diagonal", Card: CardPomar, gap: 22, padX: 34, cardMaxRatio: 1.1 });
+  return compor(data, pageIndex, { estilo: "diagonal", Card: CardPomar, gap: 14, padX: 34, cardMaxRatio: 1.1 });
 }

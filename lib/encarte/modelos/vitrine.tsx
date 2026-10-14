@@ -66,5 +66,5 @@ function CardVitrine({ t, item, w, h, s, wide, index }: CardProps) {
 }
 
 export function renderVitrine(data: EncarteData, pageIndex: number) {
-  return compor(data, pageIndex, { estilo: "raios", Card: CardVitrine, gap: 26, padX: 34 });
+  return compor(data, pageIndex, { estilo: "raios", Card: CardVitrine, gap: 14, padX: 34 });
 }

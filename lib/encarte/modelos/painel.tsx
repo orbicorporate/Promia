@@ -50,5 +50,5 @@ function CardPainel({ t, item, w, h, s, wide }: CardProps) {
 }
 
 export function renderPainel(data: EncarteData, pageIndex: number) {
-  return compor(data, pageIndex, { estilo: "bokeh", Card: CardPainel, gap: 14, padX: 30, cardMaxRatio: 1.1 });
+  return compor(data, pageIndex, { estilo: "bokeh", Card: CardPainel, gap: 12, padX: 30, cardMaxRatio: 1.1 });
 }

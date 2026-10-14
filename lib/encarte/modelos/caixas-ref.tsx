@@ -24,7 +24,7 @@ export const MODELOS_CAIXA: Record<string, { label: string; hint: string; render
     {
       label: b.nome,
       hint: `Caixa ${b.id.slice(2)} das referências, cores fixas, fundo e emblema à escolha`,
-      render: (d: EncarteData, i: number) => compor(d, i, { estilo: "vinheta", Card: cardDe(b), gap: 22, padX: 34, cardMaxRatio: 1.25 }),
+      render: (d: EncarteData, i: number) => compor(d, i, { estilo: "vinheta", Card: cardDe(b), padX: 34, aspect: b.aspect }),
     },
   ])
 );
