@@ -1,7 +1,7 @@
 // Gera as miniaturas do construtor em public/miniaturas.
 //   estilo-<id>   a caixa (ou os cartões do estilo) em destaque, 4:3
 //   fundo-<id>    só o fundo, sem título nem produtos, 4:3
-//   pronto-<slug> a arte completa de cada visual pronto, quadrada
+//   pronto-<slug> a arte completa de cada combinação pronta, formato feed com 12 produtos
 // Uso: npx tsx --tsconfig tsconfig.json scripts/gerar-miniaturas.tsx [prontos]
 // As frutas são desenhos em código no lugar de fotos reais.
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -28,8 +28,13 @@ const MARKET = { name: "Mercado Bom Preço", colorPrimary: "#15803d", whatsapp: 
 
 type Fonts = Awaited<ReturnType<typeof loadEncarteFonts>>;
 
-async function itens(): Promise<EncarteItem[]> {
-  const keys = ["banana|Banana prata|6.99|8.99", "tomate|Tomate italiano|7.49|9.99", "maca|Maçã Fuji|8.99|11.9", "laranja|Laranja pera|2.99|4.49"];
+async function itens(qtd = 4): Promise<EncarteItem[]> {
+  const todas = [
+    "banana|Banana prata|6.99|8.99", "tomate|Tomate italiano|7.49|9.99", "maca|Maçã Fuji|8.99|11.9", "laranja|Laranja pera|2.99|4.49",
+    "cebola|Cebola nacional|3.99|5.49", "batata|Batata lavada|4.49|5.99", "banana|Banana nanica|5.49|6.99", "tomate|Tomate débora|6.49|8.49",
+    "maca|Maçã gala|7.99|9.99", "laranja|Laranja lima|3.49|4.99", "cebola|Cebola roxa|5.99|7.49", "batata|Batata inglesa|3.99|5.29",
+  ];
+  const keys = todas.slice(0, qtd);
   const out: EncarteItem[] = [];
   for (const k of keys) {
     const [f, nm, p, o] = k.split("|");
@@ -38,12 +43,12 @@ async function itens(): Promise<EncarteItem[]> {
   return out;
 }
 
-async function dados(modelo: string | null, fundo: string | null, emblema: string | null, themeKey: string): Promise<EncarteData> {
+async function dados(modelo: string | null, fundo: string | null, emblema: string | null, themeKey: string, formato: EncarteData["format"] = "quadrado", qtd = 4): Promise<EncarteData> {
   return {
     id: "mini",
     name: "Mini",
     headline: "Ofertas da semana",
-    format: "quadrado",
+    format: formato,
     layout: "grade",
     modelo: modelo as EncarteData["modelo"],
     fundo: fundo as EncarteData["fundo"],
@@ -54,7 +59,7 @@ async function dados(modelo: string | null, fundo: string | null, emblema: strin
     validFrom: "2026-10-14",
     validUntil: "2026-10-14",
     market: MARKET,
-    items: await itens(),
+    items: await itens(qtd),
   } as EncarteData;
 }
 
@@ -136,7 +141,7 @@ async function pagina(d: EncarteData, fonts: Fonts) {
 
   // visuais prontos: a arte completa
   for (const v of VISUAIS_PRONTOS) {
-    await salvar(`pronto-${v.slug}.webp`, await pagina(await dados(v.modelo, v.fundo, v.emblema, v.themeKey), fonts), 360);
+    await salvar(`pronto-${v.slug}.webp`, await pagina(await dados(v.modelo, v.fundo, v.emblema, v.themeKey, "feed", 12), fonts), 480);
   }
 })().catch((e) => {
   console.error(e);
