@@ -646,6 +646,12 @@ export function EncarteBuilder({
     setPreviewPage(1);
   }
 
+  function irParaProdutos() {
+    setAvisoPronto(null);
+    setStep(P_PRODUTOS);
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  }
+
   function irParaLogo() {
     secaoLogoRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
     setDestacarLogo(true);
@@ -847,15 +853,18 @@ export function EncarteBuilder({
           >
             <div className="flex items-start gap-2">
               <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[var(--folha)] text-white"><Check className="size-3.5" strokeWidth={3.5} /></span>
-              <p className="min-w-0 flex-1 text-sm"><span className="font-semibold">{avisoPronto}</span> escolhida. E agora? Veja a prévia ao lado e siga o passo a passo.</p>
+              <p className="min-w-0 flex-1 text-sm"><span className="font-semibold">{avisoPronto}</span> escolhida. Fundo, caixas e logo já vieram prontos. O que você quer fazer agora?</p>
               <button type="button" onClick={() => setAvisoPronto(null)} aria-label="Fechar aviso" className="grid size-8 shrink-0 place-items-center rounded-lg text-[var(--ink-3)] hover:bg-[var(--line)]"><X className="size-4" /></button>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button onClick={irParaProdutos}>
+                Já está bom, escolher os produtos <ChevronRight className="size-4" />
+              </Button>
               <Button variant="vidro" onClick={irParaLogo}>
                 Trocar o logo <ArrowDown className="size-4 motion-safe:animate-bounce" aria-hidden />
               </Button>
-              <Button onClick={avancar}>
-                Continuar: {PASSOS[1].nome} <ChevronRight className="size-4" />
+              <Button variant="fantasma" onClick={avancar}>
+                Ajustar fundo e caixas
               </Button>
             </div>
           </motion.div>
@@ -1203,9 +1212,16 @@ export function EncarteBuilder({
         </Button>
       ) : (
         <div className="flex flex-col items-end gap-1">
-          <Button size="lg" onClick={avancar} disabled={!podeAvancar}>
-            Próximo: {PASSOS[step + 1].nome} <ChevronRight className="size-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {step < P_PRODUTOS && (
+              <Button variant="vidro" size="lg" onClick={irParaProdutos}>
+                Pular para os produtos
+              </Button>
+            )}
+            <Button size="lg" onClick={avancar} disabled={!podeAvancar}>
+              Próximo: {PASSOS[step + 1].nome} <ChevronRight className="size-4" />
+            </Button>
+          </div>
           {!podeAvancar && <span className="text-xs text-[var(--ink-3)]">Escolha pelo menos 1 produto.</span>}
         </div>
       )}
@@ -1285,7 +1301,12 @@ export function EncarteBuilder({
           {ultimo ? (
             <Button onClick={save} loading={saving}>Salvar</Button>
           ) : (
-            <Button onClick={avancar} disabled={!podeAvancar}>Próximo</Button>
+            <>
+              {step < P_PRODUTOS && (
+                <Button variant="vidro" onClick={irParaProdutos} aria-label="Pular para a escolha dos produtos">Pular</Button>
+              )}
+              <Button onClick={avancar} disabled={!podeAvancar}>Próximo</Button>
+            </>
           )}
         </div>
       </div>
