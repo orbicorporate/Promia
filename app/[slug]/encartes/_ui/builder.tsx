@@ -86,12 +86,12 @@ export type BuilderInitial = {
 };
 
 const PASSOS = [
-  { key: "objetivo", nome: "Objetivo", pergunta: "Qual é o objetivo do encarte?" },
-  { key: "fundo", nome: "Fundo", pergunta: "Escolha o fundo" },
-  { key: "caixas", nome: "Caixas", pergunta: "Escolha o estilo das caixas" },
-  { key: "produtos", nome: "Produtos", pergunta: "Quais produtos entram?" },
-  { key: "textos", nome: "Título e datas", pergunta: "Título e validade" },
-  { key: "revisar", nome: "Revisar", pergunta: "Está tudo certo?" },
+  { key: "objetivo", nome: "Objetivo", curto: "Objetivo", pergunta: "Escolha o ponto de partida", agora: "Escolha uma combinação pronta ou só o logo da campanha, e diga onde vai usar. Tudo pode ser trocado depois." },
+  { key: "fundo", nome: "Fundo", curto: "Fundo", pergunta: "Escolha o fundo", agora: "Toque no fundo que combina com a campanha. A prévia muda na hora." },
+  { key: "caixas", nome: "Caixas", curto: "Caixas", pergunta: "Escolha as caixas dos produtos", agora: "Escolha o desenho das caixas onde cada produto vai aparecer. Cada página leva 12." },
+  { key: "produtos", nome: "Produtos", curto: "Produtos", pergunta: "Escolha os produtos", agora: "Adicione os produtos da oferta e confira os preços. Precisa de pelo menos 1 para continuar." },
+  { key: "textos", nome: "Título e datas", curto: "Textos", pergunta: "Título e validade", agora: "Escreva o título (se quiser, o logo já serve) e a validade da oferta." },
+  { key: "revisar", nome: "Revisar", curto: "Revisar", pergunta: "Confira e salve", agora: "Veja a arte final. Se estiver certa, salve: depois você baixa em PNG ou PDF." },
 ] as const;
 const P_PRODUTOS = 3;
 const P_TEXTOS = 4;
@@ -1159,33 +1159,38 @@ export function EncarteBuilder({
           {initial.id ? "Salvar alterações" : "Salvar encarte"}
         </Button>
       ) : (
-        <Button size="lg" onClick={avancar} disabled={!podeAvancar}>
-          Continuar <ChevronRight className="size-4" />
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button size="lg" onClick={avancar} disabled={!podeAvancar}>
+            Próximo: {PASSOS[step + 1].nome} <ChevronRight className="size-4" />
+          </Button>
+          {!podeAvancar && <span className="text-xs text-[var(--ink-3)]">Escolha pelo menos 1 produto.</span>}
+        </div>
       )}
     </div>
   );
 
   return (
     <div className="space-y-5 pb-36 xl:pb-0">
-      {/* trilha de passos: é uma sequência de verdade, então vai numerada */}
+      {/* trilha de passos: é uma sequência de verdade, então vai numerada, com o nome sempre à vista */}
       <nav aria-label="Passos do encarte" className="sticky top-[76px] lg:top-4 z-20">
-        <ol className="vidro-forte flex items-center gap-1 rounded-2xl p-1.5">
+        <ol className="vidro-forte flex items-start rounded-2xl px-2 py-2.5">
           {PASSOS.map((p, i) => {
             const atual = i === step;
             const feito = i < step;
             return (
-              <li key={p.key} className="min-w-0 flex-1">
+              <li key={p.key} className="relative min-w-0 flex-1">
+                {i > 0 && <span aria-hidden className={cn("absolute right-1/2 top-[20px] h-0.5 w-full -translate-y-1/2 rounded-full transition-colors", i <= step ? "bg-[var(--folha)]" : "bg-[var(--line-strong)]")} />}
                 <button
                   type="button"
                   onClick={() => (i > P_PRODUTOS && items.length === 0 ? toast.error("Escolha pelo menos um produto primeiro.") : setStep(i))}
                   aria-current={atual ? "step" : undefined}
-                  className={cn("flex h-11 w-full items-center justify-center gap-2 rounded-xl px-2 text-sm font-medium transition", atual ? "bg-[var(--ink)] text-[var(--bg)]" : "text-[var(--ink-2)] hover:bg-[var(--line)]")}
+                  aria-label={`Passo ${i + 1}: ${p.nome}${feito ? " (feito)" : ""}`}
+                  className="group relative flex w-full flex-col items-center gap-1 rounded-xl px-0.5 py-0.5"
                 >
-                  <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold tabular", atual ? "bg-[var(--bg)] text-[var(--ink)]" : feito ? "bg-[var(--folha)] text-white" : "bg-[var(--line)]")}>
-                    {feito ? <Check className="size-3" strokeWidth={3.5} /> : i + 1}
+                  <span className={cn("relative grid size-9 place-items-center rounded-full text-sm font-bold tabular transition-all", atual ? "bg-[var(--ink)] text-[var(--bg)] ring-4 ring-[var(--ink)]/15" : feito ? "bg-[var(--folha)] text-white" : "bg-[var(--bg)] text-[var(--ink-2)] ring-2 ring-[var(--line-strong)] group-hover:ring-[var(--ink-3)]")}>
+                    {feito ? <Check className="size-4" strokeWidth={3.5} /> : i + 1}
                   </span>
-                  <span className={cn("truncate", !atual && "hidden sm:inline")}>{p.nome}</span>
+                  <span className={cn("max-w-full truncate text-[11px] leading-tight sm:text-xs", atual ? "font-bold text-[var(--ink)]" : "font-medium text-[var(--ink-3)]")}>{p.curto}</span>
                 </button>
               </li>
             );
@@ -1195,7 +1200,14 @@ export function EncarteBuilder({
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
         <div className="space-y-4">
-          <h2 className="font-display text-xl font-extrabold">{PASSOS[step].pergunta}</h2>
+          <header key={`h${step}`} className="surgir space-y-1.5">
+            <p className="text-sm font-semibold text-[var(--folha)]">Passo {step + 1} de {PASSOS.length}</p>
+            <h2 className="font-display text-2xl font-extrabold leading-tight">{PASSOS[step].pergunta}</h2>
+            <p className="max-w-prose text-[15px] text-[var(--ink-2)]">
+              <span className="font-semibold text-[var(--ink)]">Agora:</span> {PASSOS[step].agora}
+            </p>
+            {step < PASSOS.length - 1 && <p className="text-sm text-[var(--ink-3)]">Depois: {PASSOS[step + 1].nome.toLowerCase()}.</p>}
+          </header>
           <div key={step} className="surgir space-y-5">
             {passoPanels[step]}
           </div>
@@ -1220,7 +1232,7 @@ export function EncarteBuilder({
             <span className="absolute bottom-0.5 right-0.5 grid size-4 place-items-center rounded-full bg-black/60 text-white"><Eye className="size-2.5" /></span>
           </button>
           <span className="min-w-0 flex-1 truncate text-xs text-[var(--ink-2)]">
-            Passo {step + 1} de {PASSOS.length}
+            Passo {step + 1} de {PASSOS.length}: {PASSOS[step].curto}
           </span>
           {step > 0 && (
             <Button variant="fantasma" onClick={voltar} aria-label="Voltar um passo">
@@ -1230,7 +1242,7 @@ export function EncarteBuilder({
           {ultimo ? (
             <Button onClick={save} loading={saving}>Salvar</Button>
           ) : (
-            <Button onClick={avancar} disabled={!podeAvancar}>Continuar</Button>
+            <Button onClick={avancar} disabled={!podeAvancar}>Próximo</Button>
           )}
         </div>
       </div>
