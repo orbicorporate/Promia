@@ -37,8 +37,9 @@ export const MODELO_LABELS: Record<EncarteModelo, { label: string; hint: string 
 
 // Fundos dos modelos brilhantes (lib/encarte/modelos/brilho.tsx).
 import { CENARIOS } from "./modelos/cenarios";
+import { FUNDOS_ARTE } from "./modelos/fundos-arte";
 
-const FUNDO_LABELS_CENARIO = Object.fromEntries(CENARIOS.map((c) => [c.id, `${c.id.slice(2)} ${c.nome}`])) as Record<string, string> as Record<Exclude<import("./types").EncarteFundo, "raios" | "bokeh" | "diagonal" | "aros" | "kraft" | "madeira" | "estudio" | "vinheta" | "xadrez" | "feira">, string>;
+const FUNDO_LABELS_CENARIO = Object.fromEntries(CENARIOS.map((c) => [c.id, `${c.id.slice(2)} ${c.nome}`])) as Record<string, string> as Record<Exclude<import("./types").EncarteFundo, (typeof FUNDOS_ARTE)[number]["id"] | "raios" | "bokeh" | "diagonal" | "aros" | "kraft" | "madeira" | "estudio" | "vinheta" | "xadrez" | "feira">, string>;
 
 export const FUNDO_LABELS: Record<import("./types").EncarteFundo, string> = {
   raios: "Raios de luz",
@@ -52,4 +53,5 @@ export const FUNDO_LABELS: Record<import("./types").EncarteFundo, string> = {
   xadrez: "Quadriculado",
   feira: "Toldo de feira",
   ...FUNDO_LABELS_CENARIO,
+  ...(Object.fromEntries(FUNDOS_ARTE.map((a) => [a.id, a.nome])) as Record<string, string>),
 };

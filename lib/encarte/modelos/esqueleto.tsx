@@ -10,7 +10,8 @@ import { PRODUTOS_POR_ENCARTE } from "../formats";
 
 const VAZIO: EncarteItem = { name: "", price: 0, highlight: false };
 
-function CardEsqueleto({ w, h, s, index }: CardProps): ReactElement {
+function CardEsqueleto({ w, h, s, index, claro }: CardProps): ReactElement {
+  const tinta = claro ? "20,40,32" : "255,255,255";
   const bw = Math.round(Math.min(w, h * 0.9));
   const bh = Math.round(bw / 0.9);
   const linha = Math.max(2, Math.round(3.5 * s));
@@ -27,19 +28,19 @@ function CardEsqueleto({ w, h, s, index }: CardProps): ReactElement {
           width: bw,
           height: bh,
           borderRadius: raio,
-          border: `${linha}px dashed rgba(255,255,255,0.92)`,
-          backgroundColor: "rgba(255,255,255,0.14)",
+          border: `${linha}px dashed rgba(${tinta},0.85)`,
+          backgroundColor: `rgba(${tinta},0.1)`,
           boxShadow: `0 ${Math.round(10 * s)}px ${Math.round(26 * s)}px rgba(0,0,0,0.38)`,
           padding: inner,
         }}
       >
         {/* foto */}
-        <div style={{ display: "flex", flex: 1, borderRadius: Math.round(raio * 0.6), border: `${Math.max(1, Math.round(2.5 * s))}px dashed rgba(255,255,255,0.55)`, alignItems: "center", justifyContent: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: n, height: n, borderRadius: n, backgroundColor: "rgba(255,255,255,0.92)", color: "#1b2a22", fontWeight: 800, fontSize: Math.round(n * 0.52) }}>{index + 1}</div>
+        <div style={{ display: "flex", flex: 1, borderRadius: Math.round(raio * 0.6), border: `${Math.max(1, Math.round(2.5 * s))}px dashed rgba(${tinta},0.5)`, alignItems: "center", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: n, height: n, borderRadius: n, backgroundColor: claro ? "#1b2a22" : "rgba(255,255,255,0.92)", color: claro ? "#fff" : "#1b2a22", fontWeight: 800, fontSize: Math.round(n * 0.52) }}>{index + 1}</div>
         </div>
         {/* nome e preço */}
-        <div style={{ display: "flex", height: Math.round(bh * 0.07), marginTop: Math.round(bh * 0.035), borderRadius: 99, backgroundColor: "rgba(255,255,255,0.5)", width: "78%", alignSelf: "center" }} />
-        <div style={{ display: "flex", height: Math.round(bh * 0.15), marginTop: Math.round(bh * 0.03), borderRadius: Math.round(raio * 0.6), border: `${Math.max(1, Math.round(2.5 * s))}px dashed rgba(255,255,255,0.55)` }} />
+        <div style={{ display: "flex", height: Math.round(bh * 0.07), marginTop: Math.round(bh * 0.035), borderRadius: 99, backgroundColor: `rgba(${tinta},0.4)`, width: "78%", alignSelf: "center" }} />
+        <div style={{ display: "flex", height: Math.round(bh * 0.15), marginTop: Math.round(bh * 0.03), borderRadius: Math.round(raio * 0.6), border: `${Math.max(1, Math.round(2.5 * s))}px dashed rgba(${tinta},0.5)` }} />
       </div>
     </div>
   );

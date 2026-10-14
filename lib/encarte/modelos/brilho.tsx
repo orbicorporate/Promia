@@ -1,4 +1,5 @@
 import { cenarioSvg } from "./cenarios";
+import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, FORMATS } from "../formats";
 import { getPage } from "../paginate";
@@ -222,6 +223,39 @@ export function fundoBrilho(W: number, H: number, t: BT, estilo: EstiloFundo, cx
   );
 }
 
+// Corpo do fundo de arte: degradê vertical entre as cores medidas nas duas
+// emendas (cabeçalho e rodapé), com as cores de cada ponto da largura nas
+// emendas para a transição ficar invisível, e uma luz suave atrás da grade.
+export function corpoArte(W: number, H: number, a: FundoArteMeta, topY: number, botY: number, luzCy: number, luzH: number): string {
+  const media = (cs: string[]) => {
+    const n = cs.map((c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)));
+    return `#${[0, 1, 2].map((k) => Math.round(n.reduce((t, c) => t + c[k], 0) / n.length).toString(16).padStart(2, "0")).join("")}`;
+  };
+  const stops = (cs: string[]) => cs.map((c, i) => `<stop offset="${(i / (cs.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join("");
+  const span = Math.max(1, botY - topY);
+  const h1 = topY + span * 0.22;
+  const h2 = botY - span * 0.22;
+  const luz = a.claro ? 0.2 : 0.07;
+  return uri(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs>
+      <linearGradient id="v" gradientUnits="userSpaceOnUse" x1="0" y1="${topY}" x2="0" y2="${botY}"><stop offset="0" stop-color="${media(a.topo)}"/><stop offset="0.5" stop-color="${a.meio}"/><stop offset="1" stop-color="${media(a.base)}"/></linearGradient>
+      <linearGradient id="ht" x1="0" y1="0" x2="1" y2="0">${stops(a.topo)}</linearGradient>
+      <linearGradient id="hb" x1="0" y1="0" x2="1" y2="0">${stops(a.base)}</linearGradient>
+      <linearGradient id="ft" gradientUnits="userSpaceOnUse" x1="0" y1="${topY}" x2="0" y2="${h1}"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+      <linearGradient id="fb" gradientUnits="userSpaceOnUse" x1="0" y1="${h2}" x2="0" y2="${botY}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>
+      <mask id="mt" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect x="0" y="0" width="${W}" height="${topY}" fill="#fff"/><rect x="0" y="${topY}" width="${W}" height="${h1 - topY}" fill="url(#ft)"/></mask>
+      <mask id="mb" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect x="0" y="${h2}" width="${W}" height="${botY - h2}" fill="url(#fb)"/><rect x="0" y="${botY}" width="${W}" height="${H - botY}" fill="#fff"/></mask>
+      <radialGradient id="l" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff" stop-opacity="${luz}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="${W}" height="${H}" fill="url(#v)"/>
+    <rect width="${W}" height="${H}" fill="url(#ht)" mask="url(#mt)"/>
+    <rect width="${W}" height="${H}" fill="url(#hb)" mask="url(#mb)"/>
+    <ellipse cx="${W / 2}" cy="${luzCy}" rx="${W * 0.62}" ry="${Math.max(60, luzH * 0.72)}" fill="url(#l)"/>
+  </svg>`
+  );
+}
+
 // cerca de madeira (rodapé do modelo Cerca)
 export function cercaUri(w: number, h: number): string {
   const n = Math.max(8, Math.round(w / 70));
@@ -366,7 +400,7 @@ export function Titulo3D({ text, w, h, s, t }: { text: string; w: number; h: num
 
 // ---------------------------------------------------------------- página
 
-export type CardProps = { t: BT; tk: Tokens; item: EncarteItem; w: number; h: number; s: number; wide: boolean; index: number };
+export type CardProps = { t: BT; tk: Tokens; item: EncarteItem; w: number; h: number; s: number; wide: boolean; index: number; claro?: boolean };
 
 export type ConfigModelo = {
   estilo: EstiloFundo;
@@ -401,9 +435,14 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   const padX = r((cfg.padX ?? 36) * s);
   const gap = r((cfg.gap ?? 24) * s);
-  const footerH = r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
+  // fundo de arte: o cabeçalho e o rodapé são imagens, o corpo é degradê
+  const arte = data.fundoArte ? fundoArtePorId(data.fundoArte.id) : null;
+  const ak = arte ? W / arte.w : 1;
+  const cropTop = arte && data.format === "quadrado" ? r(arte.cut * ak * 0.16) : 0;
+  const faixaH = r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
+  const footerH = arte ? r((arte.baseH - arte.fade * 0.8) * ak) + faixaH : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
-  const heroH = r(H * heroFrac) + spec.safeTop;
+  const heroH = arte ? r(arte.cut * ak) - cropTop : r(H * heroFrac) + spec.safeTop;
   const validH = validity ? r(84 * s) : 0;
   const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
   const areaH = H - areaTop - footerH - r(14 * s) - (cfg.rodape === "cerca" ? r(52 * s) : 0);
@@ -414,8 +453,8 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   // emblema: escolhe a versão que fica maior na área do cabeçalho
   const em = data.emblemaImg;
-  const boxW = W * 0.9;
-  const boxH = heroH - spec.safeTop - r(12 * s);
+  const boxW = arte ? W * 0.4 : W * 0.9;
+  const boxH = arte ? (heroH - spec.safeTop) * 0.74 : heroH - spec.safeTop - r(12 * s);
   let emblema: { src: string; w: number; h: number } | null = null;
   if (em) {
     const fit = (a: { w: number; h: number }) => Math.min(boxW / a.w, boxH / a.h);
@@ -438,7 +477,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       <div key={rIdx} style={{ ...row, justifyContent: slice.length < cols ? "center" : "space-between", marginTop: rIdx === 0 ? 0 : gap }}>
         {slice.map((it, i) => (
           <div key={i} style={{ display: "flex", marginLeft: slice.length < cols && i > 0 ? gap : 0 }}>
-            {cfg.Card({ t, tk, item: it, w: cardW, h: cardH, s, wide, index: rIdx * cols + i })}
+            {cfg.Card({ t, tk, item: it, w: cardW, h: cardH, s, wide, index: rIdx * cols + i, claro: arte?.claro })}
           </div>
         ))}
       </div>
@@ -451,7 +490,18 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   const element = (
     <div style={{ ...col, position: "relative", width: W, height: H, backgroundColor: t.bg1, fontFamily: FONT_BALOO }}>
-      <Img src={fundoBrilho(W, H, t, data.fundo ?? cfg.estilo, cx, cy, tk)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
+      {arte && data.fundoArte ? (
+        <>
+          <Img src={corpoArte(W, H, arte, r(arte.topoH * ak) - cropTop, H - faixaH - r(data.fundoArte.base.h * ak), areaTop + areaH / 2, rows * cardH + gap * (rows - 1))} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
+          <div style={{ display: "flex", position: "absolute", left: 0, top: 0, width: W, height: r(arte.topoH * ak) - cropTop, overflow: "hidden" }}>
+            <Img src={data.fundoArte.topo.src} w={W} h={r(arte.topoH * ak)} style={{ position: "absolute", left: 0, top: -cropTop }} />
+          </div>
+          <Img src={data.fundoArte.base.src} w={W} h={r(data.fundoArte.base.h * ak)} style={{ position: "absolute", left: 0, top: H - faixaH - r(data.fundoArte.base.h * ak) }} />
+          <Img src={data.fundoArte.faixa} w={W} h={faixaH} style={{ position: "absolute", left: 0, top: H - faixaH }} />
+        </>
+      ) : (
+        <Img src={fundoBrilho(W, H, t, data.fundo ?? cfg.estilo, cx, cy, tk)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
+      )}
 
       {/* título: emblema da campanha ou texto em 3D */}
       <div style={{ ...row, position: "absolute", left: 0, top: spec.safeTop + r(6 * s), width: W, height: heroH - spec.safeTop, alignItems: "center", justifyContent: "center" }}>
@@ -470,11 +520,25 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
       {/* produtos */}
       <div style={{ ...col, position: "absolute", left: padX, top: areaTop, width: W - padX * 2, height: areaH, justifyContent: "center" }}>
-        {items.length === 0 ? <div style={{ display: "flex", justifyContent: "center", fontFamily: FONT_BALOO, fontSize: r(34 * s), color: "#fff" }}>Adicione produtos para ver o encarte</div> : grid}
+        {items.length === 0 ? <div style={{ display: "flex", justifyContent: "center", fontFamily: FONT_BALOO, fontSize: r(34 * s), color: arte?.claro ? "#1b2a22" : "#fff" }}>Adicione produtos para ver o encarte</div> : grid}
       </div>
 
       {/* rodapé */}
-      {cfg.rodape === "cerca" ? (
+      {arte ? (
+        <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", padding: `0 ${padX}px` }}>
+          {data.market.logoUrl ? (
+            <div style={{ ...row, width: r(60 * s), height: r(60 * s), borderRadius: r(60 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
+              <Img src={data.market.logoUrl} w={r(60 * s) * 0.82} h={r(60 * s) * 0.82} style={{ objectFit: "contain" }} />
+            </div>
+          ) : (
+            <Selo kind="festonado" w={r(60 * s)} h={r(60 * s)} fill={t.gold} edge="#ffffff" edgeW={2.5 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: t.ink }]} />
+          )}
+          <div style={{ ...col, marginLeft: r(18 * s), flex: 1 }}>
+            <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(32 * s), color: arte.faixaClara ? "#1b2a22" : "#fff", letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
+            {contact || addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: arte.faixaClara ? "#1b2a22" : t.gold, whiteSpace: "nowrap", lineHeight: 1.15 }}>{contact || addr}</div> : null}
+          </div>
+        </div>
+      ) : cfg.rodape === "cerca" ? (
         <>
           <Img src={cercaUri(W, r(70 * s))} w={W} h={r(70 * s)} style={{ position: "absolute", left: 0, top: H - footerH - r(60 * s) }} />
           <div style={{ ...row, position: "absolute", left: 0, top: H - footerH + r(10 * s), width: W, height: footerH - r(10 * s), backgroundColor: "#FFFFFF", alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
