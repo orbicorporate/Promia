@@ -330,7 +330,7 @@ export function EncarteBuilder({
   );
 
   useEffect(() => {
-    const t = setTimeout(() => loadPreview(previewPage), 220);
+    const t = setTimeout(() => loadPreview(previewPage), 120);
     return () => clearTimeout(t);
   }, [loadPreview, previewPage]);
 
@@ -642,6 +642,11 @@ export function EncarteBuilder({
     setEmblema(v.emblema);
     if (themes.some((t) => t.key === v.themeKey)) setThemeKey(v.themeKey);
     setPreviewPage(1);
+    // a miniatura da combinação (já carregada) aparece na hora no feed, enquanto a prévia real é desenhada
+    if (format === "feed") {
+      setPreviewUrl(`/miniaturas/pronto-${v.slug}.webp`);
+      setPreviewLoading(true);
+    }
   }
 
   const podeAvancar = step !== P_PRODUTOS || items.length > 0;
