@@ -8,6 +8,7 @@ import { isThemeKey, DEFAULT_THEME_KEY } from "@/lib/encarte/themes";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } from "@/lib/encarte/types";
 import { EncarteBuilder, type BuilderInitial } from "../../_ui/builder";
 import { loadBuilderData } from "../../_ui/builder-data";
+import { lerEmblema } from "@/lib/encarte/emblema-escala";
 
 export const metadata = { title: "Editar encarte" };
 
@@ -34,7 +35,8 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     format: isEncarteFormat(t.format) ? t.format : "feed",
     layout: isEncarteLayout(t.layout) ? t.layout : "grade",
     modelo: isEncarteModelo(t.modelo) ? t.modelo : null,
-    emblema: t.emblema ?? null,
+    emblema: lerEmblema(t.emblema).slug,
+    emblemaEscala: lerEmblema(t.emblema).escala,
     fundo: isEncarteFundo(t.fundo) ? t.fundo : null,
     themeKey: isThemeKey(t.theme_key) ? t.theme_key : DEFAULT_THEME_KEY,
     validFrom: t.valid_from ?? "",

@@ -2,6 +2,7 @@ import { cenarioSvg } from "./cenarios";
 import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, FORMATS } from "../formats";
+import { clampEscala } from "../emblema-escala";
 import { getPage } from "../paginate";
 import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
 import { marketInitials } from "../render";
@@ -462,8 +463,8 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   // emblema: escolhe a versão que fica maior na área do cabeçalho
   const em = data.emblemaImg;
-  const boxW = arte ? (fino ? W * 0.66 : W * 0.4) : W * 0.9;
-  const boxH = arte ? (fino ? embH : (heroH - spec.safeTop) * 0.74) : heroH - spec.safeTop - r(12 * s);
+  const boxW = arte ? (fino ? W * 0.66 : W * 0.46) : W * 0.9;
+  const boxH = arte ? (fino ? embH : (heroH - spec.safeTop) * 0.84) : heroH - spec.safeTop - r(12 * s);
   let emblema: { src: string; w: number; h: number } | null = null;
   if (em) {
     const fit = (a: { w: number; h: number }) => Math.min(boxW / a.w, boxH / a.h);
@@ -471,7 +472,11 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
     const b = em.horizontal;
     const useB = b && fit(b) * fit(b) * b.w * b.h > fit(a) * fit(a) * a.w * a.h * 1.1;
     const pick = useB && b ? b : a;
-    const k = fit(pick);
+    // a proporção do desenho nunca muda: só um fator único para largura e altura
+    // (o ajuste do usuário, de 60% a 160%), com teto para não passar da página nem do cabeçalho
+    const escala = clampEscala(data.emblemaEscala);
+    const teto = Math.min((W * 0.94) / pick.w, (boxH * 1.4) / pick.h);
+    const k = Math.min(fit(pick) * escala, teto);
     emblema = { src: pick.src, w: pick.w * k, h: pick.h * k };
   }
 

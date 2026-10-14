@@ -24,12 +24,15 @@ import {
   TriangleAlert,
   Sparkles,
   Pencil,
+  Minus,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
 import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
+import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
@@ -74,6 +77,7 @@ export type BuilderInitial = {
   layout: EncarteLayout;
   modelo: EncarteModelo | null;
   emblema: string | null;
+  emblemaEscala?: number;
   fundo: EncarteFundo | null;
   themeKey: string;
   validFrom: string;
@@ -136,6 +140,7 @@ export function EncarteBuilder({
   const [layout, setLayout] = useState<EncarteLayout>(initial.layout);
   const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
   const [emblema, setEmblema] = useState<string | null>(initial.emblema);
+  const [emblemaEscala, setEmblemaEscala] = useState<number>(clampEscala(initial.emblemaEscala));
   const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
@@ -238,6 +243,7 @@ export function EncarteBuilder({
       layout,
       modelo,
       emblema,
+      emblemaEscala,
       fundo,
       themeKey,
       validFrom: validFrom || null,
@@ -265,7 +271,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, fundo, themeKey, validFrom, validUntil, items, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, fundo, themeKey, validFrom, validUntil, items, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -358,7 +364,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, fundo, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, fundo, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -629,6 +635,7 @@ export function EncarteBuilder({
 
   function escolherEmblema(slug: string) {
     setEmblema(slug);
+    setEmblemaEscala(1);
     const e = EMBLEMAS.find((x) => x.slug === slug);
     const tema = e?.temas.find((k) => themes.some((t) => t.key === k));
     if (tema) setThemeKey(tema);
@@ -640,6 +647,7 @@ export function EncarteBuilder({
     setLayout("grade");
     setFundo(v.fundo);
     setEmblema(v.emblema);
+    setEmblemaEscala(1);
     if (themes.some((t) => t.key === v.themeKey)) setThemeKey(v.themeKey);
     setPreviewPage(1);
     // a miniatura da combinação (já carregada) aparece na hora no feed, enquanto a prévia real é desenhada
@@ -856,6 +864,37 @@ export function EncarteBuilder({
             );
           })}
         </div>
+        {emblema ? (
+          <div className="space-y-2 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="tam-logo" className="text-sm font-semibold">Tamanho do logo</label>
+              <button type="button" onClick={() => setEmblemaEscala(1)} disabled={emblemaEscala === 1} className="text-xs font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline disabled:no-underline disabled:opacity-50">
+                Voltar ao tamanho automático
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label="Diminuir o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v - EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala <= EMBLEMA_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+                <Minus className="size-4" aria-hidden />
+              </button>
+              <input
+                id="tam-logo"
+                type="range"
+                min={EMBLEMA_ESCALA_MIN}
+                max={EMBLEMA_ESCALA_MAX}
+                step={EMBLEMA_ESCALA_PASSO}
+                value={emblemaEscala}
+                onChange={(e) => setEmblemaEscala(clampEscala(Number(e.target.value)))}
+                className="h-11 w-full accent-[var(--ink)]"
+                aria-valuetext={`${Math.round(emblemaEscala * 100)}%`}
+              />
+              <button type="button" aria-label="Aumentar o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v + EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala >= EMBLEMA_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+                <Plus className="size-4" aria-hidden />
+              </button>
+              <span className="w-12 shrink-0 text-right text-sm tabular-nums text-[var(--ink-2)]">{Math.round(emblemaEscala * 100)}%</span>
+            </div>
+            <p className="text-xs text-[var(--ink-3)]">A proporção do logo nunca muda, só o tamanho.</p>
+          </div>
+        ) : null}
         {emblema ? (
           <button type="button" onClick={() => setEmblema(null)} className="text-sm font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline">
             Tirar o logo e usar só o título

@@ -8,6 +8,7 @@ import { isThemeKey, getTheme } from "@/lib/encarte/themes";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } from "@/lib/encarte/types";
 import { EncarteBuilder, type BuilderInitial, type BuilderItem } from "../_ui/builder";
 import { loadBuilderData } from "../_ui/builder-data";
+import { lerEmblema } from "@/lib/encarte/emblema-escala";
 
 export const metadata = { title: "Novo encarte" };
 
@@ -37,6 +38,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     layout: "grade",
     modelo: "cx01",
     emblema: "ofertas-da-semana",
+    emblemaEscala: 1,
     fundo: null,
     themeKey,
     validFrom,
@@ -68,7 +70,8 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
         format: isEncarteFormat(src.format) ? src.format : "feed",
         layout: isEncarteLayout(src.layout) ? src.layout : "grade",
         modelo: isEncarteModelo(src.modelo) ? src.modelo : null,
-        emblema: src.emblema ?? null,
+        emblema: lerEmblema(src.emblema).slug,
+        emblemaEscala: lerEmblema(src.emblema).escala,
         fundo: isEncarteFundo(src.fundo) ? src.fundo : null,
         themeKey: isThemeKey(src.theme_key) ? src.theme_key : initial.themeKey,
         items: [...(src.tabloid_products ?? [])]

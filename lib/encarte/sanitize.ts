@@ -1,6 +1,7 @@
 import { isISODate } from "@/lib/dates";
 import { normalizeUnit } from "@/lib/products";
 import { emblemaPorSlug } from "@/lib/emblemas/catalog";
+import { clampEscala } from "./emblema-escala";
 import { isThemeKey } from "./themes";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteData, type EncarteItem } from "./types";
 
@@ -84,6 +85,7 @@ export function sanitizePreviewInput(raw: unknown): SanitizeResult {
       modelo: isEncarteModelo(r.modelo) ? r.modelo : null,
       fundo: isEncarteFundo(r.fundo) ? r.fundo : null,
       emblema: typeof r.emblema === "string" && emblemaPorSlug(r.emblema) ? r.emblema : null,
+      emblemaEscala: clampEscala(r.emblemaEscala),
       themeKey: r.themeKey,
       esqueleto: r.esqueleto === true,
       validFrom: isISODate(r.validFrom) ? r.validFrom : null,
