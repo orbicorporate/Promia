@@ -235,7 +235,7 @@ export function corpoArte(W: number, H: number, a: FundoArteMeta, topY: number, 
   const span = Math.max(1, botY - topY);
   const h1 = topY + span * 0.22;
   const h2 = botY - span * 0.22;
-  const luz = a.claro ? 0.2 : 0.07;
+  const luz = a.radial ? 0 : a.claro ? 0.2 : 0.07;
   return uri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     <defs>
@@ -246,9 +246,11 @@ export function corpoArte(W: number, H: number, a: FundoArteMeta, topY: number, 
       <linearGradient id="fb" gradientUnits="userSpaceOnUse" x1="0" y1="${h2}" x2="0" y2="${botY}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>
       <mask id="mt" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect x="0" y="0" width="${W}" height="${topY}" fill="#fff"/><rect x="0" y="${topY}" width="${W}" height="${h1 - topY}" fill="url(#ft)"/></mask>
       <mask id="mb" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect x="0" y="${h2}" width="${W}" height="${botY - h2}" fill="url(#fb)"/><rect x="0" y="${botY}" width="${W}" height="${H - botY}" fill="#fff"/></mask>
+      ${a.radial ? `<radialGradient id="rd" gradientUnits="userSpaceOnUse" cx="${W / 2}" cy="${(topY + botY) / 2}" r="${W * 0.52}" gradientTransform="translate(${W / 2} ${(topY + botY) / 2}) scale(1 ${(span * 0.62) / (W * 0.52)}) translate(${-W / 2} ${-(topY + botY) / 2})"><stop offset="0" stop-color="${a.radial[0]}"/><stop offset="0.5" stop-color="${a.radial[1]}"/><stop offset="1" stop-color="${a.radial[2]}"/></radialGradient>` : ""}
       <radialGradient id="l" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff" stop-opacity="${luz}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
     </defs>
     <rect width="${W}" height="${H}" fill="url(#v)"/>
+    ${a.radial ? `<rect width="${W}" height="${H}" fill="url(#rd)"/>` : ""}
     <rect width="${W}" height="${H}" fill="url(#ht)" mask="url(#mt)"/>
     <rect width="${W}" height="${H}" fill="url(#hb)" mask="url(#mb)"/>
     <ellipse cx="${W / 2}" cy="${luzCy}" rx="${W * 0.62}" ry="${Math.max(60, luzH * 0.72)}" fill="url(#l)"/>
@@ -438,11 +440,15 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   // fundo de arte: o cabeçalho e o rodapé são imagens, o corpo é degradê
   const arte = data.fundoArte ? fundoArtePorId(data.fundoArte.id) : null;
   const ak = arte ? W / arte.w : 1;
-  const cropTop = arte && data.format === "quadrado" ? r(arte.cut * ak * 0.16) : 0;
-  const faixaH = r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
-  const footerH = arte ? r((arte.baseH - arte.fade * 0.8) * ak) + faixaH : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
+  const fino = arte?.modo === "fino";
+  const cutPx = arte ? r(arte.cut * ak) : 0;
+  const cropTop = arte ? (fino ? Math.max(0, cutPx - r(H * 0.19)) : data.format === "quadrado" ? r(cutPx * 0.16) : 0) : 0;
+  const embH = fino ? r(Math.min(H * 0.15, W * 0.2)) : 0;
+  const rodapeFino = fino ? r(H * 0.115) : 0;
+  const faixaH = fino ? 0 : r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
+  const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
-  const heroH = arte ? r(arte.cut * ak) - cropTop : r(H * heroFrac) + spec.safeTop;
+  const heroH = arte ? cutPx - cropTop + (fino ? r(embH * 0.5) : 0) : r(H * heroFrac) + spec.safeTop;
   const validH = validity ? r(84 * s) : 0;
   const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
   const areaH = H - areaTop - footerH - r(14 * s) - (cfg.rodape === "cerca" ? r(52 * s) : 0);
@@ -453,8 +459,8 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   // emblema: escolhe a versão que fica maior na área do cabeçalho
   const em = data.emblemaImg;
-  const boxW = arte ? W * 0.4 : W * 0.9;
-  const boxH = arte ? (heroH - spec.safeTop) * 0.74 : heroH - spec.safeTop - r(12 * s);
+  const boxW = arte ? (fino ? W * 0.66 : W * 0.4) : W * 0.9;
+  const boxH = arte ? (fino ? embH : (heroH - spec.safeTop) * 0.74) : heroH - spec.safeTop - r(12 * s);
   let emblema: { src: string; w: number; h: number } | null = null;
   if (em) {
     const fit = (a: { w: number; h: number }) => Math.min(boxW / a.w, boxH / a.h);
@@ -492,19 +498,27 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
     <div style={{ ...col, position: "relative", width: W, height: H, backgroundColor: t.bg1, fontFamily: FONT_BALOO }}>
       {arte && data.fundoArte ? (
         <>
-          <Img src={corpoArte(W, H, arte, r(arte.topoH * ak) - cropTop, H - faixaH - r(data.fundoArte.base.h * ak), areaTop + areaH / 2, rows * cardH + gap * (rows - 1))} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
+          <Img src={corpoArte(W, H, arte, r(arte.topoH * ak) - cropTop, fino ? H - rodapeFino - r(arte.fade * ak * 0.8) : H - faixaH - r(data.fundoArte.base.h * ak), areaTop + areaH / 2, rows * cardH + gap * (rows - 1))} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
           <div style={{ display: "flex", position: "absolute", left: 0, top: 0, width: W, height: r(arte.topoH * ak) - cropTop, overflow: "hidden" }}>
             <Img src={data.fundoArte.topo.src} w={W} h={r(arte.topoH * ak)} style={{ position: "absolute", left: 0, top: -cropTop }} />
           </div>
-          <Img src={data.fundoArte.base.src} w={W} h={r(data.fundoArte.base.h * ak)} style={{ position: "absolute", left: 0, top: H - faixaH - r(data.fundoArte.base.h * ak) }} />
-          <Img src={data.fundoArte.faixa} w={W} h={faixaH} style={{ position: "absolute", left: 0, top: H - faixaH }} />
+          {fino ? (
+            <div style={{ display: "flex", position: "absolute", left: 0, top: H - rodapeFino - r(arte.fade * ak * 0.8), width: W, height: rodapeFino + r(arte.fade * ak * 0.8), overflow: "hidden" }}>
+              <Img src={data.fundoArte.base.src} w={W} h={r(data.fundoArte.base.h * ak)} style={{ position: "absolute", left: 0, top: 0 }} />
+            </div>
+          ) : (
+            <>
+              <Img src={data.fundoArte.base.src} w={W} h={r(data.fundoArte.base.h * ak)} style={{ position: "absolute", left: 0, top: H - faixaH - r(data.fundoArte.base.h * ak) }} />
+              <Img src={data.fundoArte.faixa} w={W} h={faixaH} style={{ position: "absolute", left: 0, top: H - faixaH }} />
+            </>
+          )}
         </>
       ) : (
         <Img src={fundoBrilho(W, H, t, data.fundo ?? cfg.estilo, cx, cy, tk)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
       )}
 
       {/* título: emblema da campanha ou texto em 3D */}
-      <div style={{ ...row, position: "absolute", left: 0, top: spec.safeTop + r(6 * s), width: W, height: heroH - spec.safeTop, alignItems: "center", justifyContent: "center" }}>
+      <div style={{ ...row, position: "absolute", left: 0, top: fino ? cutPx - cropTop - r(embH * 0.5) : spec.safeTop + r(6 * s), width: W, height: fino ? embH : heroH - spec.safeTop, alignItems: "center", justifyContent: "center" }}>
         {emblema ? <Img src={emblema.src} w={emblema.w} h={emblema.h} /> : <Titulo3D text={headline} w={W * 0.86} h={heroH * 0.7} s={s} t={t} />}
       </div>
 
@@ -524,7 +538,23 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       </div>
 
       {/* rodapé */}
-      {arte ? (
+      {arte && fino ? (
+        <div style={{ ...row, position: "absolute", left: 0, top: H - (spec.safeBottom ? r(spec.safeBottom * 0.6) : 0) - r(16 * s) - r(68 * s), width: W, height: r(68 * s), alignItems: "center", justifyContent: "center" }}>
+          <div style={{ ...row, alignItems: "center", height: r(68 * s), padding: `0 ${r(24 * s)}px 0 ${r(10 * s)}px`, borderRadius: r(34 * s), backgroundColor: "rgba(10,14,22,0.8)", border: `${r(2.5 * s)}px solid ${t.gold}`, boxShadow: `0 ${r(6 * s)}px ${r(16 * s)}px rgba(0,0,0,0.35)` }}>
+            {data.market.logoUrl ? (
+              <div style={{ ...row, width: r(48 * s), height: r(48 * s), borderRadius: r(48 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                <Img src={data.market.logoUrl} w={r(48 * s) * 0.82} h={r(48 * s) * 0.82} style={{ objectFit: "contain" }} />
+              </div>
+            ) : (
+              <Selo kind="festonado" w={r(48 * s)} h={r(48 * s)} fill={t.gold} edge="#ffffff" edgeW={2 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: t.ink }]} />
+            )}
+            <div style={{ ...col, marginLeft: r(14 * s) }}>
+              <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(26 * s), color: "#fff", letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
+              {contact || addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(18 * s), color: t.gold, whiteSpace: "nowrap", lineHeight: 1.1 }}>{contact || addr}</div> : null}
+            </div>
+          </div>
+        </div>
+      ) : arte ? (
         <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", padding: `0 ${padX}px` }}>
           {data.market.logoUrl ? (
             <div style={{ ...row, width: r(60 * s), height: r(60 * s), borderRadius: r(60 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
