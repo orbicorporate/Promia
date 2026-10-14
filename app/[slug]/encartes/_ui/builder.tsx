@@ -874,7 +874,7 @@ export function EncarteBuilder({
           <details open>
           <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
           <div className="mt-3 space-y-3">
-            {[{ grupo: "Cabeçalhos temáticos (herói inteiro, corpo em degradê)", ids: FUNDOS_ARTE.map((a) => a.id as EncarteFundo) }, { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
+            {[{ grupo: "Cabeçalhos temáticos", ids: FUNDOS_ARTE.filter((a) => !a.grupo).map((a) => a.id as EncarteFundo) }, { grupo: "Semanas e festivais", ids: FUNDOS_ARTE.filter((a) => a.grupo === "Semanas e festivais").map((a) => a.id as EncarteFundo) }, { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
               <div key={grupo} className="space-y-1.5">
                 <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
                 <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
