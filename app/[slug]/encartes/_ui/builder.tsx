@@ -131,6 +131,9 @@ export function EncarteBuilder({
   const [verPrevia, setVerPrevia] = useState(false);
   const [grupoEmblema, setGrupoEmblema] = useState("Para agora");
   const [temaPronto, setTemaPronto] = useState<string | null>(null);
+  const [avisoPronto, setAvisoPronto] = useState<string | null>(null); // nome da combinação recém-escolhida
+  const [destacarLogo, setDestacarLogo] = useState(false);
+  const secaoLogoRef = useRef<HTMLDivElement | null>(null);
   const [buscaPronto, setBuscaPronto] = useState("");
   const [limitePronto, setLimitePronto] = useState(8);
   const [name, setName] = useState(initial.name);
@@ -634,12 +637,19 @@ export function EncarteBuilder({
   }, [grupoEmblema, emblemasOrdenados]);
 
   function escolherEmblema(slug: string) {
+    setAvisoPronto(null);
     setEmblema(slug);
     setEmblemaEscala(1);
     const e = EMBLEMAS.find((x) => x.slug === slug);
     const tema = e?.temas.find((k) => themes.some((t) => t.key === k));
     if (tema) setThemeKey(tema);
     setPreviewPage(1);
+  }
+
+  function irParaLogo() {
+    secaoLogoRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    setDestacarLogo(true);
+    setTimeout(() => setDestacarLogo(false), 2200);
   }
 
   function aplicarPronto(v: (typeof VISUAIS_PRONTOS)[number]) {
@@ -650,6 +660,7 @@ export function EncarteBuilder({
     setEmblemaEscala(1);
     if (themes.some((t) => t.key === v.themeKey)) setThemeKey(v.themeKey);
     setPreviewPage(1);
+    setAvisoPronto(v.nome);
     // a miniatura da combinação (já carregada) aparece na hora no feed, enquanto a prévia real é desenhada
     if (format === "feed") {
       setPreviewUrl(`/miniaturas/pronto-${v.slug}.webp`);
@@ -823,15 +834,43 @@ export function EncarteBuilder({
           )}
         </>
       )}
+      <AnimatePresence>
+        {avisoPronto && (
+          <motion.div
+            key="aviso-pronto"
+            role="status"
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8, transition: { duration: 0.15 } }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0 }}
+            className="vidro-forte sticky bottom-44 z-10 space-y-2.5 rounded-2xl p-3 shadow-lg xl:bottom-4"
+          >
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[var(--folha)] text-white"><Check className="size-3.5" strokeWidth={3.5} /></span>
+              <p className="min-w-0 flex-1 text-sm"><span className="font-semibold">{avisoPronto}</span> escolhida. E agora? Veja a prévia ao lado e siga o passo a passo.</p>
+              <button type="button" onClick={() => setAvisoPronto(null)} aria-label="Fechar aviso" className="grid size-8 shrink-0 place-items-center rounded-lg text-[var(--ink-3)] hover:bg-[var(--line)]"><X className="size-4" /></button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="vidro" onClick={irParaLogo}>
+                Trocar o logo <ArrowDown className="size-4 motion-safe:animate-bounce" aria-hidden />
+              </Button>
+              <Button onClick={avancar}>
+                Continuar: {PASSOS[1].nome} <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Glass>
   );
 
   const objetivoPanel = (
     <div className="space-y-5">
       {prontosPanel}
-      <Glass className="p-4 sm:p-5 space-y-3">
+      <div ref={secaoLogoRef} className="scroll-mt-28">
+      <Glass className={cn("p-4 sm:p-5 space-y-3 transition-shadow duration-500", destacarLogo && "ring-2 ring-[var(--folha)] shadow-[0_0_0_6px_var(--folha-soft)]")}>
         <div>
-          <h3 className="font-bold">Ou escolha só o logo da campanha</h3>
+          <h3 className="font-bold">Ou troque só o logo da campanha</h3>
           <p className="text-sm text-[var(--ink-2)]">Escolha a campanha. O logo dela vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
         </div>
         <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
@@ -870,6 +909,7 @@ export function EncarteBuilder({
           </button>
         ) : null}
       </Glass>
+      </div>
 
       <Glass className="p-4 sm:p-5 space-y-3">
         <div>
