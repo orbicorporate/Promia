@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { emblemaPng, emblemaPorSlug, type Variante } from "@/lib/emblemas/catalog";
+import { emblemaPng, emblemaPorSlug, emblemaThumb, type Variante } from "@/lib/emblemas/catalog";
 
 // Emblema de campanha dentro do encarte. O arquivo vem de public/emblemas:
 // do disco quando existe (desenvolvimento e testes) e por HTTPS do próprio
@@ -35,8 +35,8 @@ export type EmblemaImg = {
 const MAX_W = 880;
 const cache = new Map<string, Promise<EmblemaImg | null>>();
 
-async function lerArquivo(slug: string, variante?: Variante): Promise<Buffer | null> {
-  const rel = emblemaPng(slug, variante); // /emblemas/x.png
+async function lerArquivo(slug: string, variante?: Variante, miniatura = false): Promise<Buffer | null> {
+  const rel = miniatura ? emblemaThumb(slug) : emblemaPng(slug, variante); // /emblemas/x.png ou /emblemas/t/x.webp
   try {
     return await readFile(path.join(process.cwd(), "public", rel));
   } catch {
@@ -112,10 +112,12 @@ export function coresDoEmblema(raw: Buffer): CoresEmblema {
   };
 }
 
-async function carregar(slug: string): Promise<EmblemaImg | null> {
+// rapido: usa a miniatura (440 px, ~45 KB) em vez do PNG de 1 a 2 MB. Serve à
+// prévia pequena; o arquivo final e a prévia nítida usam o PNG inteiro.
+async function carregar(slug: string, rapido: boolean): Promise<EmblemaImg | null> {
   const e = emblemaPorSlug(slug);
   if (!e) return null;
-  const base = await lerArquivo(slug);
+  const base = (rapido ? await lerArquivo(slug, undefined, true) : null) ?? (await lerArquivo(slug));
   if (!base) return null;
   const p = await preparar(base);
   let horizontal: EmblemaArquivo | null = null;
@@ -126,14 +128,15 @@ async function carregar(slug: string): Promise<EmblemaImg | null> {
   return { slug, nome: e.nome, ilustrado: p.file, horizontal, cores: coresDoEmblema(p.raw) };
 }
 
-export function carregarEmblema(slug: string | null | undefined): Promise<EmblemaImg | null> {
+export function carregarEmblema(slug: string | null | undefined, opts: { rapido?: boolean } = {}): Promise<EmblemaImg | null> {
   if (!slug) return Promise.resolve(null);
-  let p = cache.get(slug);
+  const chave = `${slug}${opts.rapido ? "|r" : ""}`;
+  let p = cache.get(chave);
   if (!p) {
-    p = carregar(slug).catch(() => null);
-    cache.set(slug, p);
+    p = carregar(slug, !!opts.rapido).catch(() => null);
+    cache.set(chave, p);
     p.then((v) => {
-      if (!v && cache.get(slug) === p) cache.delete(slug);
+      if (!v && cache.get(chave) === p) cache.delete(chave);
     });
     if (cache.size > 40) cache.delete(cache.keys().next().value as string);
   }

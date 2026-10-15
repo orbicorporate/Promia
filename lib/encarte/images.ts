@@ -53,6 +53,7 @@ export type ResolveImagesOptions = {
   ilustrar?: boolean; // sem foto, usar a ilustração do tipo do produto (padrão: não)
   cutout?: boolean; // recortar o fundo das fotos de produto (modelos de arte); padrão: quando o encarte tem modelo
   cache?: Map<string, Promise<string | null>>; // reaproveitar entre páginas (PDF)
+  emblemaRapido?: boolean; // prévia pequena: logo pela miniatura leve
   maxLado?: number; // prévia: encolhe as fotos de produto para no máximo esse lado (px); o arquivo final usa o tamanho real
 };
 
@@ -212,7 +213,7 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
 
   const [logoUrl, emblemaImg, fundoArte, ...images] = await Promise.all([
     load(data.market.logoUrl),
-    data.emblema ? carregarEmblema(data.emblema) : Promise.resolve(null),
+    data.emblema ? carregarEmblema(data.emblema, { rapido: opts.emblemaRapido }) : Promise.resolve(null),
     data.fundo && fundoArtePorId(data.fundo) ? carregarFundoArte(data.fundo) : Promise.resolve(null),
     ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl, true))),
   ]);

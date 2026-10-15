@@ -114,6 +114,7 @@ const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,
 // Escalas da prévia: a rápida chega primeiro, a nítida a substitui (o arquivo final sai no tamanho real).
 const PREVIA_RAPIDA = 0.4;
 const PREVIA_NITIDA = 0.8;
+const PREVIA_FINAL = 1; // no último passo (revisar) a prévia já sai no tamanho real
 
 export function EncarteBuilder({
   marketId,
@@ -292,7 +293,8 @@ export function EncarteBuilder({
 
   const loadPreview = useCallback(
     async (page: number) => {
-      const ckey = `${page}|${previewKey}`;
+      const revisando = step === PASSOS.length - 1;
+      const ckey = `${page}|${previewKey}|${revisando ? "f" : "n"}`;
       const hit = cacheRef.current.get(ckey);
       if (hit) {
         abortRef.current?.abort();
@@ -347,7 +349,7 @@ export function EncarteBuilder({
         await guardar(res);
         if (abortRef.current === ctrl) setPreviewLoading(false);
         // versão nítida: só depois que a pessoa parou de mexer
-        const fina = await pedir(PREVIA_NITIDA);
+        const fina = await pedir(revisando ? PREVIA_FINAL : PREVIA_NITIDA);
         if (fina.ok) await guardar(fina);
       } catch (err) {
         if ((err as Error).name !== "AbortError") setPreviewError("Sem conexão para gerar a prévia.");
@@ -355,7 +357,7 @@ export function EncarteBuilder({
         if (abortRef.current === ctrl) setPreviewLoading(false);
       }
     },
-    [marketId, previewKey]
+    [marketId, previewKey, step]
   );
 
   useEffect(() => {
@@ -910,7 +912,7 @@ export function EncarteBuilder({
           ))}
         </div>
         <div className="grid max-h-[26rem] grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-3">
-          {emblemasDoGrupo.map((e) => {
+          {emblemasDoGrupo.map((e, idx) => {
             const on = emblema === e.slug;
             return (
               <button
@@ -921,7 +923,7 @@ export function EncarteBuilder({
                 className={cn("relative overflow-hidden rounded-2xl text-left ring-2 transition active:scale-[0.98]", on ? "ring-[var(--ink)]" : "ring-[var(--line)] hover:ring-[var(--line-strong)]")}
               >
                 <span className="grid aspect-[4/3] w-full place-items-center bg-[linear-gradient(160deg,#fbfaf7,#e4e0d6)] p-2">
-                  <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
+                  <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading={idx < 9 ? "eager" : "lazy"} decoding="async" className="max-h-full max-w-full object-contain" />
                 </span>
                 <span className={cn("flex items-center justify-between gap-1 px-2.5 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
                   <span className="truncate">{e.nome}</span>
