@@ -1105,34 +1105,29 @@ export function EncarteBuilder({
   // tamanho do logo: fica ao lado da prévia, ajustável do passo 1 ao 3 (objetivo, fundo e caixas)
   const tamanhoLogo =
     emblema && step <= 2 ? (
-          <div className="space-y-2 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold">Tamanho do logo</span>
-              <button type="button" onClick={() => setEmblemaEscala(1)} disabled={emblemaEscala === 1} className="text-xs font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline disabled:no-underline disabled:opacity-50">
-                Automático
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label="Diminuir o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v - EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala <= EMBLEMA_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
-                <Minus className="size-4" aria-hidden />
-              </button>
-              <input
-                aria-label="Tamanho do logo"
-                type="range"
-                min={EMBLEMA_ESCALA_MIN}
-                max={EMBLEMA_ESCALA_MAX}
-                step={EMBLEMA_ESCALA_PASSO}
-                value={emblemaEscala}
-                onChange={(e) => setEmblemaEscala(clampEscala(Number(e.target.value)))}
-                className="h-11 w-full accent-[var(--ink)]"
-                aria-valuetext={`${Math.round(emblemaEscala * 100)}%`}
-              />
-              <button type="button" aria-label="Aumentar o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v + EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala >= EMBLEMA_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
-                <Plus className="size-4" aria-hidden />
-              </button>
-              <span className="w-12 shrink-0 text-right text-sm tabular-nums text-[var(--ink-2)]">{Math.round(emblemaEscala * 100)}%</span>
-            </div>
-          </div>
+      <div className="flex items-center gap-1.5 rounded-xl bg-[var(--glass-strong)] px-2.5 py-1.5 ring-1 ring-[var(--line)]">
+        <span className="shrink-0 text-xs font-semibold">Logo</span>
+        <button type="button" aria-label="Diminuir o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v - EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala <= EMBLEMA_ESCALA_MIN} className="grid size-9 shrink-0 place-items-center rounded-lg transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+          <Minus className="size-3.5" aria-hidden />
+        </button>
+        <input
+          type="range"
+          aria-label="Tamanho do logo"
+          min={EMBLEMA_ESCALA_MIN}
+          max={EMBLEMA_ESCALA_MAX}
+          step={EMBLEMA_ESCALA_PASSO}
+          value={emblemaEscala}
+          onChange={(e) => setEmblemaEscala(clampEscala(Number(e.target.value)))}
+          className="h-9 min-w-0 flex-1 accent-[var(--ink)]"
+          aria-valuetext={`${Math.round(emblemaEscala * 100)}%`}
+        />
+        <button type="button" aria-label="Aumentar o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v + EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala >= EMBLEMA_ESCALA_MAX} className="grid size-9 shrink-0 place-items-center rounded-lg transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+          <Plus className="size-3.5" aria-hidden />
+        </button>
+        <button type="button" onClick={() => setEmblemaEscala(1)} disabled={emblemaEscala === 1} title="Voltar ao tamanho automático" className="w-10 shrink-0 text-right text-xs tabular-nums text-[var(--ink-2)] enabled:underline enabled:underline-offset-2 enabled:hover:text-[var(--ink)]">
+          {Math.round(emblemaEscala * 100)}%
+        </button>
+      </div>
     ) : null;
 
   const previewPanel = (
