@@ -3,7 +3,7 @@ import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, FORMATS } from "../formats";
 import { clampEscala } from "../emblema-escala";
-import { VALIDADE_ESTILO_PADRAO, VALIDADE_POSICAO_PADRAO } from "../validade";
+import { resolverValidade } from "../validade";
 import { alturaValidade, ValidadeEl } from "./validade-el";
 import { getPage } from "../paginate";
 import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
@@ -454,9 +454,10 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
   const heroH = arte ? cutPx - cropTop + (fino ? r(embH * 0.5) : 0) : r(H * heroFrac) + spec.safeTop;
-  // validade: estilo e posição escolhidos (padrão: pílula na emenda do cabeçalho)
-  const vEstilo = data.validadeEstilo ?? VALIDADE_ESTILO_PADRAO;
-  const vPos = data.validadePosicao ?? VALIDADE_POSICAO_PADRAO;
+  // validade: posição, alinhamento, estilo e cor escolhidos (padrão: cheia e branca, na emenda do cabeçalho)
+  const val = resolverValidade(data.validade);
+  const vEstilo = val.estilo;
+  const vPos = val.posicao;
   const vShow = !!vp && validity !== "" && vPos !== "oculto";
   const vh = alturaValidade(vEstilo, s);
   const validH = !vShow ? 0 : vPos === "abaixo" ? vh + r(26 * s) : vPos === "sobre" ? r(vh / 2) : 0;
@@ -544,12 +545,13 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
           style={{
             ...row,
             position: "absolute",
-            ...(vPos === "canto" ? { right: padX } : { left: 0, width: W }),
-            top: vPos === "abaixo" ? heroH + r(8 * s) : vPos === "sobre" ? heroH - r(vh / 2) : vPos === "canto" ? spec.safeTop + r(16 * s) : H - footerH - r(14 * s) - baseExtra + r(6 * s),
-            justifyContent: "center",
+            left: padX,
+            width: W - padX * 2,
+            top: vPos === "abaixo" ? heroH + r(8 * s) : vPos === "sobre" ? heroH - r(vh / 2) : H - footerH - r(14 * s) - baseExtra + r(6 * s),
+            justifyContent: val.alinhamento === "esquerda" ? "flex-start" : val.alinhamento === "direita" ? "flex-end" : "center",
           }}
         >
-          <ValidadeEl vp={vp} estilo={vEstilo} t={t} s={s} />
+          <ValidadeEl vp={vp} estilo={vEstilo} cor={val.cor} s={s} />
         </div>
       ) : null}
 
