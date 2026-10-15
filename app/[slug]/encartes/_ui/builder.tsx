@@ -954,20 +954,24 @@ export function EncarteBuilder({
         <div className="grid max-h-[28rem] grid-cols-2 gap-3.5 overflow-y-auto p-1 pr-2 sm:grid-cols-3">
           {emblemasDoGrupo.map((e, idx) => {
             const on = emblema === e.slug;
+            const corG = corDoGrupo(grupoEmblema, gruposEmblema.indexOf(grupoEmblema));
             return (
               <button
                 key={e.slug}
                 type="button"
                 aria-pressed={on}
                 onClick={() => escolherEmblema(e.slug)}
-                style={on ? { boxShadow: `0 0 0 2px ${corDoGrupo(grupoEmblema, gruposEmblema.indexOf(grupoEmblema))}` } : undefined}
+                style={on ? { boxShadow: `0 0 0 2px ${corG}` } : undefined}
                 className={cn("relative overflow-hidden rounded-2xl text-left ring-1 transition active:scale-[0.98]", on ? "ring-transparent" : "ring-[var(--line)] hover:-translate-y-0.5 hover:ring-[var(--line-strong)]")}
               >
-                <span className="grid aspect-[4/3] w-full place-items-center bg-[linear-gradient(160deg,#fbfaf7,#e4e0d6)] p-3">
+                <span className="grid aspect-[4/3] w-full place-items-center p-3" style={{ background: `linear-gradient(160deg, color-mix(in srgb, ${corG} 6%, #fff), color-mix(in srgb, ${corG} 22%, #fff))` }}>
                   <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading={idx < 9 ? "eager" : "lazy"} decoding="async" className="max-h-full max-w-full object-contain" />
                 </span>
-                <span className={cn("flex items-center justify-between gap-1 px-2.5 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
-                  <span className="truncate">{e.nome}</span>
+                <span className={cn("flex items-center justify-between gap-1.5 px-3 py-2 text-xs font-semibold", on ? "text-white" : "bg-[var(--glass-strong)]")} style={on ? { background: corG } : undefined}>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    {on ? null : <span className="size-2 shrink-0 rounded-full" style={{ background: corG }} aria-hidden />}
+                    <span className="truncate">{e.nome}</span>
+                  </span>
                   {on && <Check className="size-3.5 shrink-0" strokeWidth={3} />}
                 </span>
                 {emblemasOrdenados.hit.includes(e) ? <span className="absolute left-1.5 top-1.5 rounded-full bg-[var(--ink)] px-2 py-0.5 text-[10px] font-semibold text-[var(--bg)]">Agora</span> : null}
