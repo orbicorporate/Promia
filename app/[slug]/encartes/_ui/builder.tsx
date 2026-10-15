@@ -32,7 +32,8 @@ import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
 import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
-import { VALIDADE_ESTILOS, VALIDADE_ESTILO_LABEL, VALIDADE_ESTILO_PADRAO, VALIDADE_POSICAO_LABEL, VALIDADE_POSICAO_PADRAO, VALIDADE_POSICOES, type ValidadeEstilo, type ValidadePosicao } from "@/lib/encarte/validade";
+import { VALIDADE_ESTILO_PADRAO, VALIDADE_POSICAO_PADRAO, type ValidadeEstilo, type ValidadePosicao } from "@/lib/encarte/validade";
+import { ValidadePicker } from "./validade-picker";
 import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
@@ -1025,45 +1026,7 @@ export function EncarteBuilder({
   // ------------------------------ passo 4: textos ------------------------------
   // validade: estilo e posição (ao lado da prévia nos passos 3 a 5; no celular também no passo de textos)
   const validadeControles = (
-    <div className="space-y-3 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold">Validade na arte</span>
-        <button
-          type="button"
-          onClick={() => {
-            setValidadeEstilo(VALIDADE_ESTILO_PADRAO);
-            setValidadePosicao(VALIDADE_POSICAO_PADRAO);
-          }}
-          disabled={validadeEstilo === VALIDADE_ESTILO_PADRAO && validadePosicao === VALIDADE_POSICAO_PADRAO}
-          className="text-xs font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline disabled:no-underline disabled:opacity-50"
-        >
-          Voltar ao padrão
-        </button>
-      </div>
-      <div className="space-y-1.5">
-        <p className="text-xs font-medium text-[var(--ink-3)]">Onde fica</p>
-        <div className="flex flex-wrap gap-1.5">
-          {VALIDADE_POSICOES.map((v) => (
-            <Chip key={v} on={validadePosicao === v} onClick={() => setValidadePosicao(v)}>
-              {VALIDADE_POSICAO_LABEL[v]}
-            </Chip>
-          ))}
-        </div>
-      </div>
-      {validadePosicao !== "oculto" && (
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-[var(--ink-3)]">Como aparece</p>
-          <div className="flex flex-wrap gap-1.5">
-            {VALIDADE_ESTILOS.map((v) => (
-              <Chip key={v} on={validadeEstilo === v} onClick={() => setValidadeEstilo(v)}>
-                {VALIDADE_ESTILO_LABEL[v]}
-              </Chip>
-            ))}
-          </div>
-        </div>
-      )}
-      {!(validFrom || validUntil) && <p className="text-xs text-[var(--ink-3)]">Preencha as datas de validade para ela aparecer na arte.</p>}
-    </div>
+    <ValidadePicker posicao={validadePosicao} estilo={validadeEstilo} onPosicao={setValidadePosicao} onEstilo={setValidadeEstilo} semDatas={!(validFrom || validUntil)} />
   );
 
   const textosPanel = (
