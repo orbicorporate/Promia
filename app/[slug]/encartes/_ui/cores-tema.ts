@@ -25,3 +25,23 @@ const RESERVA = ["#0f766e", "#9333ea", "#be123c", "#1d4ed8", "#a16207", "#047857
 export function corDoTema(id: string, indice: number): string {
   return POR_TEMA[id] ?? RESERVA[indice % RESERVA.length];
 }
+
+// Uma cor por grupo de logos (filtro "Ou troque só o logo da campanha").
+const POR_GRUPO: Record<string, string> = {
+  "Para agora": "#16a34a",
+  "Campanhas recorrentes": "#2563eb",
+  "Loja e economia": "#c2410c",
+  "Datas em família": "#db2777",
+  "Datas e celebrações": "#7c3aed",
+  "Grandes campanhas": "#d62839",
+  "Ofertões": "#b45309",
+  "Ofertões mensais": "#0e7490",
+  "Condições comerciais": "#4f46e5",
+  "Setores de alimentos": "#2f9e44",
+  "Setores de casa e cuidados": "#0284c7",
+  "Clientes e calendário": "#0d9488",
+  "Sugestões de mercado": "#a21caf",
+};
+export function corDoGrupo(nome: string, indice: number): string {
+  return POR_GRUPO[nome] ?? RESERVA[indice % RESERVA.length];
+}

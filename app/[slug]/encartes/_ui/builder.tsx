@@ -44,7 +44,7 @@ import { FUNDOS_ARTE } from "@/lib/encarte/modelos/fundos-arte";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
-import { corDoTema } from "./cores-tema";
+import { corDoGrupo, corDoTema } from "./cores-tema";
 import { quandoFitsRange } from "@/lib/emblemas/quando";
 
 const FUNDOS_BASE = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as EncarteFundo[];
@@ -934,19 +934,24 @@ export function EncarteBuilder({
     <div className="space-y-5">
       {prontosPanel}
       <div ref={secaoLogoRef} className="scroll-mt-28">
-      <Glass className={cn("p-4 sm:p-5 space-y-3 transition-shadow duration-500", destacarLogo && "ring-2 ring-[var(--folha)] shadow-[0_0_0_6px_var(--folha-soft)]")}>
-        <div>
-          <h3 className="font-bold">Ou troque só o logo da campanha</h3>
-          <p className="text-sm text-[var(--ink-2)]">Escolha a campanha. O logo dela vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
+      <Glass className={cn("space-y-5 p-5 sm:p-6 transition-shadow duration-500", destacarLogo && "ring-2 ring-[var(--folha)] shadow-[0_0_0_6px_var(--folha-soft)]")}>
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl text-white shadow-sm" style={{ background: corDoGrupo(grupoEmblema, gruposEmblema.indexOf(grupoEmblema)) }} aria-hidden>
+            <Sparkles className="size-5" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <h3 className="font-bold leading-tight">Ou troque só o logo da campanha</h3>
+            <p className="text-sm leading-relaxed text-[var(--ink-2)]">Escolha a campanha. O logo dela vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
+          </div>
         </div>
-        <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {gruposEmblema.map((g) => (
-            <Chip key={g} on={grupoEmblema === g} onClick={() => setGrupoEmblema(g)}>
+        <div className="rolagem -mx-1 flex gap-2.5 overflow-x-auto px-1 py-1.5">
+          {gruposEmblema.map((g, i) => (
+            <Chip key={g} on={grupoEmblema === g} cor={corDoGrupo(g, i)} onClick={() => setGrupoEmblema(g)}>
               {g}
             </Chip>
           ))}
         </div>
-        <div className="grid max-h-[26rem] grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-3">
+        <div className="grid max-h-[28rem] grid-cols-2 gap-3.5 overflow-y-auto p-1 pr-2 sm:grid-cols-3">
           {emblemasDoGrupo.map((e, idx) => {
             const on = emblema === e.slug;
             return (
@@ -955,9 +960,10 @@ export function EncarteBuilder({
                 type="button"
                 aria-pressed={on}
                 onClick={() => escolherEmblema(e.slug)}
-                className={cn("relative overflow-hidden rounded-2xl text-left ring-2 transition active:scale-[0.98]", on ? "ring-[var(--ink)]" : "ring-[var(--line)] hover:ring-[var(--line-strong)]")}
+                style={on ? { boxShadow: `0 0 0 2px ${corDoGrupo(grupoEmblema, gruposEmblema.indexOf(grupoEmblema))}` } : undefined}
+                className={cn("relative overflow-hidden rounded-2xl text-left ring-1 transition active:scale-[0.98]", on ? "ring-transparent" : "ring-[var(--line)] hover:-translate-y-0.5 hover:ring-[var(--line-strong)]")}
               >
-                <span className="grid aspect-[4/3] w-full place-items-center bg-[linear-gradient(160deg,#fbfaf7,#e4e0d6)] p-2">
+                <span className="grid aspect-[4/3] w-full place-items-center bg-[linear-gradient(160deg,#fbfaf7,#e4e0d6)] p-3">
                   <img src={`/emblemas/t/${e.slug}.webp`} alt="" loading={idx < 9 ? "eager" : "lazy"} decoding="async" className="max-h-full max-w-full object-contain" />
                 </span>
                 <span className={cn("flex items-center justify-between gap-1 px-2.5 py-1.5 text-xs font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
