@@ -32,6 +32,7 @@ import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
 import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
+import { VALIDADE_ESTILOS, VALIDADE_ESTILO_LABEL, VALIDADE_ESTILO_PADRAO, VALIDADE_POSICAO_LABEL, VALIDADE_POSICAO_PADRAO, VALIDADE_POSICOES, type ValidadeEstilo, type ValidadePosicao } from "@/lib/encarte/validade";
 import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
@@ -78,6 +79,8 @@ export type BuilderInitial = {
   modelo: EncarteModelo | null;
   emblema: string | null;
   emblemaEscala?: number;
+  validadeEstilo?: ValidadeEstilo;
+  validadePosicao?: ValidadePosicao;
   fundo: EncarteFundo | null;
   themeKey: string;
   validFrom: string;
@@ -144,6 +147,8 @@ export function EncarteBuilder({
   const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
   const [emblema, setEmblema] = useState<string | null>(initial.emblema);
   const [emblemaEscala, setEmblemaEscala] = useState<number>(clampEscala(initial.emblemaEscala));
+  const [validadeEstilo, setValidadeEstilo] = useState<ValidadeEstilo>(initial.validadeEstilo ?? VALIDADE_ESTILO_PADRAO);
+  const [validadePosicao, setValidadePosicao] = useState<ValidadePosicao>(initial.validadePosicao ?? VALIDADE_POSICAO_PADRAO);
   const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
@@ -247,6 +252,8 @@ export function EncarteBuilder({
       modelo,
       emblema,
       emblemaEscala,
+      validadeEstilo,
+      validadePosicao,
       fundo,
       themeKey,
       validFrom: validFrom || null,
@@ -274,7 +281,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, fundo, themeKey, validFrom, validUntil, items, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validadeEstilo, validadePosicao, fundo, themeKey, validFrom, validUntil, items, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -367,7 +374,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, fundo, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validadeEstilo, validadePosicao, fundo, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1016,8 +1023,52 @@ export function EncarteBuilder({
   );
 
   // ------------------------------ passo 4: textos ------------------------------
+  // validade: estilo e posição (ao lado da prévia nos passos 3 a 5; no celular também no passo de textos)
+  const validadeControles = (
+    <div className="space-y-3 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold">Validade na arte</span>
+        <button
+          type="button"
+          onClick={() => {
+            setValidadeEstilo(VALIDADE_ESTILO_PADRAO);
+            setValidadePosicao(VALIDADE_POSICAO_PADRAO);
+          }}
+          disabled={validadeEstilo === VALIDADE_ESTILO_PADRAO && validadePosicao === VALIDADE_POSICAO_PADRAO}
+          className="text-xs font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline disabled:no-underline disabled:opacity-50"
+        >
+          Voltar ao padrão
+        </button>
+      </div>
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-[var(--ink-3)]">Onde fica</p>
+        <div className="flex flex-wrap gap-1.5">
+          {VALIDADE_POSICOES.map((v) => (
+            <Chip key={v} on={validadePosicao === v} onClick={() => setValidadePosicao(v)}>
+              {VALIDADE_POSICAO_LABEL[v]}
+            </Chip>
+          ))}
+        </div>
+      </div>
+      {validadePosicao !== "oculto" && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-[var(--ink-3)]">Como aparece</p>
+          <div className="flex flex-wrap gap-1.5">
+            {VALIDADE_ESTILOS.map((v) => (
+              <Chip key={v} on={validadeEstilo === v} onClick={() => setValidadeEstilo(v)}>
+                {VALIDADE_ESTILO_LABEL[v]}
+              </Chip>
+            ))}
+          </div>
+        </div>
+      )}
+      {!(validFrom || validUntil) && <p className="text-xs text-[var(--ink-3)]">Preencha as datas de validade para ela aparecer na arte.</p>}
+    </div>
+  );
+
   const textosPanel = (
     <Glass className="p-4 sm:p-5 space-y-4">
+      <div className="xl:hidden">{validadeControles}</div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nome do encarte" hint="Só para você achar depois" htmlFor="enc-nome">
           <Input id="enc-nome" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ofertas da semana 41" />
@@ -1196,6 +1247,7 @@ export function EncarteBuilder({
         </button>
       </div>
       {tamanhoLogo}
+      {step >= 2 && step <= P_TEXTOS ? validadeControles : null}
     </div>
   );
 

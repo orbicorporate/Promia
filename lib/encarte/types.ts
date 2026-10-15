@@ -1,5 +1,6 @@
 import { CENARIO_IDS } from "./modelos/cenarios";
 import { ARTE_IDS } from "./modelos/fundos-arte";
+import type { ValidadeEstilo, ValidadePosicao } from "./validade";
 // Tipos do motor de encarte (tabloide promocional de supermercado).
 //
 // O encarte é desenhado no servidor (lib/encarte/render.tsx + next/og) a
@@ -78,6 +79,8 @@ export type EncarteData = {
   modelo?: EncarteModelo | null;
   fundo?: EncarteFundo | null;
   emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
+  validadeEstilo?: ValidadeEstilo; // como a validade aparece (lib/encarte/validade.ts)
+  validadePosicao?: ValidadePosicao;
   emblemaEscala?: number; // 0,6 a 1,6: aumenta ou diminui o logo mantendo a proporção (lib/encarte/emblema-escala.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
   fundoArte?: EncarteFundoArte | null; // cabeçalho e rodapé do fundo de arte, resolvidos no servidor

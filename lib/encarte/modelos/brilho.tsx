@@ -3,6 +3,8 @@ import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, FORMATS } from "../formats";
 import { clampEscala } from "../emblema-escala";
+import { VALIDADE_ESTILO_PADRAO, VALIDADE_POSICAO_PADRAO } from "../validade";
+import { alturaValidade, ValidadeEl } from "./validade-el";
 import { getPage } from "../paginate";
 import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
 import { marketInitials } from "../render";
@@ -452,9 +454,15 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
   const heroH = arte ? cutPx - cropTop + (fino ? r(embH * 0.5) : 0) : r(H * heroFrac) + spec.safeTop;
-  const validH = validity ? r(84 * s) : 0;
+  // validade: estilo e posição escolhidos (padrão: pílula na emenda do cabeçalho)
+  const vEstilo = data.validadeEstilo ?? VALIDADE_ESTILO_PADRAO;
+  const vPos = data.validadePosicao ?? VALIDADE_POSICAO_PADRAO;
+  const vShow = !!vp && validity !== "" && vPos !== "oculto";
+  const vh = alturaValidade(vEstilo, s);
+  const validH = !vShow ? 0 : vPos === "abaixo" ? vh + r(26 * s) : vPos === "sobre" ? r(vh / 2) : 0;
+  const baseExtra = vShow && vPos === "base" ? vh + r(10 * s) : 0;
   const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
-  const areaH = H - areaTop - footerH - r(14 * s) - (cfg.rodape === "cerca" ? r(52 * s) : 0);
+  const areaH = H - areaTop - footerH - r(14 * s) - baseExtra - (cfg.rodape === "cerca" ? r(52 * s) : 0);
   const cellW = r((W - padX * 2 - gap * (cols - 1)) / cols);
   const nominalH = (areaH - gap * (capRows - 1)) / capRows;
   const cardH = tight ? r(Math.min(nominalH, cellW / cfg.aspect!)) : r(Math.min(nominalH * (cfg.cardMaxRatio ?? 1.2), (areaH - gap * (rows - 1)) / rows));
@@ -531,12 +539,17 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       </div>
 
       {/* validade */}
-      {vp ? (
-        <div style={{ ...row, position: "absolute", left: 0, top: heroH + r(8 * s), width: W, height: validH - r(8 * s), alignItems: "center", justifyContent: "center" }}>
-          <div style={{ ...row, alignItems: "stretch", height: r(58 * s), borderRadius: r(14 * s), overflow: "hidden", boxShadow: `0 ${r(8 * s)}px ${r(20 * s)}px rgba(0,0,0,0.35)`, border: `${r(2.5 * s)}px solid ${t.gold}` }}>
-            <div style={{ ...row, alignItems: "center", padding: `0 ${r(20 * s)}px`, backgroundColor: t.gold, color: t.ink, fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), letterSpacing: 1.5 * s, whiteSpace: "nowrap" }}>{vp.rotulo}</div>
-            <div style={{ ...row, alignItems: "center", padding: `0 ${r(26 * s)}px`, backgroundColor: "rgba(8,12,24,0.78)", color: "#fff", fontFamily: FONT_ANTON, fontSize: r(32 * s), letterSpacing: 1 * s, whiteSpace: "nowrap" }}>{vp.datas}</div>
-          </div>
+      {vShow && vp ? (
+        <div
+          style={{
+            ...row,
+            position: "absolute",
+            ...(vPos === "canto" ? { right: padX } : { left: 0, width: W }),
+            top: vPos === "abaixo" ? heroH + r(8 * s) : vPos === "sobre" ? heroH - r(vh / 2) : vPos === "canto" ? spec.safeTop + r(16 * s) : H - footerH - r(14 * s) - baseExtra + r(6 * s),
+            justifyContent: "center",
+          }}
+        >
+          <ValidadeEl vp={vp} estilo={vEstilo} t={t} s={s} />
         </div>
       ) : null}
 
