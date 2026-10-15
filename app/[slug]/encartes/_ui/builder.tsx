@@ -32,7 +32,7 @@ import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
 import { FindPhotos } from "@/app/[slug]/produtos/_ui/find-photos";
 import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from "@/components/ui";
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
-import { VALIDADE_ESTILO_PADRAO, VALIDADE_POSICAO_PADRAO, type ValidadeEstilo, type ValidadePosicao } from "@/lib/encarte/validade";
+import { resolverValidade, VALIDADE_PADRAO, type ValidadeOpcoes } from "@/lib/encarte/validade";
 import { ValidadePicker } from "./validade-picker";
 import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
@@ -80,8 +80,7 @@ export type BuilderInitial = {
   modelo: EncarteModelo | null;
   emblema: string | null;
   emblemaEscala?: number;
-  validadeEstilo?: ValidadeEstilo;
-  validadePosicao?: ValidadePosicao;
+  validade?: Partial<ValidadeOpcoes>;
   fundo: EncarteFundo | null;
   themeKey: string;
   validFrom: string;
@@ -148,8 +147,7 @@ export function EncarteBuilder({
   const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
   const [emblema, setEmblema] = useState<string | null>(initial.emblema);
   const [emblemaEscala, setEmblemaEscala] = useState<number>(clampEscala(initial.emblemaEscala));
-  const [validadeEstilo, setValidadeEstilo] = useState<ValidadeEstilo>(initial.validadeEstilo ?? VALIDADE_ESTILO_PADRAO);
-  const [validadePosicao, setValidadePosicao] = useState<ValidadePosicao>(initial.validadePosicao ?? VALIDADE_POSICAO_PADRAO);
+  const [validade, setValidade] = useState<ValidadeOpcoes>(resolverValidade(initial.validade));
   const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
@@ -253,8 +251,7 @@ export function EncarteBuilder({
       modelo,
       emblema,
       emblemaEscala,
-      validadeEstilo,
-      validadePosicao,
+      validade,
       fundo,
       themeKey,
       validFrom: validFrom || null,
@@ -282,7 +279,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validadeEstilo, validadePosicao, fundo, themeKey, validFrom, validUntil, items, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, fundo, themeKey, validFrom, validUntil, items, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -375,7 +372,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validadeEstilo, validadePosicao, fundo, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, fundo, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1024,9 +1021,9 @@ export function EncarteBuilder({
   );
 
   // ------------------------------ passo 4: textos ------------------------------
-  // validade: estilo e posição (ao lado da prévia nos passos 3 a 5; no celular também no passo de textos)
+  // validade: posição, estilo e cor (ao lado da prévia nos passos 3 a 5; no celular também no passo de textos)
   const validadeControles = (
-    <ValidadePicker posicao={validadePosicao} estilo={validadeEstilo} onPosicao={setValidadePosicao} onEstilo={setValidadeEstilo} semDatas={!(validFrom || validUntil)} />
+    <ValidadePicker valor={validade} onChange={setValidade} semDatas={!(validFrom || validUntil)} />
   );
 
   const textosPanel = (
