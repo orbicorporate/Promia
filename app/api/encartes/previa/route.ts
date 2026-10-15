@@ -12,6 +12,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+// A prévia é desenhada numa fração do tamanho real (0,4 = 432 px de largura no feed).
+// O montador pede primeiro 0,4 (quase instantânea) e depois 0,8 (nítida).
+const ESCALA_MIN = 0.3;
+const ESCALA_PADRAO = 0.5;
+
 // POST /api/encartes/previa
 // Corpo: { marketId, data: { name, headline?, subheadline?, format, layout,
 // themeKey, validFrom?, validUntil?, items: EncarteItem[] }, pagina? }
@@ -61,11 +66,14 @@ export async function POST(req: Request) {
   if (pageIndex >= total) return jsonError(404, `Esse encarte tem ${total} página${total > 1 ? "s" : ""}.`);
 
   try {
-    const withImages = await resolveEncarteImages(data, { pageIndex, budgetMs: 7000, ilustrar: true });
+    // prévia rápida: página em escala menor e fotos pequenas. O arquivo final
+    // (baixar, PDF, publicar) usa o tamanho real, sem passar por aqui.
+    const q = typeof body.escala === "number" && Number.isFinite(body.escala) ? Math.min(1, Math.max(ESCALA_MIN, body.escala)) : ESCALA_PADRAO;
+    const withImages = await resolveEncarteImages({ ...data, escalaPrevia: q }, { pageIndex, budgetMs: 7000, ilustrar: true, maxLado: Math.max(120, Math.round(480 * q)) });
     const out = await renderEncartePng(withImages, pageIndex);
     if (!out) return jsonError(404, "Página não encontrada.");
     // a prévia segue em WebP: 5 a 10 vezes menor que o PNG, chega mais rápido
-    const webp = await sharp(out.png).webp({ quality: 84, effort: 1 }).toBuffer();
+    const webp = await sharp(out.png).webp({ quality: 82, effort: 1 }).toBuffer();
     return pngResponse(new Uint8Array(webp), {
       contentType: "image/webp",
       fileName: pageFileName(data.name, pageIndex + 1),

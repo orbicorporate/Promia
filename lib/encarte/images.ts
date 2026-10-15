@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { fetchPublicImage, type FetchedImage } from "@/lib/net";
 import { cutoutProductPhoto } from "./cutout";
 import { ilustracaoUri } from "./ilustra";
@@ -52,7 +53,25 @@ export type ResolveImagesOptions = {
   ilustrar?: boolean; // sem foto, usar a ilustração do tipo do produto (padrão: não)
   cutout?: boolean; // recortar o fundo das fotos de produto (modelos de arte); padrão: quando o encarte tem modelo
   cache?: Map<string, Promise<string | null>>; // reaproveitar entre páginas (PDF)
+  maxLado?: number; // prévia: encolhe as fotos de produto para no máximo esse lado (px); o arquivo final usa o tamanho real
 };
+
+// Encolhe um data URI de imagem (mantém PNG com transparência; o resto vira JPEG).
+async function encolher(uri: string | null, lado: number): Promise<string | null> {
+  if (!uri) return uri;
+  const m = DATA_URI_RE.exec(uri);
+  if (!m) return uri;
+  try {
+    const input = Buffer.from(m[2], "base64");
+    const meta = await sharp(input, { failOn: "none" }).metadata();
+    if (!meta.width || !meta.height || Math.max(meta.width, meta.height) <= lado) return uri;
+    const img = sharp(input, { failOn: "none" }).resize({ width: lado, height: lado, fit: "inside" });
+    if (m[1] === "image/png") return `data:image/png;base64,${(await img.png({ compressionLevel: 3 }).toBuffer()).toString("base64")}`;
+    return `data:image/jpeg;base64,${(await img.jpeg({ quality: 80 }).toBuffer()).toString("base64")}`;
+  } catch {
+    return uri;
+  }
+}
 
 export function createImageCache(): Map<string, Promise<string | null>> {
   return new Map();
@@ -142,7 +161,7 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
     if (!url) return Promise.resolve(null);
     const cached = cache.get(url);
     if (cached) return cached;
-    const gkey = `${doCutout && isProduct ? "c" : "r"}|${url}`;
+    const gkey = `${doCutout && isProduct ? "c" : "r"}${isProduct && opts.maxLado ? `m${opts.maxLado}` : ""}|${url}`;
     if (useGlobal && url.startsWith("https://")) {
       const g = globalGet(gkey);
       if (g) {
@@ -176,6 +195,10 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
         }
       });
     }
+    if (isProduct && opts.maxLado) {
+      const lado = opts.maxLado;
+      promise = promise.then((v) => encolher(v, lado));
+    }
     cache.set(url, promise);
     if (useGlobal && url.startsWith("https://")) globalPut(gkey, promise);
     return promise;
@@ -199,7 +222,8 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
   const finais = await Promise.all(
     data.items.map(async (item, i) => {
       if (!opts.ilustrar || images[i] || (wanted && !wanted.has(item))) return images[i];
-      return ilustracaoUri(item.name).catch(() => null);
+      const ilu = await ilustracaoUri(item.name).catch(() => null);
+      return opts.maxLado ? encolher(ilu, opts.maxLado) : ilu;
     })
   );
 

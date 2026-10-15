@@ -1,7 +1,7 @@
 import { cenarioSvg } from "./cenarios";
 import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { capacidadeGrade, FORMATS } from "../formats";
+import { capacidadeGrade, specEscalada } from "../formats";
 import { clampEscala } from "../emblema-escala";
 import { resolverValidade } from "../validade";
 import { alturaValidade, ValidadeEl } from "./validade-el";
@@ -423,7 +423,7 @@ export type ConfigModelo = {
 export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo): Pg | null {
   const page = getPage(data, pageIndex);
   if (!page) return null;
-  const spec = FORMATS[data.format];
+  const spec = specEscalada(data.format, data.escalaPrevia);
   const W = spec.width;
   const H = spec.height;
   const s = W / 1080;

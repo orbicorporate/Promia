@@ -111,6 +111,14 @@ export function capacidadeGrade(format: EncarteFormat, comModelo: boolean): Layo
 }
 
 // tamanho de página A4 em pontos PDF (1 pt = 1/72 pol)
+// Mesma especificação em escala menor (prévia rápida): tudo que é medido em px acompanha.
+export function specEscalada(format: EncarteFormat, q = 1): FormatSpec {
+  const spec = FORMATS[format];
+  if (!(q > 0 && q < 1)) return spec;
+  const r = Math.round;
+  return { ...spec, width: r(spec.width * q), height: r(spec.height * q), safeTop: r(spec.safeTop * q), safeBottom: r(spec.safeBottom * q) };
+}
+
 export const A4_PDF_SIZE = { width: 595.28, height: 841.89 } as const;
 
 // Tamanho da página do PDF para cada formato: A4 de verdade para o a4; para
