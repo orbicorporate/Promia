@@ -752,7 +752,6 @@ export function EncarteBuilder({
 
   // ------------------------------ passo 3: visual ------------------------------
   const caixaIds = (Object.keys(MODELO_LABELS) as EncarteModelo[]).filter((k) => k.startsWith("cx"));
-  const outrosModelos = (Object.keys(MODELO_LABELS) as EncarteModelo[]).filter((k) => !k.startsWith("cx"));
   const miniEstilo = (key: EncarteModelo | null, rotulo: string) => {
     const on = modelo === key;
     return (
@@ -1054,10 +1053,6 @@ export function EncarteBuilder({
           {miniEstilo(null, "Clássico")}
           {caixaIds.map((k) => miniEstilo(k, MODELO_LABELS[k].label.slice(3)))}
         </div>
-        <details className="group">
-          <summary className="cursor-pointer text-sm font-medium text-[var(--ink-2)]">Mais estilos</summary>
-          <div className="mt-2.5 grid grid-cols-3 gap-2.5 sm:grid-cols-4">{outrosModelos.map((k) => miniEstilo(k, MODELO_LABELS[k].label))}</div>
-        </details>
         {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
         <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
           <Segmented
