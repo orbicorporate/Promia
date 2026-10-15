@@ -2,6 +2,7 @@ import { isUuid } from "@/lib/auth";
 import { isISODate } from "@/lib/dates";
 import { emblemaPorSlug } from "@/lib/emblemas/catalog";
 import { clampEscala, juntarEmblema } from "@/lib/encarte/emblema-escala";
+import { limparRodape } from "@/lib/encarte/rodape";
 import { limparValidade } from "@/lib/encarte/validade";
 import { isThemeKey } from "@/lib/encarte/themes";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteFormat, type EncarteFundo, type EncarteLayout, type EncarteModelo } from "@/lib/encarte/types";
@@ -89,7 +90,7 @@ export function parseEncarteInput(raw: Record<string, unknown>): { ok: true; dat
       layout: isEncarteModelo(raw.modelo) ? "grade" : raw.layout,
       modelo: isEncarteModelo(raw.modelo) ? raw.modelo : null,
       fundo: isEncarteFundo(raw.fundo) ? raw.fundo : null,
-      emblema: typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? juntarEmblema(raw.emblema, clampEscala(raw.emblemaEscala), limparValidade(raw.validade)) : null,
+      emblema: juntarEmblema(typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? raw.emblema : null, clampEscala(raw.emblemaEscala), limparValidade(raw.validade), limparRodape(raw.rodape)),
       themeKey: raw.themeKey,
       validFrom,
       validUntil,

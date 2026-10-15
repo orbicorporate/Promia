@@ -110,6 +110,7 @@ export async function loadEncarte(admin: Admin, tabloidId: string): Promise<Load
       emblema: lerEmblema(tabloid.emblema).slug && emblemaPorSlug(lerEmblema(tabloid.emblema).slug!) ? lerEmblema(tabloid.emblema).slug : null,
       emblemaEscala: lerEmblema(tabloid.emblema).escala,
       validade: lerEmblema(tabloid.emblema).validade,
+      rodape: lerEmblema(tabloid.emblema).rodape,
       themeKey: isThemeKey(tabloid.theme_key) ? tabloid.theme_key : DEFAULT_THEME_KEY,
       validFrom: tabloid.valid_from,
       validUntil: tabloid.valid_until,
