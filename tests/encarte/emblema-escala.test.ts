@@ -23,13 +23,13 @@ describe("tamanho do logo", () => {
 describe("validade junto do emblema", () => {
   it("grava só o que foge do padrão e lê de volta", () => {
     expect(juntarEmblema("a", 1, {})).toBe("a");
-    expect(juntarEmblema("a", 1.2, { estilo: "contorno", posicao: "base", alinhamento: "direita", cor: "preto" })).toBe("a~120~vcontorno~pbase~adireita~cpreto");
-    expect(lerEmblema("a~120~vcontorno~pbase~adireita~cpreto")).toMatchObject({
+    expect(juntarEmblema("a", 1.2, { estilo: "contorno", posicao: "base", alinhamento: "esquerda", cor: "preto" })).toBe("a~120~vcontorno~pbase~aesquerda~cpreto");
+    expect(lerEmblema("a~120~vcontorno~pbase~aesquerda~cpreto")).toMatchObject({
       slug: "a",
       escala: 1.2,
-      validade: { estilo: "contorno", posicao: "base", alinhamento: "direita", cor: "preto", rotulo: "" },
+      validade: { estilo: "contorno", posicao: "base", alinhamento: "esquerda", cor: "preto", rotulo: "" },
     });
-    expect(lerEmblema("a~vlixo~pxx~cneon").validade).toEqual({ estilo: "cheia", posicao: "sobre", alinhamento: "centro", cor: "branco", rotulo: "" });
+    expect(lerEmblema("a~vlixo~pxx~cneon").validade).toEqual({ estilo: "cheia", posicao: "sobre", alinhamento: "direita", cor: "branco", rotulo: "" });
     expect(lerEmblema("a~130")).toMatchObject({ escala: 1.3 });
   });
   it("grava o texto da tag sem quebrar o separador", () => {
