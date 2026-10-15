@@ -9,7 +9,7 @@ import { getPage } from "../paginate";
 import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix } from "../price";
 import { marketInitials } from "../render";
 import { getTheme } from "../themes";
-import { measureText, validityLabel, validityParts, wrapMeasured } from "../text";
+import { measureText, validityParts, wrapMeasured } from "../text";
 import type { EncarteData, EncarteFundo, EncarteItem, EncarteMarket } from "../types";
 import type { CoresEmblema } from "./emblema";
 import { Selo, fitFont } from "./formas";
@@ -436,8 +436,11 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const t = brilhoTokens(data.emblemaImg?.cores ?? null, data.market, data.themeKey);
   const theme = getTheme(data.themeKey);
   const headline = (data.headline && data.headline.trim()) || theme.headline;
-  const validity = validityLabel(data.validFrom, data.validUntil);
-  const vp = validityParts(data.validFrom, data.validUntil);
+  // sem datas, a prévia mostra a tag com datas de exemplo, para dar para editá-la desde o início
+  const vpReal = validityParts(data.validFrom, data.validUntil);
+  const vpBase = vpReal ?? (data.id === "previa" ? { rotulo: "VÁLIDO", datas: "00/00 a 00/00" } : null);
+  const vRotulo = resolverValidade(data.validade).rotulo;
+  const vp = vpBase && vRotulo ? { ...vpBase, rotulo: vRotulo.toUpperCase() } : vpBase;
 
   const padX = r((cfg.padX ?? 36) * s);
   const tight = !!cfg.aspect;
@@ -458,7 +461,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const val = resolverValidade(data.validade);
   const vEstilo = val.estilo;
   const vPos = val.posicao;
-  const vShow = !!vp && validity !== "" && vPos !== "oculto";
+  const vShow = !!vp && vPos !== "oculto";
   const vh = alturaValidade(vEstilo, s);
   const validH = !vShow ? 0 : vPos === "abaixo" ? vh + r(26 * s) : vPos === "sobre" ? r(vh / 2) : 0;
   const baseExtra = vShow && vPos === "base" ? vh + r(10 * s) : 0;

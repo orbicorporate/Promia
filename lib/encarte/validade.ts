@@ -49,18 +49,24 @@ export type ValidadeOpcoes = {
   posicao: ValidadePosicao;
   alinhamento: ValidadeAlinhamento;
   cor: ValidadeCor;
+  rotulo: string; // texto da tag (ex.: "VÁLIDO"); vazio = automático (VÁLIDO, SÓ HOJE, ATÉ, A PARTIR DE)
 };
 export const VALIDADE_PADRAO: ValidadeOpcoes = {
   estilo: VALIDADE_ESTILO_PADRAO,
   posicao: VALIDADE_POSICAO_PADRAO,
   alinhamento: VALIDADE_ALINHAMENTO_PADRAO,
   cor: VALIDADE_COR_PADRAO,
+  rotulo: "",
 };
 
 const has = (lista: readonly string[], v: unknown): boolean => typeof v === "string" && lista.includes(v);
 export const isValidadeEstilo = (v: unknown): v is ValidadeEstilo => has(VALIDADE_ESTILOS, v);
 export const isValidadePosicao = (v: unknown): v is ValidadePosicao => has(VALIDADE_POSICOES, v);
 export const isValidadeAlinhamento = (v: unknown): v is ValidadeAlinhamento => has(VALIDADE_ALINHAMENTOS, v);
+export const VALIDADE_ROTULO_MAX = 16;
+export function limparRotulo(v: unknown): string {
+  return typeof v === "string" ? v.replace(/[~\u0000-\u001f]/g, "").replace(/\s+/g, " ").trim().slice(0, VALIDADE_ROTULO_MAX) : "";
+}
 export const isValidadeCor = (v: unknown): v is ValidadeCor => has(VALIDADE_CORES, v);
 
 // aceita qualquer valor vindo de fora e devolve só o que é válido
@@ -71,6 +77,7 @@ export function limparValidade(raw: unknown): Partial<ValidadeOpcoes> {
   if (isValidadePosicao(r.posicao)) out.posicao = r.posicao;
   if (isValidadeAlinhamento(r.alinhamento)) out.alinhamento = r.alinhamento;
   if (isValidadeCor(r.cor)) out.cor = r.cor;
+  if (typeof r.rotulo === "string") out.rotulo = limparRotulo(r.rotulo);
   return out;
 }
 

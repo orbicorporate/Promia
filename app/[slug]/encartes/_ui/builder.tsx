@@ -1036,9 +1036,9 @@ export function EncarteBuilder({
   );
 
   // ------------------------------ passo 4: textos ------------------------------
-  // validade: posição, estilo e cor (ao lado da prévia nos passos 3 a 5; no celular também no passo de textos)
+  // validade: posição, estilo, cor, texto e datas (ao lado da prévia nos passos 3 a 5; no celular também no passo de textos)
   const validadeControles = (
-    <ValidadePicker valor={validade} onChange={setValidade} semDatas={!(validFrom || validUntil)} />
+    <ValidadePicker valor={validade} onChange={setValidade} de={validFrom} ate={validUntil} onDe={setValidFrom} onAte={setValidUntil} />
   );
 
   const textosPanel = (
@@ -1217,7 +1217,7 @@ export function EncarteBuilder({
         </button>
       </div>
       {tamanhoLogo}
-      {step >= 2 && step <= P_TEXTOS ? validadeControles : null}
+      {step <= P_TEXTOS ? validadeControles : null}
     </div>
   );
 

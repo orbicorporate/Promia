@@ -26,10 +26,16 @@ describe("validade junto do emblema", () => {
     expect(lerEmblema("a~120~vcontorno~pbase~adireita~cpreto")).toEqual({
       slug: "a",
       escala: 1.2,
-      validade: { estilo: "contorno", posicao: "base", alinhamento: "direita", cor: "preto" },
+      validade: { estilo: "contorno", posicao: "base", alinhamento: "direita", cor: "preto", rotulo: "" },
     });
-    expect(lerEmblema("a~vlixo~pxx~cneon").validade).toEqual({ estilo: "cheia", posicao: "sobre", alinhamento: "centro", cor: "branco" });
+    expect(lerEmblema("a~vlixo~pxx~cneon").validade).toEqual({ estilo: "cheia", posicao: "sobre", alinhamento: "centro", cor: "branco", rotulo: "" });
     expect(lerEmblema("a~130")).toMatchObject({ escala: 1.3 });
+  });
+  it("grava o texto da tag sem quebrar o separador", () => {
+    const raw = juntarEmblema("a", 1, { rotulo: "Só até ~ sábado" });
+    expect(raw).toBe(`a~t${encodeURIComponent("Só até sábado")}`);
+    expect(lerEmblema(raw).validade.rotulo).toBe("Só até sábado");
+    expect(juntarEmblema("a", 1, { rotulo: "  " })).toBe("a");
   });
   it("limpa o que vem de fora", () => {
     expect(limparValidade({ estilo: "x", cor: "verde", posicao: "base" })).toEqual({ cor: "verde", posicao: "base" });
