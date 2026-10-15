@@ -42,6 +42,7 @@ import { FUNDOS_ARTE } from "@/lib/encarte/modelos/fundos-arte";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
+import { corDoTema } from "./cores-tema";
 import { quandoFitsRange } from "@/lib/emblemas/quando";
 
 const FUNDOS_BASE = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as EncarteFundo[];
@@ -144,6 +145,7 @@ export function EncarteBuilder({
   const secaoLogoRef = useRef<HTMLDivElement | null>(null);
   const [buscaPronto, setBuscaPronto] = useState("");
   const [limitePronto, setLimitePronto] = useState(8);
+  const [verTodosTemas, setVerTodosTemas] = useState(false);
   const [name, setName] = useState(initial.name);
   const [headline, setHeadline] = useState(initial.headline);
   const [subheadline, setSubheadline] = useState(initial.subheadline);
@@ -792,75 +794,103 @@ export function EncarteBuilder({
     return temaPronto ? lista : [...lista.filter((v) => v.slug.endsWith("-1")), ...lista.filter((v) => !v.slug.endsWith("-1"))];
   }, [temaPronto, buscaPronto]);
 
+  const temaCor = useMemo(() => new Map(TEMAS_PRONTOS.map((t, i) => [t.id, { nome: t.nome, cor: corDoTema(t.id, i) }])), []);
+  const temasVisiveis = verTodosTemas ? TEMAS_PRONTOS : TEMAS_PRONTOS.slice(0, 8);
+
   const prontosPanel = (
-    <Glass className="space-y-3 p-4 sm:p-5">
-      <div>
-        <h3 className="flex items-center gap-2 font-bold"><Sparkles className="size-4" aria-hidden /> Combinações prontas</h3>
-        <p className="text-sm text-[var(--ink-2)]">Cada combinação já traz tema, logo, fundo e caixa de produto juntos, com 12 produtos de exemplo. Escolha uma e troque o que quiser depois.</p>
+    <Glass className="space-y-6 p-5 sm:p-7">
+      <div className="flex items-start gap-3.5">
+        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--folha-soft)] text-[var(--folha)]">
+          <Sparkles className="size-5" aria-hidden />
+        </span>
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-lg font-bold leading-tight">Combinações prontas</h3>
+          <p className="text-sm leading-relaxed text-[var(--ink-2)]">Tema, logo, fundo e caixas já combinados, com 12 produtos de exemplo. Escolha uma e troque o que quiser depois.</p>
+        </div>
       </div>
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
-        <Input
-          value={buscaPronto}
-          onChange={(e) => {
-            setBuscaPronto(e.target.value);
-            setLimitePronto(8);
-          }}
-          placeholder="Buscar combinação: carne, natal, sábado, bebidas..."
-          className="pl-10"
-          aria-label="Buscar combinação pronta"
-        />
-      </div>
-      <div className="rolagem -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-        <Chip
-          on={!temaPronto}
-          onClick={() => {
-            setTemaPronto(null);
-            setLimitePronto(8);
-          }}
-        >
-          Todos
-        </Chip>
-        {TEMAS_PRONTOS.map((t) => (
+
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
+          <Input
+            value={buscaPronto}
+            onChange={(e) => {
+              setBuscaPronto(e.target.value);
+              setLimitePronto(8);
+            }}
+            placeholder="Buscar: carne, natal, sábado, bebidas..."
+            className="pl-10"
+            aria-label="Buscar combinação pronta"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Chip
-            key={t.id}
-            on={temaPronto === t.id}
+            on={!temaPronto}
             onClick={() => {
-              setTemaPronto(temaPronto === t.id ? null : t.id);
+              setTemaPronto(null);
               setLimitePronto(8);
             }}
           >
-            {t.nome}
+            Todos
           </Chip>
-        ))}
+          {temasVisiveis.map((t) => {
+            const cor = temaCor.get(t.id)!.cor;
+            const on = temaPronto === t.id;
+            return (
+              <Chip
+                key={t.id}
+                on={on}
+                cor={cor}
+                onClick={() => {
+                  setTemaPronto(on ? null : t.id);
+                  setLimitePronto(8);
+                }}
+              >
+                {t.nome}
+              </Chip>
+            );
+          })}
+          <button type="button" onClick={() => setVerTodosTemas((v) => !v)} className="h-10 rounded-full px-3 text-[13px] font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline">
+            {verTodosTemas ? "Menos temas" : `Mais ${TEMAS_PRONTOS.length - 8} temas`}
+          </button>
+        </div>
       </div>
+
       {prontosFiltrados.length === 0 ? (
-        <p className="py-6 text-center text-sm text-[var(--ink-3)]">Nenhuma combinação com esse tema. Tente carne, natal, sábado, hortifruti ou bebidas.</p>
+        <p className="py-8 text-center text-sm text-[var(--ink-3)]">Nenhuma combinação com esse tema. Tente carne, natal, sábado, hortifruti ou bebidas.</p>
       ) : (
-        <>
-          <p className="text-xs text-[var(--ink-3)]">{plural(prontosFiltrados.length, "combinação pronta", "combinações prontas")}. Os produtos da miniatura são só exemplo.</p>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--ink-3)]">
+            <span className="font-semibold text-[var(--ink-2)]">{plural(prontosFiltrados.length, "combinação", "combinações")}</span> · os produtos das miniaturas são só exemplo
+          </p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {prontosFiltrados.slice(0, limitePronto).map((v) => {
               const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+              const tema = temaCor.get(v.tema);
               return (
                 <button key={v.slug} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={miniaturaClass(on)}>
                   <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={480} height={600} loading="lazy" decoding="async" className="aspect-[4/5] w-full bg-[var(--line)] object-cover" />
-                  <span className="absolute left-1.5 top-1.5 rounded-full bg-[var(--ink)]/85 px-2 py-0.5 text-[10px] font-bold text-[var(--bg)] backdrop-blur">Combinação</span>
-                  <span className={cn("block px-2 py-1.5 text-left", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
-                    <span className="block truncate text-xs font-semibold">{v.nome}</span>
-                    <span className={cn("block truncate text-[11px]", on ? "opacity-75" : "text-[var(--ink-3)]")}>{v.fundoNome} + logo + caixa</span>
+                  <span className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-bold text-white shadow-sm" style={{ background: tema?.cor ?? "var(--ink)" }}>
+                    Combinação
                   </span>
-                  {on && <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-3.5" strokeWidth={3} /></span>}
+                  <span className={cn("block space-y-0.5 px-3 py-2.5 text-left", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>
+                    <span className="block truncate text-[13px] font-semibold">{v.nome}</span>
+                    <span className={cn("flex items-center gap-1.5 truncate text-[11px]", on ? "opacity-75" : "text-[var(--ink-3)]")}>
+                      <span className="size-2 shrink-0 rounded-full" style={{ background: tema?.cor }} aria-hidden />
+                      <span className="truncate">{tema?.nome} · {v.fundoNome}</span>
+                    </span>
+                  </span>
+                  {on && <span className="absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-4" strokeWidth={3} /></span>}
                 </button>
               );
             })}
           </div>
           {prontosFiltrados.length > limitePronto && (
             <Button variant="vidro" onClick={() => setLimitePronto((n) => n + 12)} className="w-full">
-              Ver mais ({prontosFiltrados.length - limitePronto})
+              Ver mais {prontosFiltrados.length - limitePronto} combinações
             </Button>
           )}
-        </>
+        </div>
       )}
       <AnimatePresence>
         {avisoPronto && (
@@ -1369,17 +1399,19 @@ export function EncarteBuilder({
   );
 }
 
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+function Chip({ on, onClick, children, cor }: { on: boolean; onClick: () => void; children: React.ReactNode; cor?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={on}
+      style={on && cor ? { background: cor } : undefined}
       className={cn(
-        "h-10 shrink-0 rounded-full px-3.5 text-[13px] font-medium ring-1 transition",
-        on ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-[var(--glass-strong)] text-[var(--ink-2)] ring-[var(--line)] hover:text-[var(--ink)]"
+        "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-[13px] font-medium ring-1 transition active:scale-95",
+        on ? (cor ? "text-white ring-transparent" : "bg-[var(--ink)] text-[var(--bg)] ring-transparent") : "bg-[var(--glass-strong)] text-[var(--ink-2)] ring-[var(--line)] hover:text-[var(--ink)]"
       )}
     >
+      {cor && !on ? <span className="size-2.5 shrink-0 rounded-full" style={{ background: cor }} aria-hidden /> : null}
       {children}
     </button>
   );
