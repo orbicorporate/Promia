@@ -1012,6 +1012,7 @@ export function EncarteBuilder({
           </div>
           </details>
         </Glass>
+      {!emblema && (
       <Glass className="p-4 sm:p-5">
         <details>
           <summary className="cursor-pointer font-bold">Cores do tema <span className="text-sm font-normal text-[var(--ink-3)]">(opcional)</span></summary>
@@ -1042,6 +1043,7 @@ export function EncarteBuilder({
           </div>
         </details>
       </Glass>
+      )}
     </div>
   );
 
