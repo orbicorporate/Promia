@@ -16,7 +16,7 @@ export const VALIDADE_CORES = ["branco", "dourado", "preto", "vermelho", "verde"
 export type ValidadeCor = (typeof VALIDADE_CORES)[number];
 
 export const VALIDADE_POSICAO_PADRAO: ValidadePosicao = "sobre";
-export const VALIDADE_ALINHAMENTO_PADRAO: ValidadeAlinhamento = "centro";
+export const VALIDADE_ALINHAMENTO_PADRAO: ValidadeAlinhamento = "direita";
 export const VALIDADE_ESTILO_PADRAO: ValidadeEstilo = "cheia";
 export const VALIDADE_COR_PADRAO: ValidadeCor = "branco";
 
