@@ -3,6 +3,7 @@ import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, specEscalada } from "../formats";
 import { clampEscala } from "../emblema-escala";
+import { resolverRodape, RODAPE_COR_HEX, type RodapeOpcoes } from "../rodape";
 import { resolverValidade } from "../validade";
 import { alturaValidade, ValidadeEl } from "./validade-el";
 import { getPage } from "../paginate";
@@ -420,6 +421,140 @@ export type ConfigModelo = {
   overlap?: number; // quanto a grade sobe sobre o cabeçalho (px de 1080)
 };
 
+// ---------------------------------------------------------------- rodapé
+
+// Seis desenhos para o rodapé padrão (os modelos com fundo de arte trazem o
+// rodapé na própria imagem). "tema" usa as cores do tema e do logo; as outras
+// cores são fixas e o texto troca entre claro e escuro para continuar legível.
+type RodapeProps = {
+  W: number;
+  H: number;
+  s: number;
+  padX: number;
+  footerH: number;
+  safeBottom: number;
+  d: number;
+  t: BT;
+  logoUrl?: string | null;
+  nome: string;
+  addr: string;
+  contact: string;
+  opcoes: RodapeOpcoes;
+};
+
+function paletaRodape(t: BT, cor: RodapeOpcoes["cor"]) {
+  if (cor === "tema") return { bg: t.barA, bgB: t.barB, acc: t.gold, on: "#FFFFFF", sub: "rgba(255,255,255,0.78)", hi: t.gold, onAcc: t.ink, main: t.bg1 };
+  const hex = RODAPE_COR_HEX(cor);
+  const claro = cor === "branco" || cor === "dourado";
+  return {
+    bg: hex,
+    bgB: hex,
+    acc: cor === "dourado" ? "#141a24" : cor === "branco" ? t.gold : "#f5b800",
+    on: claro ? "#141a24" : "#FFFFFF",
+    sub: claro ? "rgba(20,26,36,0.72)" : "rgba(255,255,255,0.8)",
+    hi: claro ? "#141a24" : "#f5b800",
+    onAcc: "#141a24",
+    main: hex,
+  };
+}
+
+function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome, addr, contact, opcoes }: RodapeProps): ReactElement {
+  const p = paletaRodape(t, opcoes.cor);
+  const linha2 = opcoes.texto || addr;
+  const pad = safeBottom ? r(safeBottom * 0.55) : 0;
+  const logo = (size: number, borda: string, fundo: string, tinta: string) =>
+    logoUrl ? (
+      <div style={{ ...row, width: size, height: size, borderRadius: size, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${borda}`, flexShrink: 0 }}>
+        <Img src={logoUrl} w={size * 0.82} h={size * 0.82} style={{ objectFit: "contain" }} />
+      </div>
+    ) : (
+      <Selo kind="festonado" w={size} h={size} fill={fundo} edge={borda} edgeW={3 * s} lines={[{ text: marketInitials(nome), variant: "lilita400", font: FONT_LILITA, color: tinta }]} />
+    );
+  const nomeEl = (cor: string, size = 34, align: "flex-start" | "center" | "flex-end" = "flex-start") => (
+    <div style={{ display: "flex", justifyContent: align, fontFamily: FONT_ANTON, fontSize: r(size * s), color: cor, letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{nome.toUpperCase()}</div>
+  );
+  // lista com chave (e não fragmento): o Satori só empilha filhos de verdade
+  const textos = (corSub: string, corHi: string, align: "flex-start" | "center" | "flex-end" = "flex-start", sombra = false) => {
+    const sombraCss = sombra ? { textShadow: `0 ${r(2 * s)}px ${r(8 * s)}px rgba(0,0,0,0.7)` } : {};
+    const out: ReactElement[] = [];
+    if (linha2) out.push(<div key="l2" style={{ display: "flex", justifyContent: align, fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: corSub, whiteSpace: "nowrap", lineHeight: 1.15, ...sombraCss }}>{linha2}</div>);
+    if (contact) out.push(<div key="ct" style={{ display: "flex", justifyContent: align, fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(26 * s), color: corHi, whiteSpace: "nowrap", lineHeight: 1.15, ...sombraCss }}>{contact}</div>);
+    return out;
+  };
+
+  if (opcoes.estilo === "claro") {
+    const cor = opcoes.cor === "tema" ? t.bg1 : opcoes.cor === "branco" || opcoes.cor === "dourado" ? t.bg1 : p.bg;
+    return (
+      <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundColor: "#FFFFFF", borderTop: `${r(7 * s)}px solid ${cor}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: pad }}>
+        {logo(d, cor, cor, "#FFFFFF")}
+        <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+          {nomeEl(cor)}
+          {textos(t.cardMuted, cor)}
+        </div>
+      </div>
+    );
+  }
+  if (opcoes.estilo === "pilula") {
+    const h = r(Math.min(footerH - pad - 16 * s, 96 * s));
+    return (
+      <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH - pad, alignItems: "center", justifyContent: "center" }}>
+        <div style={{ ...row, alignItems: "center", height: h, padding: `0 ${r(34 * s)}px 0 ${r(10 * s)}px`, borderRadius: h, backgroundColor: p.bg, border: `${r(3 * s)}px solid ${p.acc}`, boxShadow: `0 ${r(8 * s)}px ${r(22 * s)}px rgba(0,0,0,0.4)` }}>
+          {logo(r(h - 16 * s), p.acc, p.acc, p.onAcc)}
+          <div style={{ ...col, marginLeft: r(18 * s) }}>
+            {nomeEl(p.on, 30)}
+            {textos(p.sub, p.hi)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (opcoes.estilo === "centro") {
+    return (
+      <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${p.bg}, ${p.bgB})`, borderTop: `${r(5 * s)}px solid ${p.acc}`, alignItems: "center", justifyContent: "center", padding: `0 ${padX}px`, paddingBottom: pad }}>
+        {logo(d, p.acc, p.acc, p.onAcc)}
+        <div style={{ ...col, marginLeft: r(22 * s), alignItems: "center" }}>
+          {nomeEl(p.on, 34, "center")}
+          {textos(p.sub, p.hi, "center")}
+        </div>
+      </div>
+    );
+  }
+  if (opcoes.estilo === "faixa") {
+    const esq = opcoes.cor === "tema" ? t.gold : p.acc;
+    return (
+      <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundColor: p.bg }}>
+        <div style={{ ...row, width: r(W * 0.44), height: footerH, backgroundColor: esq, alignItems: "center", paddingLeft: padX, paddingBottom: pad, overflow: "hidden" }}>
+          {logo(r(d * 0.9), p.bg, p.bg, p.on)}
+          <div style={{ ...col, marginLeft: r(16 * s) }}>{nomeEl(p.onAcc, 28)}</div>
+        </div>
+        <div style={{ ...col, flex: 1, height: footerH, justifyContent: "center", alignItems: "flex-end", paddingRight: padX, paddingBottom: pad }}>{textos(p.sub, p.hi, "flex-end")}</div>
+      </div>
+    );
+  }
+  if (opcoes.estilo === "degrade") {
+    const topo = r(56 * s);
+    return (
+      <div style={{ ...row, position: "absolute", left: 0, top: H - footerH - topo, width: W, height: footerH + topo, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.88))`, alignItems: "flex-end", padding: `0 ${padX}px ${r(14 * s) + pad}px` }}>
+        {logo(d, "#FFFFFF", p.acc, p.onAcc)}
+        <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+          {nomeEl("#FFFFFF")}
+          {textos("rgba(255,255,255,0.85)", opcoes.cor === "tema" ? t.gold : opcoes.cor === "preto" ? "#FFFFFF" : p.bg, "flex-start", true)}
+        </div>
+      </div>
+    );
+  }
+  // barra (o desenho de sempre)
+  return (
+    <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${p.bg}, ${p.bgB})`, borderTop: `${r(5 * s)}px solid ${p.acc}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: pad }}>
+      {logo(d, p.acc, p.acc, p.onAcc)}
+      <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+        {nomeEl(p.on)}
+        {textos(p.sub, p.hi)}
+      </div>
+    </div>
+  );
+}
+
 export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo): Pg | null {
   const page = getPage(data, pageIndex);
   if (!page) return null;
@@ -613,20 +748,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
           </div>
         </>
       ) : (
-        <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${t.barA}, ${t.barB})`, borderTop: `${r(5 * s)}px solid ${t.gold}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
-        {data.market.logoUrl ? (
-          <div style={{ ...row, width: d, height: d, borderRadius: d, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
-            <Img src={data.market.logoUrl} w={d * 0.82} h={d * 0.82} style={{ objectFit: "contain" }} />
-          </div>
-        ) : (
-          <Selo kind="festonado" w={d} h={d} fill={t.gold} edge="#ffffff" edgeW={3 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: t.ink }]} />
-        )}
-        <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
-          <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(34 * s), color: "#fff", letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
-          {addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: "rgba(255,255,255,0.78)", whiteSpace: "nowrap", lineHeight: 1.15 }}>{addr}</div> : null}
-          {contact ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(26 * s), color: t.gold, whiteSpace: "nowrap", lineHeight: 1.15 }}>{contact}</div> : null}
-        </div>
-      </div>
+        <RodapePadrao W={W} H={H} s={s} padX={padX} footerH={footerH} safeBottom={spec.safeBottom} d={d} t={t} logoUrl={data.market.logoUrl} nome={data.market.name} addr={addr} contact={contact} opcoes={resolverRodape(data.rodape)} />
       )}
     </div>
   );

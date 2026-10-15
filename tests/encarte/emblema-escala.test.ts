@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clampEscala, juntarEmblema, lerEmblema } from "@/lib/encarte/emblema-escala";
+import { limparRodape, RODAPE_PADRAO } from "@/lib/encarte/rodape";
 import { limparValidade } from "@/lib/encarte/validade";
 
 describe("tamanho do logo", () => {
@@ -23,7 +24,7 @@ describe("validade junto do emblema", () => {
   it("grava só o que foge do padrão e lê de volta", () => {
     expect(juntarEmblema("a", 1, {})).toBe("a");
     expect(juntarEmblema("a", 1.2, { estilo: "contorno", posicao: "base", alinhamento: "direita", cor: "preto" })).toBe("a~120~vcontorno~pbase~adireita~cpreto");
-    expect(lerEmblema("a~120~vcontorno~pbase~adireita~cpreto")).toEqual({
+    expect(lerEmblema("a~120~vcontorno~pbase~adireita~cpreto")).toMatchObject({
       slug: "a",
       escala: 1.2,
       validade: { estilo: "contorno", posicao: "base", alinhamento: "direita", cor: "preto", rotulo: "" },
@@ -40,5 +41,26 @@ describe("validade junto do emblema", () => {
   it("limpa o que vem de fora", () => {
     expect(limparValidade({ estilo: "x", cor: "verde", posicao: "base" })).toEqual({ cor: "verde", posicao: "base" });
     expect(limparValidade(null)).toEqual({});
+  });
+});
+
+describe("rodapé junto do emblema", () => {
+  it("grava estilo, cor e frase, e lê de volta", () => {
+    const raw = juntarEmblema("a", 1, {}, { estilo: "pilula", cor: "preto", texto: "Aberto até as 22h ~" });
+    expect(raw).toBe(`a~rpilula~kpreto~x${encodeURIComponent("Aberto até as 22h")}`);
+    expect(lerEmblema(raw).rodape).toEqual({ estilo: "pilula", cor: "preto", texto: "Aberto até as 22h" });
+    expect(lerEmblema("a").rodape).toEqual(RODAPE_PADRAO);
+  });
+  it("vale também sem logo de campanha", () => {
+    const raw = juntarEmblema(null, 1, { posicao: "base" }, { estilo: "claro" });
+    expect(raw).toBe("~pbase~rclaro");
+    const lido = lerEmblema(raw);
+    expect(lido.slug).toBeNull();
+    expect(lido.validade.posicao).toBe("base");
+    expect(lido.rodape.estilo).toBe("claro");
+    expect(juntarEmblema(null, 1)).toBeNull();
+  });
+  it("ignora valores inválidos", () => {
+    expect(limparRodape({ estilo: "x", cor: "verde", texto: 5 })).toEqual({ cor: "verde" });
   });
 });

@@ -34,6 +34,8 @@ import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
 import { resolverValidade, VALIDADE_PADRAO, type ValidadeOpcoes } from "@/lib/encarte/validade";
 import { ValidadePicker } from "./validade-picker";
+import { RodapePicker } from "./rodape-picker";
+import { resolverRodape, type RodapeOpcoes } from "@/lib/encarte/rodape";
 import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
@@ -82,6 +84,7 @@ export type BuilderInitial = {
   emblema: string | null;
   emblemaEscala?: number;
   validade?: Partial<ValidadeOpcoes>;
+  rodape?: Partial<RodapeOpcoes>;
   fundo: EncarteFundo | null;
   themeKey: string;
   validFrom: string;
@@ -155,6 +158,7 @@ export function EncarteBuilder({
   const [emblema, setEmblema] = useState<string | null>(initial.emblema);
   const [emblemaEscala, setEmblemaEscala] = useState<number>(clampEscala(initial.emblemaEscala));
   const [validade, setValidade] = useState<ValidadeOpcoes>(resolverValidade(initial.validade));
+  const [rodape, setRodape] = useState<RodapeOpcoes>(resolverRodape(initial.rodape));
   const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
@@ -259,6 +263,7 @@ export function EncarteBuilder({
       emblema,
       emblemaEscala,
       validade,
+      rodape,
       fundo,
       themeKey,
       validFrom: validFrom || null,
@@ -286,7 +291,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, fundo, themeKey, validFrom, validUntil, items, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, themeKey, validFrom, validUntil, items, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -391,7 +396,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, fundo, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1099,6 +1104,7 @@ export function EncarteBuilder({
         <Chip on={false} onClick={() => { const s = nextWeekday(today, 6); setValidFrom(s); setValidUntil(addDays(s, 1)); }}>Fim de semana</Chip>
         <Chip on={false} onClick={() => { setValidFrom(""); setValidUntil(""); }}>Sem data</Chip>
       </div>
+      <RodapePicker valor={rodape} onChange={setRodape} endereco="" />
     </Glass>
   );
 
@@ -1195,16 +1201,6 @@ export function EncarteBuilder({
           )}
         </AnimatePresence>
         {!previewUrl && !previewError && <div className="esqueleto absolute inset-0 rounded-none" />}
-        {step <= 1 && previewUrl && !previewError && (
-          <span className="vidro-forte absolute inset-x-3 bottom-3 rounded-2xl px-3 py-2 text-center text-xs font-medium">
-            As 12 caixas tracejadas são onde os produtos vão ficar.
-          </span>
-        )}
-        {step === 2 && items.length === 0 && previewUrl && !previewError && (
-          <span className="vidro-forte absolute inset-x-3 bottom-3 rounded-2xl px-3 py-2 text-center text-xs font-medium">
-            Exemplo com produtos de mentira. Você escolhe os seus no próximo passo.
-          </span>
-        )}
         {previewError && (
           <div className="absolute inset-0 grid place-items-center p-6 text-center">
             <p className="text-sm text-[var(--ink-2)]">
@@ -1227,6 +1223,11 @@ export function EncarteBuilder({
           )}
         </AnimatePresence>
       </div>
+      {previewUrl && !previewError && (step <= 1 || (step === 2 && items.length === 0)) && (
+        <p className="text-center text-xs text-[var(--ink-3)]">
+          {step <= 1 ? "As 12 caixas tracejadas são onde os produtos vão ficar." : "Exemplo com produtos de mentira. Você escolhe os seus no próximo passo."}
+        </p>
+      )}
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}

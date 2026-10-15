@@ -1,5 +1,6 @@
 import { CENARIO_IDS } from "./modelos/cenarios";
 import { ARTE_IDS } from "./modelos/fundos-arte";
+import type { RodapeOpcoes } from "./rodape";
 import type { ValidadeOpcoes } from "./validade";
 // Tipos do motor de encarte (tabloide promocional de supermercado).
 //
@@ -79,6 +80,7 @@ export type EncarteData = {
   modelo?: EncarteModelo | null;
   fundo?: EncarteFundo | null;
   emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
+  rodape?: Partial<RodapeOpcoes>; // estilo, cor e frase do rodapé (lib/encarte/rodape.ts)
   validade?: Partial<ValidadeOpcoes>; // posição, alinhamento, estilo e cor da validade (lib/encarte/validade.ts)
   emblemaEscala?: number; // 0,6 a 1,6: aumenta ou diminui o logo mantendo a proporção (lib/encarte/emblema-escala.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)

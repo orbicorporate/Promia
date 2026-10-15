@@ -1,3 +1,4 @@
+import { limparRodapeTexto, isRodapeCor, isRodapeEstilo, RODAPE_PADRAO, type RodapeOpcoes } from "./rodape";
 import { limparRotulo, isValidadeAlinhamento, isValidadeCor, isValidadeEstilo, isValidadePosicao, VALIDADE_PADRAO, type ValidadeOpcoes } from "./validade";
 
 // Ajustes do encarte que não têm coluna própria no banco ficam gravados junto
@@ -15,10 +16,10 @@ export function clampEscala(v: unknown): number {
   return Math.round(Math.min(EMBLEMA_ESCALA_MAX, Math.max(EMBLEMA_ESCALA_MIN, n)) * 100) / 100;
 }
 
-export type OpcoesEmblema = { slug: string | null; escala: number; validade: ValidadeOpcoes };
+export type OpcoesEmblema = { slug: string | null; escala: number; validade: ValidadeOpcoes; rodape: RodapeOpcoes };
 
 export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
-  const out: OpcoesEmblema = { slug: null, escala: 1, validade: { ...VALIDADE_PADRAO } };
+  const out: OpcoesEmblema = { slug: null, escala: 1, validade: { ...VALIDADE_PADRAO }, rodape: { ...RODAPE_PADRAO } };
   if (!raw) return out;
   const [slug, ...resto] = raw.split("~");
   out.slug = slug || null;
@@ -29,7 +30,15 @@ export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
     else if (t[0] === "p" && isValidadePosicao(v)) out.validade.posicao = v;
     else if (t[0] === "a" && isValidadeAlinhamento(v)) out.validade.alinhamento = v;
     else if (t[0] === "c" && isValidadeCor(v)) out.validade.cor = v;
-    else if (t[0] === "t") {
+    else if (t[0] === "r" && isRodapeEstilo(v)) out.rodape.estilo = v;
+    else if (t[0] === "k" && isRodapeCor(v)) out.rodape.cor = v;
+    else if (t[0] === "x") {
+      try {
+        out.rodape.texto = limparRodapeTexto(decodeURIComponent(v));
+      } catch {
+        /* ignora texto mal formado */
+      }
+    } else if (t[0] === "t") {
       try {
         out.validade.rotulo = limparRotulo(decodeURIComponent(v));
       } catch {
@@ -40,11 +49,12 @@ export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
   return out;
 }
 
-export function juntarEmblema(slug: string | null, escala: number, validade: Partial<ValidadeOpcoes> = {}): string | null {
-  if (!slug) return null;
-  const e = clampEscala(escala);
+// Sem slug (encarte só com título) as opções continuam valendo: o texto fica "~vcontorno...".
+export function juntarEmblema(slug: string | null, escala: number, validade: Partial<ValidadeOpcoes> = {}, rodape: Partial<RodapeOpcoes> = {}): string | null {
+  const e = slug ? clampEscala(escala) : 1;
   const val = { ...VALIDADE_PADRAO, ...validade };
-  const partes = [slug];
+  const rod = { ...RODAPE_PADRAO, ...rodape };
+  const partes: string[] = [];
   if (e !== 1) partes.push(String(Math.round(e * 100)));
   if (val.estilo !== VALIDADE_PADRAO.estilo) partes.push(`v${val.estilo}`);
   if (val.posicao !== VALIDADE_PADRAO.posicao) partes.push(`p${val.posicao}`);
@@ -52,5 +62,10 @@ export function juntarEmblema(slug: string | null, escala: number, validade: Par
   if (val.cor !== VALIDADE_PADRAO.cor) partes.push(`c${val.cor}`);
   const rotulo = limparRotulo(val.rotulo);
   if (rotulo) partes.push(`t${encodeURIComponent(rotulo).replace(/~/g, "%7E")}`);
-  return partes.join("~");
+  if (rod.estilo !== RODAPE_PADRAO.estilo) partes.push(`r${rod.estilo}`);
+  if (rod.cor !== RODAPE_PADRAO.cor) partes.push(`k${rod.cor}`);
+  const texto = limparRodapeTexto(rod.texto);
+  if (texto) partes.push(`x${encodeURIComponent(texto).replace(/~/g, "%7E")}`);
+  if (!slug && partes.length === 0) return null;
+  return [slug ?? "", ...partes].join("~");
 }
