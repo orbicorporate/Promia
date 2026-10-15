@@ -10,6 +10,7 @@ import {
   VALIDADE_ESTILO_LABEL,
   VALIDADE_ESTILOS,
   VALIDADE_PADRAO,
+  VALIDADE_ROTULO_MAX,
   VALIDADE_POSICAO_LABEL,
   VALIDADE_POSICOES,
   type ValidadeAlinhamento,
@@ -39,7 +40,23 @@ function Grupo<T extends string>({ valor, opcoes, rotulo, onChange }: { valor: T
   );
 }
 
-export function ValidadePicker({ valor, onChange, semDatas }: { valor: ValidadeOpcoes; onChange: (v: ValidadeOpcoes) => void; semDatas: boolean }) {
+const campo = "h-8 min-w-0 rounded-lg bg-[var(--line)] px-2 text-xs text-[var(--ink)] outline-none ring-1 ring-transparent transition placeholder:text-[var(--ink-3)] focus:ring-[var(--ink)]";
+
+export function ValidadePicker({
+  valor,
+  onChange,
+  de,
+  ate,
+  onDe,
+  onAte,
+}: {
+  valor: ValidadeOpcoes;
+  onChange: (v: ValidadeOpcoes) => void;
+  de: string;
+  ate: string;
+  onDe: (v: string) => void;
+  onAte: (v: string) => void;
+}) {
   const set = (parcial: Partial<ValidadeOpcoes>) => onChange({ ...valor, ...parcial });
   const padrao = (Object.keys(VALIDADE_PADRAO) as (keyof ValidadeOpcoes)[]).every((k) => valor[k] === VALIDADE_PADRAO[k]);
   const oculto = valor.posicao === "oculto";
@@ -79,7 +96,21 @@ export function ValidadePicker({ valor, onChange, semDatas }: { valor: ValidadeO
         </div>
       )}
 
-      {semDatas && !oculto && <p className="text-[11px] text-[var(--ink-3)]">Preencha as datas (passo 5) para ela aparecer.</p>}
+      {!oculto && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <input
+            value={valor.rotulo}
+            onChange={(e) => set({ rotulo: e.target.value.slice(0, VALIDADE_ROTULO_MAX) })}
+            maxLength={VALIDADE_ROTULO_MAX}
+            placeholder="Texto: VÁLIDO"
+            aria-label="Texto da tag de validade (vazio = automático)"
+            className={cn(campo, "w-28")}
+          />
+          <input type="date" value={de} onChange={(e) => onDe(e.target.value)} aria-label="Válido de" className={cn(campo, "w-[7.6rem]")} />
+          <span className="text-[11px] text-[var(--ink-3)]">a</span>
+          <input type="date" value={ate} min={de || undefined} onChange={(e) => onAte(e.target.value)} aria-label="Válido até" className={cn(campo, "w-[7.6rem]")} />
+        </div>
+      )}
     </div>
   );
 }
