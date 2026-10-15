@@ -3,6 +3,8 @@ import { readJson, serverError } from "@/lib/auth";
 import { MEDIA_BUCKET, normalizeUploaded, storeImageFromUrl, UPLOAD_EXT } from "@/lib/server/media";
 import { forgetAiPhoto, rememberByName, rememberInBank } from "@/lib/server/photos";
 import { loadOwnedProduct } from "@/lib/server/product-access";
+import { searchImages, serperEnabled } from "@/lib/photos/serper";
+import { recordUsage, remainingToday } from "@/lib/ai/usage";
 
 export const maxDuration = 60;
 
@@ -10,6 +12,7 @@ export const maxDuration = 60;
 //   { acao: "url", url }        usar a foto deste endereço (ou uma candidata)
 //   { acao: "envio", fileName } URL assinada para subir foto do celular
 //   { acao: "confirmar", path } aplica a foto que acabou de subir
+//   { acao: "pesquisar", termo } busca fotos no Google por um nome digitado (sem IA, devolve as opções)
 //   { acao: "buscar" }          devolve o produto para a fila de busca
 //   { acao: "sem-foto" }        marca que esse produto vai sem foto
 // Foto escolhida pelo dono (da internet) entra no banco compartilhado; foto da câmera não.
@@ -17,7 +20,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
   const { id } = await params;
   const g = await loadOwnedProduct(id);
   if ("error" in g) return g.error;
-  const { admin, product } = g;
+  const { admin, product, viewer } = g;
   const body = await readJson(req);
   const base = `${product.market_id}/produtos/${product.id}`;
 
@@ -70,6 +73,22 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       } catch (err) {
         return serverError("foto/confirmar", err, "Não consegui usar essa foto. Tente outra.");
       }
+    }
+    case "pesquisar": {
+      const termo = String(body.termo ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+      if (termo.length < 2) return NextResponse.json({ error: "Digite o nome do que você quer buscar." }, { status: 400 });
+      if (!serperEnabled()) return NextResponse.json({ error: "A busca de fotos não está ligada." }, { status: 503 });
+      if ((await remainingToday(product.market_id, "busca_imagem")) <= 0) {
+        return NextResponse.json({ error: "Limite diário de busca de fotos atingido. Volte amanhã." }, { status: 429 });
+      }
+      const hits = await searchImages(termo, { num: 20 });
+      await recordUsage(product.market_id, viewer.userId, "busca_imagem", 1);
+      if (hits === null) return NextResponse.json({ error: "A busca está indisponível agora. Tente de novo em instantes." }, { status: 503 });
+      const imagens = hits
+        .filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= 200)
+        .map((h) => h.imageUrl)
+        .slice(0, 18);
+      return NextResponse.json({ imagens });
     }
     case "buscar": {
       await forgetAiPhoto(admin, [product.name, product.canonical_name], product.brand, product.image_url);

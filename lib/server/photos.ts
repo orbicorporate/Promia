@@ -87,7 +87,13 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
   if (first.status === "encontrada") return first;
   // a primeira busca não trouxe a foto certa: tenta a alternativa e, por fim,
   // uma busca simples só com o nome e fundo branco
-  const buscas = [plan.alt, `${[p.name, p.brand].filter(Boolean).join(" ")} fundo branco`].filter((q): q is string => !!q && q !== plan.query);
+  const simples = [p.name, p.brand].filter(Boolean).join(" ");
+  const buscas = [
+    plan.alt,
+    `${simples} fundo branco`,
+    // item sem embalagem (corte de carne, fruta, verdura): termos mais simples e do alimento cru
+    ...(plan.generic ? [simples, `${simples} cru`, `${simples} bandeja mercado`, `${simples} fatiado peça`] : []),
+  ].filter((q, i, all): q is string => !!q && q !== plan.query && all.indexOf(q) === i);
   const outcomes = [first];
   for (const q of buscas) {
     const next = await searchOnce(admin, marketId, p, plan, q);
@@ -107,8 +113,9 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
 async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan, query: string): Promise<PhotoOutcome | null> {
   const raw = await searchImages(query);
   if (raw === null) return null;
-  // foto pequena demais não serve para encarte
-  const sized = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= 300);
+  // foto pequena demais não serve para encarte (item sem embalagem aceita a partir de 200 px)
+  const minLado = plan.generic ? 200 : 300;
+  const sized = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= minLado);
   // fotos cujo título traz a marca pedida vêm primeiro (o juiz vê só 8)
   const brandKey = plan.brand ? normalizeName(plan.brand).replace(/[^a-z0-9]/g, "") : "";
   const hasBrand = (h: ImageHit) => !!brandKey && normalizeName(`${h.title} ${h.imageUrl}`).replace(/[^a-z0-9]/g, "").includes(brandKey);
