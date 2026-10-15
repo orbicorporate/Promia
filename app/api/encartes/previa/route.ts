@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     // prévia rápida: página em escala menor e fotos pequenas. O arquivo final
     // (baixar, PDF, publicar) usa o tamanho real, sem passar por aqui.
     const q = typeof body.escala === "number" && Number.isFinite(body.escala) ? Math.min(1, Math.max(ESCALA_MIN, body.escala)) : ESCALA_PADRAO;
-    const withImages = await resolveEncarteImages({ ...data, escalaPrevia: q }, { pageIndex, budgetMs: 7000, ilustrar: true, maxLado: Math.max(120, Math.round(480 * q)) });
+    const withImages = await resolveEncarteImages({ ...data, escalaPrevia: q }, { pageIndex, budgetMs: 7000, ilustrar: true, emblemaRapido: q <= 0.5, maxLado: Math.max(120, Math.round(480 * q)) });
     const out = await renderEncartePng(withImages, pageIndex);
     if (!out) return jsonError(404, "Página não encontrada.");
     // a prévia segue em WebP: 5 a 10 vezes menor que o PNG, chega mais rápido
