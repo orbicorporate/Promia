@@ -83,6 +83,7 @@ export type EncarteData = {
   emblemaEscala?: number; // 0,6 a 1,6: aumenta ou diminui o logo mantendo a proporção (lib/encarte/emblema-escala.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
   fundoArte?: EncarteFundoArte | null; // cabeçalho e rodapé do fundo de arte, resolvidos no servidor
+  escalaPrevia?: number; // só no servidor: desenha a página em escala menor (0,3 a 1) para a prévia ser rápida
   esqueleto?: boolean; // prévia só com fundo, logo e a marcação das 12 caixas (passos 1 e 2 do montador)
   themeKey: string;
   validFrom?: string | null; // YYYY-MM-DD

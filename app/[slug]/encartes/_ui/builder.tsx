@@ -111,6 +111,10 @@ const parseMoney = (s: string) => {
 };
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+// Escalas da prévia: a rápida chega primeiro, a nítida a substitui (o arquivo final sai no tamanho real).
+const PREVIA_RAPIDA = 0.4;
+const PREVIA_NITIDA = 0.8;
+
 export function EncarteBuilder({
   marketId,
   slug,
@@ -303,13 +307,34 @@ export function EncarteBuilder({
       abortRef.current = ctrl;
       setPreviewLoading(true);
       setPreviewError(null);
-      try {
-        const res = await fetch("/api/encartes/previa", {
+      // Primeiro uma versão pequena (quase instantânea), depois a nítida no lugar dela.
+      const pedir = async (escala: number) =>
+        fetch("/api/encartes/previa", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ marketId, data: JSON.parse(previewKey), pagina: page }),
+          body: JSON.stringify({ marketId, data: JSON.parse(previewKey), pagina: page, escala }),
           signal: ctrl.signal,
         });
+      const guardar = async (res: Response) => {
+        const pages = Number(res.headers.get("x-encarte-paginas") || "1");
+        const url = URL.createObjectURL(await res.blob());
+        const cache = cacheRef.current;
+        const antigo = cache.get(ckey);
+        cache.set(ckey, { url, pages });
+        // guarda as 14 mais recentes; as antigas liberam memória
+        while (cache.size > 14) {
+          const first = cache.keys().next().value as string;
+          const old = cache.get(first);
+          cache.delete(first);
+          if (old && old.url !== url) setTimeout(() => URL.revokeObjectURL(old.url), 2000);
+        }
+        if (antigo && antigo.url !== url) setTimeout(() => URL.revokeObjectURL(antigo.url), 2000);
+        lastUrl.current = url;
+        setPreviewUrl(url);
+        setPreviewPages(pages);
+      };
+      try {
+        const res = await pedir(PREVIA_RAPIDA);
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           if (res.status === 404 && page > 1) {
@@ -319,21 +344,11 @@ export function EncarteBuilder({
           setPreviewError(data.error || "Não consegui desenhar a prévia.");
           return;
         }
-        const pages = Number(res.headers.get("x-encarte-paginas") || "1");
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const cache = cacheRef.current;
-        cache.set(ckey, { url, pages });
-        // guarda as 14 mais recentes; as antigas liberam memória
-        while (cache.size > 14) {
-          const first = cache.keys().next().value as string;
-          const old = cache.get(first);
-          cache.delete(first);
-          if (old && old.url !== url) setTimeout(() => URL.revokeObjectURL(old.url), 2000);
-        }
-        lastUrl.current = url;
-        setPreviewUrl(url);
-        setPreviewPages(pages);
+        await guardar(res);
+        if (abortRef.current === ctrl) setPreviewLoading(false);
+        // versão nítida: só depois que a pessoa parou de mexer
+        const fina = await pedir(PREVIA_NITIDA);
+        if (fina.ok) await guardar(fina);
       } catch (err) {
         if ((err as Error).name !== "AbortError") setPreviewError("Sem conexão para gerar a prévia.");
       } finally {
