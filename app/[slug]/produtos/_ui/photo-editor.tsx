@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Camera, Link2, RotateCw, ImageOff, Check } from "lucide-react";
+import { Camera, Link2, RotateCw, ImageOff, Check, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -19,7 +19,7 @@ export type PhotoProduct = {
 
 const proxied = (u: string) => `/api/imagem?u=${encodeURIComponent(u)}`;
 
-async function postFoto(id: string, body: Record<string, unknown>) {
+async function postFoto<T = { imageUrl?: string }>(id: string, body: Record<string, unknown>) {
   const res = await fetch(`/api/produtos/${id}/foto`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -27,7 +27,7 @@ async function postFoto(id: string, body: Record<string, unknown>) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Não consegui salvar a foto.");
-  return data as { imageUrl?: string };
+  return data as T;
 }
 
 // Reduz e converte no próprio aparelho: foto de celular de 12 MP vira um
@@ -66,8 +66,11 @@ export function PhotoEditor({
   const [busy, setBusy] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [showUrl, setShowUrl] = useState(false);
+  const [showBusca, setShowBusca] = useState(false);
+  const [termo, setTermo] = useState(product.name);
+  const [achadas, setAchadas] = useState<string[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const candidates = (product.image_candidates ?? []).filter((c) => c !== product.image_url).slice(0, 6);
+  const candidates = achadas ?? (product.image_candidates ?? []).filter((c) => c !== product.image_url).slice(0, 6);
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
@@ -86,6 +89,8 @@ export function PhotoEditor({
       onChange({ image_url: r.imageUrl ?? null, image_status: "encontrada", image_candidates: null });
       setUrl("");
       setShowUrl(false);
+      setShowBusca(false);
+      setAchadas(null);
       toast.success("Foto salva.");
     });
 
@@ -129,6 +134,9 @@ export function PhotoEditor({
           <Button size="sm" variant="vidro" icon={<Camera className="size-4" />} loading={busy === "upload"} onClick={() => fileRef.current?.click()}>
             Tirar ou enviar foto
           </Button>
+          <Button size="sm" variant="vidro" icon={<Search className="size-4" />} onClick={() => setShowBusca((v) => !v)}>
+            Buscar por outro nome
+          </Button>
           <Button size="sm" variant="vidro" icon={<Link2 className="size-4" />} onClick={() => setShowUrl((v) => !v)}>
             Colar link
           </Button>
@@ -167,7 +175,35 @@ export function PhotoEditor({
         </div>
       </div>
 
+      {product.image_status === "nao_encontrada" && !showBusca && !achadas && (
+        <p className="text-sm text-[var(--ink-2)]">
+          Não achei uma foto que desse para confiar. Toque em <span className="font-medium">Buscar por outro nome</span> e digite, por exemplo, &quot;bife de contrafilé cru&quot;.
+        </p>
+      )}
+
       <AnimatePresence initial={false}>
+      {showBusca && (
+        <motion.form
+          initial={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (termo.trim().length < 2) return;
+            run("pesquisar", async () => {
+              const r = await postFoto<{ imagens: string[] }>(product.id, { acao: "pesquisar", termo: termo.trim() });
+              setAchadas(r.imagens);
+              if (r.imagens.length === 0) toast.message("Nada encontrado com esse nome. Tente outras palavras.");
+            });
+          }}
+        >
+          <Input autoFocus value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Ex.: bife de contrafilé cru" maxLength={120} />
+          <Button type="submit" loading={busy === "pesquisar"}>
+            Buscar
+          </Button>
+        </motion.form>
+      )}
       {showUrl && (
         <motion.form
           initial={{ opacity: 0, y: -6, filter: "blur(4px)" }}
@@ -189,7 +225,7 @@ export function PhotoEditor({
 
       {candidates.length > 0 && (
         <div>
-          <p className="mb-2 text-sm text-[var(--ink-2)]">Encontrei estas. Toque na certa:</p>
+          <p className="mb-2 text-sm text-[var(--ink-2)]">{achadas ? "Resultado da sua busca. Toque na certa:" : "Encontrei estas. Toque na certa:"}</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {candidates.map((c, i) => (
               <button
