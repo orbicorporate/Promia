@@ -555,6 +555,29 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
   );
 }
 
+// Tamanho do emblema no cabeçalho. A proporção do desenho nunca muda: só um
+// fator único para largura e altura. O peso visual é igual em todos os logos
+// (a área do desenho tem um alvo), então um logo largo não fica maior que um
+// quase quadrado só por causa da proporção. O usuário ajusta de 60% a 160%
+// por cima disso, com teto para não passar da página nem do cabeçalho.
+export type MedidaEmblema = { W: number; H: number; boxW: number; boxH: number; fino: boolean; arte: boolean; escala?: number };
+
+export function tamanhoEmblema(em: { ilustrado: { src: string; w: number; h: number }; horizontal: { src: string; w: number; h: number } | null }, m: MedidaEmblema): { src: string; w: number; h: number } {
+  const fit = (a: { w: number; h: number }) => Math.min(m.boxW / a.w, m.boxH / a.h);
+  const a = em.ilustrado;
+  const b = em.horizontal;
+  // usa a versão horizontal quando ela fica bem maior na área disponível
+  const useB = b && fit(b) * fit(b) * b.w * b.h > fit(a) * fit(a) * a.w * a.h * 1.1;
+  const pick = useB && b ? b : a;
+  const teto = Math.min((m.W * 0.94) / pick.w, (m.boxH * 1.4) / pick.h);
+  // medido pela largura da página, com a proporção do feed como referência: no story o logo não encolhe
+  const alvo = (m.fino ? 0.066 : m.arte ? 0.085 : 0.13) * m.W * Math.min(m.H, m.W * 1.25);
+  const kArea = Math.sqrt(alvo / (pick.w * pick.h));
+  const k = Math.min(Math.min(fit(pick), kArea) * clampEscala(m.escala), teto);
+  return { src: pick.src, w: pick.w * k, h: pick.h * k };
+}
+
+
 export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo): Pg | null {
   const page = getPage(data, pageIndex);
   if (!page) return null;
@@ -586,7 +609,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const fino = arte?.modo === "fino";
   const cutPx = arte ? r(arte.cut * ak) : 0;
   const cropTop = arte ? (fino ? Math.max(0, cutPx - r(H * 0.19)) : data.format === "quadrado" ? r(cutPx * 0.16) : 0) : 0;
-  const embH = fino ? r(Math.min(H * 0.15, W * 0.2)) : 0;
+  const embH = fino ? r(Math.min(H * 0.21, W * 0.28)) : 0;
   const rodapeFino = fino ? r(H * 0.115) : 0;
   const faixaH = fino ? 0 : r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
@@ -610,22 +633,9 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
   // emblema: escolhe a versão que fica maior na área do cabeçalho
   const em = data.emblemaImg;
-  const boxW = arte ? (fino ? W * 0.66 : W * 0.46) : W * 0.9;
-  const boxH = arte ? (fino ? embH : (heroH - spec.safeTop) * 0.84) : heroH - spec.safeTop - r(12 * s);
-  let emblema: { src: string; w: number; h: number } | null = null;
-  if (em) {
-    const fit = (a: { w: number; h: number }) => Math.min(boxW / a.w, boxH / a.h);
-    const a = em.ilustrado;
-    const b = em.horizontal;
-    const useB = b && fit(b) * fit(b) * b.w * b.h > fit(a) * fit(a) * a.w * a.h * 1.1;
-    const pick = useB && b ? b : a;
-    // a proporção do desenho nunca muda: só um fator único para largura e altura
-    // (o ajuste do usuário, de 60% a 160%), com teto para não passar da página nem do cabeçalho
-    const escala = clampEscala(data.emblemaEscala);
-    const teto = Math.min((W * 0.94) / pick.w, (boxH * 1.4) / pick.h);
-    const k = Math.min(fit(pick) * escala, teto);
-    emblema = { src: pick.src, w: pick.w * k, h: pick.h * k };
-  }
+  const boxW = arte ? (fino ? W * 0.74 : W * 0.62) : W * 0.9;
+  const boxH = arte ? (fino ? embH : (heroH - spec.safeTop) * 1.12) : heroH - spec.safeTop - r(12 * s);
+  const emblema = em ? tamanhoEmblema(em, { W, H, boxW, boxH, fino, arte: !!arte, escala: data.emblemaEscala }) : null;
 
   const cx = 0.5;
   const cy = (spec.safeTop + (heroH - spec.safeTop) / 2) / H;
