@@ -1153,18 +1153,11 @@ export function EncarteBuilder({
               <Chip on={filtroFundo === "Todos"} cor="#b3122f" onClick={() => setFiltroFundo("Todos")}>
                 Todos
               </Chip>
-              <div className="flex basis-full flex-col gap-2 sm:basis-auto">
-                <span className="flex items-center gap-1.5 text-xs font-extrabold text-[#8a5a00]">
-                  <Crown className="size-4" aria-hidden /> Layout premium
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {GRUPOS_PREMIUM.map((g) => (
-                    <Chip key={g} premium on={filtroFundo === g} onClick={() => setFiltroFundo(g)}>
-                      {g}
-                    </Chip>
-                  ))}
-                </div>
-              </div>
+              {GRUPOS_PREMIUM.map((g) => (
+                <Chip key={g} premium on={filtroFundo === g} onClick={() => setFiltroFundo(g)}>
+                  {g}
+                </Chip>
+              ))}
               {gruposFundo.filter((g) => !GRUPOS_PREMIUM.includes(g.grupo)).map((g, i) => (
                 <Chip key={g.grupo} on={filtroFundo === g.grupo} cor={corDoGrupo(g.grupo, i + 2)} onClick={() => setFiltroFundo(g.grupo)}>
                   {g.grupo}
