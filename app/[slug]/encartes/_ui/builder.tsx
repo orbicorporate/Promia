@@ -550,7 +550,7 @@ export function EncarteBuilder({
                     <button type="button" onClick={() => setEditing(open ? null : it.productId)} className="min-w-0 flex-1 text-left" aria-expanded={open}>
                       <span className="block truncate text-[15px] font-medium">{p.name}</span>
                       <span className="block truncate text-xs text-[var(--ink-3)]">
-                        {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : naFila(p) ? <span className="font-semibold text-[var(--ink-2)]">Buscando foto · </span> : paraConfirmar(p) ? <span className="font-semibold text-[#b45309]">Confira a foto · </span> : null}
+                        {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : naFila(p) ? <span className="font-semibold text-[var(--ink-2)]">Buscando foto · </span> : paraConfirmar(p) ? <AvisoFoto>Confira a foto</AvisoFoto> : null}
                         {it.oldPrice ? `de R$ ${money(it.oldPrice)} · ` : ""}
                         {it.label ?? ""}
                         {it.limitQty ? ` · limite ${it.limitQty}` : ""}
@@ -1424,6 +1424,19 @@ export function EncarteBuilder({
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// selo de atenção: bolinha que pulsa + texto, para a foto que precisa de confirmação
+function AvisoFoto({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mr-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#fde8c4] py-0.5 pl-1.5 pr-2.5 align-middle text-[11px] font-bold text-[#8a4b04] ring-1 ring-[#f0c77a]">
+      <span className="relative flex size-2" aria-hidden>
+        <span className="absolute inline-flex size-full rounded-full bg-[#e8890c] opacity-60 motion-safe:animate-ping" />
+        <span className="relative inline-flex size-2 rounded-full bg-[#e8890c]" />
+      </span>
+      {children}
+    </span>
   );
 }
 
