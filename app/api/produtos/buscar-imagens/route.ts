@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
   const marketId = body.marketId as string;
 
   const admin = createAdminClient();
+  // palpites: só aplica as opções que já estavam guardadas, sem nova busca
+  if (body.palpites === true) {
+    return NextResponse.json({ applied: await aplicarPalpites(admin, marketId) });
+  }
   // refazer: devolve para a fila os produtos que já foram buscados e ficaram sem foto
   if (body.refazer === true) {
     // primeiro aproveita as opções que já estavam guardadas (palpite aplicado direto)

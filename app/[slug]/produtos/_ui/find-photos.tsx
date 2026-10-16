@@ -87,6 +87,22 @@ export function FindPhotos({ marketId, pending, semFoto = 0, auto = true }: { ma
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto, pending]);
 
+  // sem fila, mas com produto sem foto: aplica sozinho as opções que a busca já tinha achado
+  const palpitou = useRef(false);
+  useEffect(() => {
+    if (!auto || pending > 0 || semFoto === 0 || palpitou.current) return;
+    palpitou.current = true;
+    fetch("/api/produtos/buscar-imagens", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId, palpites: true }) })
+      .then((r) => r.json().catch(() => ({})))
+      .then((d) => {
+        if (d?.applied > 0) {
+          toast.success(`${d.applied} fotos aplicadas das opções que a busca já tinha achado. Confira as marcadas para revisar.`);
+          router.refresh();
+        }
+      })
+      .catch(() => {});
+  }, [auto, pending, semFoto, marketId, router]);
+
   if (!pending && !running && !semFoto) return null;
   const pct = total ? Math.round((done / total) * 100) : 0;
 
