@@ -1,4 +1,4 @@
-import { limparRodapeTexto, isRodapeCor, isRodapeEstilo, RODAPE_PADRAO, type RodapeOpcoes } from "./rodape";
+import { limparRodapeTexto, limparCampo, isRodapeCor, isRodapeEstilo, RODAPE_CAMPO_MAX, RODAPE_PADRAO, RODAPE_PARTES, RODAPE_PARTE_LETRA, type RodapeOpcoes } from "./rodape";
 import { limparRotulo, isValidadeAlinhamento, isValidadeCor, isValidadeEstilo, isValidadePosicao, VALIDADE_PADRAO, type ValidadeOpcoes } from "./validade";
 
 // Ajustes do encarte que não têm coluna própria no banco ficam gravados junto
@@ -38,6 +38,15 @@ export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
       } catch {
         /* ignora texto mal formado */
       }
+    } else if (t[0] === "n" || t[0] === "w" || t[0] === "i" || t[0] === "h") {
+      const campo = ({ n: "nome", w: "whatsapp", i: "instagram", h: "horario" } as const)[t[0]];
+      try {
+        out.rodape[campo] = limparCampo(decodeURIComponent(v), RODAPE_CAMPO_MAX[campo]);
+      } catch {
+        /* ignora texto mal formado */
+      }
+    } else if (t[0] === "m") {
+      out.rodape.ocultar = RODAPE_PARTES.filter((p) => v.includes(RODAPE_PARTE_LETRA[p]));
     } else if (t[0] === "t") {
       try {
         out.validade.rotulo = limparRotulo(decodeURIComponent(v));
@@ -66,6 +75,12 @@ export function juntarEmblema(slug: string | null, escala: number, validade: Par
   if (rod.cor !== RODAPE_PADRAO.cor) partes.push(`k${rod.cor}`);
   const texto = limparRodapeTexto(rod.texto);
   if (texto) partes.push(`x${encodeURIComponent(texto).replace(/~/g, "%7E")}`);
+  for (const [letra, campo] of [["n", "nome"], ["w", "whatsapp"], ["i", "instagram"], ["h", "horario"]] as const) {
+    const val2 = limparCampo(rod[campo], RODAPE_CAMPO_MAX[campo]);
+    if (val2) partes.push(`${letra}${encodeURIComponent(val2).replace(/~/g, "%7E")}`);
+  }
+  const ocultas = RODAPE_PARTES.filter((p) => rod.ocultar?.includes(p));
+  if (ocultas.length) partes.push(`m${ocultas.map((p) => RODAPE_PARTE_LETRA[p]).join("")}`);
   if (!slug && partes.length === 0) return null;
   return [slug ?? "", ...partes].join("~");
 }

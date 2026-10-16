@@ -9,6 +9,8 @@ import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } fro
 import { EncarteBuilder, type BuilderInitial } from "../../_ui/builder";
 import { loadBuilderData } from "../../_ui/builder-data";
 import { lerEmblema } from "@/lib/encarte/emblema-escala";
+import { lerRodapePadrao } from "@/lib/server/rodape-padrao";
+import { mercadoRodapeInfo } from "@/lib/encarte/rodape";
 
 export const metadata = { title: "Editar encarte" };
 
@@ -25,7 +27,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     .maybeSingle();
   if (!t) notFound();
 
-  const data = await loadBuilderData(market.id);
+  const [data, rodapePadrao] = await Promise.all([loadBuilderData(market.id), lerRodapePadrao(admin, market.id)]);
   const known = new Set(data.catalog.map((p) => p.id));
   const initial: BuilderInitial = {
     id: t.id,
@@ -71,6 +73,8 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
         themes={data.themes}
         suggestedThemeKeys={data.suggested}
         initial={initial}
+        mercado={mercadoRodapeInfo(market)}
+        rodapePadrao={rodapePadrao}
         today={data.today}
       />
     </div>
