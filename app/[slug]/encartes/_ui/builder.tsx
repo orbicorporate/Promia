@@ -27,6 +27,7 @@ import {
   Minus,
   Plus,
   Undo2,
+  Crown,
   Redo2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -50,6 +51,8 @@ import { corDoGrupo, corDoTema } from "./cores-tema";
 import { quandoFitsRange } from "@/lib/emblemas/quando";
 
 const FUNDOS_BASE = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as EncarteFundo[];
+// fundos de arte completa: ganham destaque dourado no seletor
+const GRUPOS_PREMIUM = ["Cabeçalhos temáticos", "Semanas e festivais"];
 const GRUPOS_CENARIO: CenarioGrupo[] = ["Palco", "Papel", "Cortinas", "Festas", "Departamentos"];
 
 export type CatalogProduct = {
@@ -1147,9 +1150,24 @@ export function EncarteBuilder({
           <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
           <div className="mt-5 space-y-6">
             <div className="flex flex-wrap gap-x-3 gap-y-3" role="group" aria-label="Filtrar fundos por tag">
-              {["Todos", ...gruposFundo.map((g) => g.grupo)].map((g, i) => (
-                <Chip key={g} on={filtroFundo === g} cor={g === "Todos" ? "#b3122f" : corDoGrupo(g, i)} onClick={() => setFiltroFundo(g)}>
-                  {g}
+              <Chip on={filtroFundo === "Todos"} cor="#b3122f" onClick={() => setFiltroFundo("Todos")}>
+                Todos
+              </Chip>
+              <div className="flex basis-full flex-col gap-2 rounded-2xl bg-gradient-to-br from-[#fff3c4]/90 to-[#ffe9a8]/40 p-3 ring-1 ring-[#e0a500]/50 sm:basis-auto">
+                <span className="flex items-center gap-1.5 text-xs font-extrabold text-[#8a5a00]">
+                  <Crown className="size-4" aria-hidden /> Layout premium
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {GRUPOS_PREMIUM.map((g) => (
+                    <Chip key={g} premium on={filtroFundo === g} onClick={() => setFiltroFundo(g)}>
+                      {g}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+              {gruposFundo.filter((g) => !GRUPOS_PREMIUM.includes(g.grupo)).map((g, i) => (
+                <Chip key={g.grupo} on={filtroFundo === g.grupo} cor={corDoGrupo(g.grupo, i + 2)} onClick={() => setFiltroFundo(g.grupo)}>
+                  {g.grupo}
                 </Chip>
               ))}
             </div>
@@ -1164,8 +1182,11 @@ export function EncarteBuilder({
             {gruposFundoVisiveis.length === 0 && <p className="text-sm text-[var(--ink-3)]">Nenhum fundo com esse nome. Limpe a busca ou escolha outra tag.</p>}
             {gruposFundoVisiveis.map(({ grupo, ids }) => (
               <div key={grupo} className="space-y-3">
-                <p className="text-sm font-semibold text-[var(--ink-2)]">{grupo}</p>
-                <div className="rolagem -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+                <p className={cn("flex items-center gap-1.5 text-sm font-semibold", GRUPOS_PREMIUM.includes(grupo) ? "text-[#8a5a00]" : "text-[var(--ink-2)]")}>
+                  {GRUPOS_PREMIUM.includes(grupo) && <Crown className="size-4" aria-hidden />}
+                  {grupo}
+                </p>
+                <div className={cn("-mx-1 flex gap-3 px-1 pb-2", filtroFundo === grupo ? "flex-wrap" : "rolagem overflow-x-auto")}>{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
               </div>
             ))}
           </div>
@@ -1614,19 +1635,28 @@ function AvisoFoto({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Chip({ on, onClick, children, cor }: { on: boolean; onClick: () => void; children: React.ReactNode; cor?: string }) {
+function Chip({ on, onClick, children, cor, premium }: { on: boolean; onClick: () => void; children: React.ReactNode; cor?: string; premium?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      style={on && cor ? { background: cor } : undefined}
+      style={premium && on ? { backgroundImage: "linear-gradient(135deg,#fde68a,#f5b52a 55%,#d98a06)" } : on && cor ? { background: cor } : undefined}
       className={cn(
         "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-[13px] font-medium ring-1 transition active:scale-95",
-        on ? (cor ? "text-white ring-transparent" : "bg-[var(--ink)] text-[var(--bg)] ring-transparent") : "bg-[var(--glass-strong)] text-[var(--ink-2)] ring-[var(--line)] hover:text-[var(--ink)]"
+        premium
+          ? on
+            ? "font-bold text-[#4a2e00] shadow-[0_8px_18px_-8px_rgba(217,138,6,0.9)] ring-transparent"
+            : "bg-white/90 text-[#6b4300] ring-[#e0a500]/60 hover:bg-[#fff7df]"
+          : on
+            ? cor
+              ? "text-white ring-transparent"
+              : "bg-[var(--ink)] text-[var(--bg)] ring-transparent"
+            : "bg-[var(--glass-strong)] text-[var(--ink-2)] ring-[var(--line)] hover:text-[var(--ink)]"
       )}
     >
-      {cor && !on ? <span className="size-2.5 shrink-0 rounded-full" style={{ background: cor }} aria-hidden /> : null}
+      {premium ? <Crown className="size-4 shrink-0" aria-hidden /> : null}
+      {cor && !on && !premium ? <span className="size-2.5 shrink-0 rounded-full" style={{ background: cor }} aria-hidden /> : null}
       {children}
     </button>
   );
