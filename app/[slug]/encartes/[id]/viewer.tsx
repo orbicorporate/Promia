@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronLeft, ChevronRight, Download, FileDown, Share2, Pencil, Copy, Trash2, Check, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileDown, Scissors, Share2, Pencil, Copy, Trash2, Check, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button, ButtonLink, Sheet, cn } from "@/components/ui";
 import { plural } from "@/lib/plural";
@@ -207,6 +207,12 @@ export function EncarteViewer({
           className="vidro flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
         >
           <FileDown className="size-5" /> Baixar PDF para imprimir
+        </a>
+        <a
+          href={`/api/encartes/${id}/pdf?grafica=1&v=${encodeURIComponent(version)}`}
+          className="vidro flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl px-3 py-2 text-center font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
+        >
+          <Scissors className="size-5 shrink-0" /> PDF para gráfica (sangria 3 mm e marcas de corte)
         </a>
         <a
           href={`/api/encartes/${id}/cartazes`}

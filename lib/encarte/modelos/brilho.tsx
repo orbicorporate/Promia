@@ -465,7 +465,8 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, dados
   const { mostrarSelo, mostrarNome } = dados;
   // sem o selo, o texto encosta na borda em vez de deixar o vão
   const ml = (n: number) => (mostrarSelo ? r(n * s) : 0);
-  const pad = safeBottom ? r(safeBottom * 0.55) : 0;
+  // respiro embaixo: o texto do rodapé não encosta na borda da página
+  const pad = Math.max(safeBottom ? r(safeBottom * 0.55) : 0, r(22 * s));
   const logo = (size: number, borda: string, fundo: string, tinta: string) =>
     !mostrarSelo ? null : logoUrl ? (
       <div style={{ ...row, width: size, height: size, borderRadius: size, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${borda}`, flexShrink: 0 }}>
@@ -631,7 +632,8 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const vRotulo = resolverValidade(data.validade).rotulo;
   const vp = vpBase && vRotulo ? { ...vpBase, rotulo: vRotulo.toUpperCase() } : vpBase;
 
-  const padX = r((cfg.padX ?? 36) * s);
+  // margens laterais com respiro (o desenho nunca encosta na borda, e sobra espaço para a sangria da gráfica)
+  const padX = r((cfg.padX ?? 36) * 1.35 * s);
   const tight = !!cfg.aspect;
   const gap = r((tight ? 14 : (cfg.gap ?? 24)) * s);
   // fundo de arte: o cabeçalho e o rodapé são imagens, o corpo é degradê
