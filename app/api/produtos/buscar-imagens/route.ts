@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJson, requireMarketAccess } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapWithConcurrency } from "@/lib/ai/imageSearch";
-import { outcomeToUpdate, resolveProductPhoto } from "@/lib/server/photos";
+import { aplicarPalpites, outcomeToUpdate, resolveProductPhoto } from "@/lib/server/photos";
 import { planSearches, type SearchPlan } from "@/lib/photos/plan";
 import { serperEnabled } from "@/lib/photos/serper";
 import { recordUsage, remainingToday } from "@/lib/ai/usage";
@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient();
   // refazer: devolve para a fila os produtos que já foram buscados e ficaram sem foto
   if (body.refazer === true) {
+    // primeiro aproveita as opções que já estavam guardadas (palpite aplicado direto)
+    const aplicadas = await aplicarPalpites(admin, marketId);
     const { data: voltaram, error: refazerError } = await admin
       .from("products")
       .update({ image_status: "pendente", image_claimed_at: null, image_candidates: null })
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
       console.error("[buscar-imagens] refazer", refazerError);
       return NextResponse.json({ error: "Não consegui recolocar os produtos na fila." }, { status: 500 });
     }
-    return NextResponse.json({ requeued: voltaram?.length ?? 0 });
+    return NextResponse.json({ requeued: voltaram?.length ?? 0, applied: aplicadas });
   }
   const countPending = async () => {
     const { count } = await admin

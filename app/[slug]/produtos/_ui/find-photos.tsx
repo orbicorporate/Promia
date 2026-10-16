@@ -28,7 +28,9 @@ export function FindPhotos({ marketId, pending, semFoto = 0, auto = true }: { ma
       if (!res.ok || !data.requeued) {
         setRunning(false);
         if (!res.ok) toast.error(data.error || "Não consegui recolocar na fila.");
+        else if (data.applied) toast.success(`${data.applied} fotos aplicadas das opções já encontradas. Confira as marcadas para revisar.`);
         else toast.message("Nenhum produto para buscar de novo. Os que sobraram pedem foto manual.");
+        router.refresh();
         return;
       }
       setRunning(false);
