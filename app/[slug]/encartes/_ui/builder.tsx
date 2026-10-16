@@ -155,6 +155,8 @@ export function EncarteBuilder({
   const [step, setStep] = useState(0);
   const [verPrevia, setVerPrevia] = useState(false);
   const [grupoEmblema, setGrupoEmblema] = useState("Para agora");
+  const [filtroFundo, setFiltroFundo] = useState("Todos");
+  const [buscaFundo, setBuscaFundo] = useState("");
   const [temaPronto, setTemaPronto] = useState<string | null>(null);
   const [avisoPronto, setAvisoPronto] = useState<string | null>(null); // nome da combinação recém-escolhida
   const [destacarLogo, setDestacarLogo] = useState(false);
@@ -1030,6 +1032,13 @@ export function EncarteBuilder({
     </div>
   );
 
+  const gruposFundo: { grupo: string; ids: (EncarteFundo | null)[] }[] = [{ grupo: "Cabeçalhos temáticos", ids: FUNDOS_ARTE.filter((a) => !a.grupo).map((a) => a.id as EncarteFundo) }, { grupo: "Semanas e festivais", ids: FUNDOS_ARTE.filter((a) => a.grupo === "Semanas e festivais").map((a) => a.id as EncarteFundo) }, { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))];
+  const buscaFundoN = buscaFundo.trim().toLowerCase();
+  const gruposFundoVisiveis = gruposFundo
+    .filter((g) => filtroFundo === "Todos" || g.grupo === filtroFundo)
+    .map((g) => ({ grupo: g.grupo, ids: buscaFundoN ? g.ids.filter((f) => (f ? FUNDO_LABELS[f] : "Do estilo").toLowerCase().includes(buscaFundoN)) : g.ids }))
+    .filter((g) => g.ids.length > 0);
+
   const fundoPanel = (
     <div className="space-y-5">
       <p className="text-sm text-[var(--ink-2)]">A prévia mostra onde cada uma das 12 caixas vai ficar. Os produtos entram nos próximos passos.</p>
@@ -1037,7 +1046,23 @@ export function EncarteBuilder({
           <details open>
           <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
           <div className="mt-3 space-y-3">
-            {[{ grupo: "Cabeçalhos temáticos", ids: FUNDOS_ARTE.filter((a) => !a.grupo).map((a) => a.id as EncarteFundo) }, { grupo: "Semanas e festivais", ids: FUNDOS_ARTE.filter((a) => a.grupo === "Semanas e festivais").map((a) => a.id as EncarteFundo) }, { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))].map(({ grupo, ids }) => (
+            <div className="rolagem -mx-1 flex gap-2.5 overflow-x-auto px-1 py-1.5" role="group" aria-label="Filtrar fundos por tag">
+              {["Todos", ...gruposFundo.map((g) => g.grupo)].map((g, i) => (
+                <Chip key={g} on={filtroFundo === g} cor={g === "Todos" ? "#b3122f" : corDoGrupo(g, i)} onClick={() => setFiltroFundo(g)}>
+                  {g}
+                </Chip>
+              ))}
+            </div>
+            <input
+              type="search"
+              value={buscaFundo}
+              onChange={(e) => setBuscaFundo(e.target.value)}
+              placeholder="Buscar fundo pelo nome"
+              aria-label="Buscar fundo pelo nome"
+              className="h-11 w-full rounded-full bg-white/70 px-4 text-sm ring-1 ring-[var(--line)] outline-none transition placeholder:text-[var(--ink-3)] focus:ring-2 focus:ring-[#b3122f]/60"
+            />
+            {gruposFundoVisiveis.length === 0 && <p className="text-sm text-[var(--ink-3)]">Nenhum fundo com esse nome. Limpe a busca ou escolha outra tag.</p>}
+            {gruposFundoVisiveis.map(({ grupo, ids }) => (
               <div key={grupo} className="space-y-1.5">
                 <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
                 <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
