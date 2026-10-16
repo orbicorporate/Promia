@@ -368,6 +368,20 @@ export function EncarteBuilder({
     [marketId, previewKey, step]
   );
 
+  // ao abrir: aplica sozinho, no catálogo todo, as fotos que a busca já tinha achado (sem custo)
+  useEffect(() => {
+    let vivo = true;
+    fetch("/api/produtos/buscar-imagens", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId, palpites: true }) })
+      .then((r) => r.json().catch(() => ({})))
+      .then((d) => {
+        if (vivo && d?.applied > 0) router.refresh();
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [marketId, router]);
+
   useEffect(() => {
     const t = setTimeout(() => loadPreview(previewPage), 120);
     return () => clearTimeout(t);
