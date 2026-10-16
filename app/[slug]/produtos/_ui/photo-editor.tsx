@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Camera, Link2, RotateCw, ImageOff, Check, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -70,6 +70,26 @@ export function PhotoEditor({
   const [termo, setTermo] = useState(product.name);
   const [achadas, setAchadas] = useState<string[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const tentouPalpite = useRef(false);
+
+  // já tem opções achadas e o quadro está vazio: coloca a primeira que abrir, a pessoa só confirma
+  useEffect(() => {
+    const opcoes = (product.image_candidates ?? []).filter((c) => typeof c === "string");
+    if (tentouPalpite.current || product.image_url || opcoes.length === 0 || (product.image_status !== "revisar" && product.image_status !== "nao_encontrada")) return;
+    tentouPalpite.current = true;
+    (async () => {
+      for (const u of opcoes.slice(0, 4)) {
+        try {
+          const r = await postFoto<{ imageUrl?: string; resto?: string[] }>(product.id, { acao: "palpite", url: u });
+          onChange({ image_url: r.imageUrl ?? null, image_status: "revisar", image_candidates: r.resto ?? null });
+          return;
+        } catch {
+          /* tenta a próxima */
+        }
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id, product.image_url]);
   const candidates = achadas ?? (product.image_candidates ?? []).filter((c) => c !== product.image_url).slice(0, 6);
 
   async function run(key: string, fn: () => Promise<void>) {
@@ -134,8 +154,25 @@ export function PhotoEditor({
           <Button size="sm" variant="vidro" icon={<Camera className="size-4" />} loading={busy === "upload"} onClick={() => fileRef.current?.click()}>
             Tirar ou enviar foto
           </Button>
-          <Button size="sm" variant="vidro" icon={<Search className="size-4" />} onClick={() => setShowBusca((v) => !v)}>
-            Buscar por outro nome
+          <Button
+            size="sm"
+            variant="rosa"
+            icon={<Search className="size-4" />}
+            loading={busy === "pesquisar"}
+            onClick={() => {
+              const abrir = !showBusca;
+              setShowBusca(abrir);
+              // ao abrir já busca com o nome do produto: mais opções sem digitar
+              if (abrir && !achadas) {
+                run("pesquisar", async () => {
+                  const r = await postFoto<{ imagens: string[] }>(product.id, { acao: "pesquisar", termo: termo.trim() || product.name });
+                  setAchadas(r.imagens);
+                  if (r.imagens.length === 0) toast.message("Nada encontrado. Tente outras palavras no campo.");
+                });
+              }
+            }}
+          >
+            Mais opções de foto
           </Button>
           <Button size="sm" variant="vidro" icon={<Link2 className="size-4" />} onClick={() => setShowUrl((v) => !v)}>
             Colar link
@@ -177,7 +214,7 @@ export function PhotoEditor({
 
       {product.image_status === "nao_encontrada" && !showBusca && !achadas && (
         <p className="text-sm text-[var(--ink-2)]">
-          Não achei uma foto que desse para confiar. Toque em <span className="font-medium">Buscar por outro nome</span> e digite, por exemplo, &quot;bife de contrafilé cru&quot;.
+          Não achei uma foto que desse para confiar. Toque em <span className="font-medium">Mais opções de foto</span> e, se precisar, digite outro nome, por exemplo, &quot;bife de contrafilé cru&quot;.
         </p>
       )}
 
