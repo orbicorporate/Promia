@@ -68,7 +68,7 @@ export async function resolveProductPhoto(admin: Admin, marketId: string, p: Pho
     return { status: "revisar", sourceUrl: found.sourceUrl, candidates: [found.imageUrl, ...found.candidates], usedAi: true };
   }
   // sem confirmação: a primeira opção que abrir entra como palpite, para o dono confirmar
-  for (const url of found.candidates.slice(0, 4)) {
+  for (const url of found.candidates.slice(0, 8)) {
     const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, url);
     if (stored) return { status: "revisar", imageUrl: stored.url, sourceUrl: url, candidates: found.candidates.filter((c) => c !== url), usedAi: true };
   }
@@ -113,7 +113,7 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
   // nenhuma foi confirmada: junta as opções e aplica a melhor como palpite,
   // para o produto nunca ficar sem imagem; o dono confirma ou troca
   const merged = [...new Set(outcomes.flatMap((o) => ("candidates" in o ? o.candidates : [])))].slice(0, 8);
-  for (const url of merged.slice(0, 4)) {
+  for (const url of merged.slice(0, 8)) {
     const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, url);
     if (stored) return { status: "revisar", imageUrl: stored.url, sourceUrl: url, candidates: merged.filter((c) => c !== url).slice(0, 6), usedAi: true };
   }
@@ -256,4 +256,40 @@ export async function forgetAiPhoto(admin: Admin, names: (string | null | undefi
   if (!keys.length) return;
   const { error } = await admin.from("photo_name_bank").delete().in("key", keys).eq("source", "ia").eq("image_url", imageUrl);
   if (error) console.error("[photos] esquecer foto da IA", error);
+}
+
+// Produtos que já têm opções guardadas mas ficaram sem foto aplicada (busca
+// antiga, ou o site bloqueou a cópia na hora): aplica a primeira opção que abrir,
+// como palpite para confirmar. Sem nova busca, sem custo de IA.
+export async function aplicarPalpites(admin: Admin, marketId: string): Promise<number> {
+  const { data: rows } = await admin
+    .from("products")
+    .select("id, image_candidates")
+    .eq("market_id", marketId)
+    .eq("active", true)
+    .is("image_url", null)
+    .in("image_status", ["revisar", "nao_encontrada"])
+    .not("image_candidates", "is", null)
+    .limit(60);
+  let aplicadas = 0;
+  const lista = (rows ?? []).filter((r) => Array.isArray(r.image_candidates) && r.image_candidates.length > 0);
+  for (let i = 0; i < lista.length; i += 6) {
+    await Promise.all(
+      lista.slice(i, i + 6).map(async (r) => {
+        const cands = (r.image_candidates as unknown[]).filter((c): c is string => typeof c === "string").slice(0, 8);
+        for (const url of cands) {
+          const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${r.id}`, url);
+          if (!stored) continue;
+          const { error } = await admin
+            .from("products")
+            .update({ image_url: stored.url, image_status: "revisar", image_origin: "web", image_source_url: url, image_candidates: cands.filter((c) => c !== url).slice(0, 6) as Json })
+            .eq("id", r.id)
+            .eq("market_id", marketId);
+          if (!error) aplicadas++;
+          return;
+        }
+      })
+    );
+  }
+  return aplicadas;
 }
