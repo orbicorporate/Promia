@@ -5,6 +5,7 @@ import { todayInSaoPaulo } from "@/lib/dates";
 import { ButtonLink, EmptyState } from "@/components/ui";
 import { EncarteThumb } from "../_ui/encarte-thumb";
 import { plural } from "@/lib/plural";
+import { ExcluirEncarte } from "../_ui/excluir-encarte";
 
 export const metadata = { title: "Encartes" };
 
@@ -61,7 +62,10 @@ function Grid({ title, slug, items }: { title: string; slug: string; items: Para
       <h2 className="text-lg font-bold">{title}</h2>
       <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.map((t) => (
-          <EncarteThumb key={t.id} slug={slug} encarte={t} />
+          <div key={t.id} className="group relative">
+            <EncarteThumb slug={slug} encarte={t} />
+            <ExcluirEncarte id={t.id} nome={t.name} />
+          </div>
         ))}
       </div>
     </section>
