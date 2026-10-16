@@ -1045,8 +1045,8 @@ export function EncarteBuilder({
         <Glass className="p-4 sm:p-5">
           <details open>
           <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
-          <div className="mt-3 space-y-3">
-            <div className="rolagem -mx-1 flex gap-2.5 overflow-x-auto px-1 py-1.5" role="group" aria-label="Filtrar fundos por tag">
+          <div className="mt-5 space-y-6">
+            <div className="flex flex-wrap gap-x-3 gap-y-3" role="group" aria-label="Filtrar fundos por tag">
               {["Todos", ...gruposFundo.map((g) => g.grupo)].map((g, i) => (
                 <Chip key={g} on={filtroFundo === g} cor={g === "Todos" ? "#b3122f" : corDoGrupo(g, i)} onClick={() => setFiltroFundo(g)}>
                   {g}
@@ -1059,13 +1059,13 @@ export function EncarteBuilder({
               onChange={(e) => setBuscaFundo(e.target.value)}
               placeholder="Buscar fundo pelo nome"
               aria-label="Buscar fundo pelo nome"
-              className="h-11 w-full rounded-full bg-white/70 px-4 text-sm ring-1 ring-[var(--line)] outline-none transition placeholder:text-[var(--ink-3)] focus:ring-2 focus:ring-[#b3122f]/60"
+              className="h-12 w-full rounded-full bg-white/70 px-5 text-sm ring-1 ring-[var(--line)] outline-none transition placeholder:text-[var(--ink-3)] focus:ring-2 focus:ring-[#b3122f]/60"
             />
             {gruposFundoVisiveis.length === 0 && <p className="text-sm text-[var(--ink-3)]">Nenhum fundo com esse nome. Limpe a busca ou escolha outra tag.</p>}
             {gruposFundoVisiveis.map(({ grupo, ids }) => (
-              <div key={grupo} className="space-y-1.5">
-                <p className="text-xs font-semibold text-[var(--ink-3)]">{grupo}</p>
-                <div className="rolagem -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+              <div key={grupo} className="space-y-3">
+                <p className="text-sm font-semibold text-[var(--ink-2)]">{grupo}</p>
+                <div className="rolagem -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
               </div>
             ))}
           </div>
