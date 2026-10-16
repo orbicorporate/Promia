@@ -22,6 +22,22 @@ export async function POST(req: NextRequest) {
   const marketId = body.marketId as string;
 
   const admin = createAdminClient();
+  // refazer: devolve para a fila os produtos que já foram buscados e ficaram sem foto
+  if (body.refazer === true) {
+    const { data: voltaram, error: refazerError } = await admin
+      .from("products")
+      .update({ image_status: "pendente", image_claimed_at: null, image_candidates: null })
+      .eq("market_id", marketId)
+      .eq("active", true)
+      .eq("image_status", "nao_encontrada")
+      .is("image_url", null)
+      .select("id");
+    if (refazerError) {
+      console.error("[buscar-imagens] refazer", refazerError);
+      return NextResponse.json({ error: "Não consegui recolocar os produtos na fila." }, { status: 500 });
+    }
+    return NextResponse.json({ requeued: voltaram?.length ?? 0 });
+  }
   const countPending = async () => {
     const { count } = await admin
       .from("products")

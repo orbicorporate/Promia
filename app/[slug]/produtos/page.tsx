@@ -107,7 +107,7 @@ export default async function ProdutosPage({ params, searchParams }: PageProps<"
         <ImportButton marketId={market.id} openInitially={sp.importar === "1"} />
       </header>
 
-      <FindPhotos marketId={market.id} pending={pendentes.count ?? 0} />
+      <FindPhotos marketId={market.id} pending={pendentes.count ?? 0} semFoto={semFoto.count ?? 0} />
 
       <div className="sticky top-[68px] z-20 -mx-1 space-y-3 px-1 py-1 lg:top-2">
         <SearchBox initial={q} />
