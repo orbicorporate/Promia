@@ -3,7 +3,7 @@ import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, specEscalada } from "../formats";
 import { clampEscala } from "../emblema-escala";
-import { resolverRodape, RODAPE_COR_HEX, type RodapeOpcoes } from "../rodape";
+import { resolverRodape, rodapeDados, RODAPE_COR_HEX, type RodapeDados, type RodapeOpcoes } from "../rodape";
 import { resolverValidade } from "../validade";
 import { alturaValidade, ValidadeEl } from "./validade-el";
 import { getPage } from "../paginate";
@@ -436,9 +436,7 @@ type RodapeProps = {
   d: number;
   t: BT;
   logoUrl?: string | null;
-  nome: string;
-  addr: string;
-  contact: string;
+  dados: RodapeDados;
   opcoes: RodapeOpcoes;
 };
 
@@ -458,19 +456,26 @@ function paletaRodape(t: BT, cor: RodapeOpcoes["cor"]) {
   };
 }
 
-function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome, addr, contact, opcoes }: RodapeProps): ReactElement {
+function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, dados, opcoes }: RodapeProps): ReactElement {
   const p = paletaRodape(t, opcoes.cor);
-  const linha2 = opcoes.texto || addr;
+  const nome = dados.nome;
+  // endereço e horário dividem a mesma linha: o rodapé não ganha altura
+  const linha2 = [dados.linha2, dados.horario].filter(Boolean).join("   ·   ");
+  const contact = dados.contato;
+  const { mostrarSelo, mostrarNome } = dados;
+  // sem o selo, o texto encosta na borda em vez de deixar o vão
+  const ml = (n: number) => (mostrarSelo ? r(n * s) : 0);
   const pad = safeBottom ? r(safeBottom * 0.55) : 0;
   const logo = (size: number, borda: string, fundo: string, tinta: string) =>
-    logoUrl ? (
+    !mostrarSelo ? null : logoUrl ? (
       <div style={{ ...row, width: size, height: size, borderRadius: size, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${borda}`, flexShrink: 0 }}>
         <Img src={logoUrl} w={size * 0.82} h={size * 0.82} style={{ objectFit: "contain" }} />
       </div>
     ) : (
       <Selo kind="festonado" w={size} h={size} fill={fundo} edge={borda} edgeW={3 * s} lines={[{ text: marketInitials(nome), variant: "lilita400", font: FONT_LILITA, color: tinta }]} />
     );
-  const nomeEl = (cor: string, size = 34, align: "flex-start" | "center" | "flex-end" = "flex-start") => (
+  const nomeEl = (cor: string, size = 34, align: "flex-start" | "center" | "flex-end" = "flex-start") =>
+    !mostrarNome ? null : (
     <div style={{ display: "flex", justifyContent: align, fontFamily: FONT_ANTON, fontSize: r(size * s), color: cor, letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{nome.toUpperCase()}</div>
   );
   // lista com chave (e não fragmento): o Satori só empilha filhos de verdade
@@ -487,7 +492,7 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
     return (
       <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundColor: "#FFFFFF", borderTop: `${r(7 * s)}px solid ${cor}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: pad }}>
         {logo(d, cor, cor, "#FFFFFF")}
-        <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+        <div style={{ ...col, marginLeft: ml(20), flex: 1 }}>
           {nomeEl(cor)}
           {textos(t.cardMuted, cor)}
         </div>
@@ -498,9 +503,9 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
     const h = r(Math.min(footerH - pad - 16 * s, 96 * s));
     return (
       <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH - pad, alignItems: "center", justifyContent: "center" }}>
-        <div style={{ ...row, alignItems: "center", height: h, padding: `0 ${r(34 * s)}px 0 ${r(10 * s)}px`, borderRadius: h, backgroundColor: p.bg, border: `${r(3 * s)}px solid ${p.acc}`, boxShadow: `0 ${r(8 * s)}px ${r(22 * s)}px rgba(0,0,0,0.4)` }}>
+        <div style={{ ...row, alignItems: "center", height: h, padding: `0 ${r(34 * s)}px 0 ${mostrarSelo ? r(10 * s) : r(34 * s)}px`, borderRadius: h, backgroundColor: p.bg, border: `${r(3 * s)}px solid ${p.acc}`, boxShadow: `0 ${r(8 * s)}px ${r(22 * s)}px rgba(0,0,0,0.4)` }}>
           {logo(r(h - 16 * s), p.acc, p.acc, p.onAcc)}
-          <div style={{ ...col, marginLeft: r(18 * s) }}>
+          <div style={{ ...col, marginLeft: ml(18) }}>
             {nomeEl(p.on, 30)}
             {textos(p.sub, p.hi)}
           </div>
@@ -512,7 +517,7 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
     return (
       <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${p.bg}, ${p.bgB})`, borderTop: `${r(5 * s)}px solid ${p.acc}`, alignItems: "center", justifyContent: "center", padding: `0 ${padX}px`, paddingBottom: pad }}>
         {logo(d, p.acc, p.acc, p.onAcc)}
-        <div style={{ ...col, marginLeft: r(22 * s), alignItems: "center" }}>
+        <div style={{ ...col, marginLeft: ml(22), alignItems: "center" }}>
           {nomeEl(p.on, 34, "center")}
           {textos(p.sub, p.hi, "center")}
         </div>
@@ -525,7 +530,7 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
       <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundColor: p.bg }}>
         <div style={{ ...row, width: r(W * 0.44), height: footerH, backgroundColor: esq, alignItems: "center", paddingLeft: padX, paddingBottom: pad, overflow: "hidden" }}>
           {logo(r(d * 0.9), p.bg, p.bg, p.on)}
-          <div style={{ ...col, marginLeft: r(16 * s) }}>{nomeEl(p.onAcc, 28)}</div>
+          <div style={{ ...col, marginLeft: ml(16) }}>{nomeEl(p.onAcc, 28)}</div>
         </div>
         <div style={{ ...col, flex: 1, height: footerH, justifyContent: "center", alignItems: "flex-end", paddingRight: padX, paddingBottom: pad }}>{textos(p.sub, p.hi, "flex-end")}</div>
       </div>
@@ -536,7 +541,7 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
     return (
       <div style={{ ...row, position: "absolute", left: 0, top: H - footerH - topo, width: W, height: footerH + topo, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.88))`, alignItems: "flex-end", padding: `0 ${padX}px ${r(14 * s) + pad}px` }}>
         {logo(d, "#FFFFFF", p.acc, p.onAcc)}
-        <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+        <div style={{ ...col, marginLeft: ml(20), flex: 1 }}>
           {nomeEl("#FFFFFF")}
           {textos("rgba(255,255,255,0.85)", opcoes.cor === "tema" ? t.gold : opcoes.cor === "preto" ? "#FFFFFF" : p.bg, "flex-start", true)}
         </div>
@@ -547,9 +552,35 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, nome,
   return (
     <div style={{ ...row, position: "absolute", left: 0, top: H - footerH, width: W, height: footerH, backgroundImage: `linear-gradient(180deg, ${p.bg}, ${p.bgB})`, borderTop: `${r(5 * s)}px solid ${p.acc}`, alignItems: "center", padding: `0 ${padX}px`, paddingBottom: pad }}>
       {logo(d, p.acc, p.acc, p.onAcc)}
-      <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
+      <div style={{ ...col, marginLeft: ml(20), flex: 1 }}>
         {nomeEl(p.on)}
         {textos(p.sub, p.hi)}
+      </div>
+    </div>
+  );
+}
+
+// Pílula do rodapé sobre fundos de arte: logo ou selo, nome e uma linha de contato.
+// Na cor "tema" é a pílula escura com borda dourada; nas outras segue a cor escolhida.
+function PilulaArte({ s, t, dados, logoUrl, cor, linha, h }: { s: number; t: BT; dados: RodapeDados; logoUrl?: string | null; cor: RodapeOpcoes["cor"]; linha: string; h: number }): ReactElement {
+  const p = cor === "tema" ? null : paletaRodape(t, cor);
+  const bg = p ? p.bg : "rgba(10,14,22,0.8)";
+  const borda = p ? p.acc : t.gold;
+  const nomeCor = p ? p.on : "#fff";
+  const linhaCor = p ? p.hi : t.gold;
+  const d = r(h - 20 * s);
+  return (
+    <div style={{ ...row, alignItems: "center", height: h, padding: `0 ${r(24 * s)}px 0 ${dados.mostrarSelo ? r(10 * s) : r(24 * s)}px`, borderRadius: h, backgroundColor: bg, border: `${r(2.5 * s)}px solid ${borda}`, boxShadow: `0 ${r(6 * s)}px ${r(16 * s)}px rgba(0,0,0,0.35)` }}>
+      {!dados.mostrarSelo ? null : logoUrl ? (
+        <div style={{ ...row, width: d, height: d, borderRadius: d, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <Img src={logoUrl} w={d * 0.82} h={d * 0.82} style={{ objectFit: "contain" }} />
+        </div>
+      ) : (
+        <Selo kind="festonado" w={d} h={d} fill={borda} edge="#ffffff" edgeW={2 * s} lines={[{ text: marketInitials(dados.iniciaisDe), variant: "lilita400", font: FONT_LILITA, color: p ? p.onAcc : t.ink }]} />
+      )}
+      <div style={{ ...col, marginLeft: dados.mostrarSelo ? r(14 * s) : 0 }}>
+        {dados.mostrarNome ? <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(26 * s), color: nomeCor, letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{dados.nome.toUpperCase()}</div> : null}
+        {linha ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(18 * s), color: linhaCor, whiteSpace: "nowrap", lineHeight: 1.1 }}>{linha}</div> : null}
       </div>
     </div>
   );
@@ -655,8 +686,12 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
     );
   }
 
-  const addr = [data.market.address, data.market.city].filter(Boolean).join(" - ");
-  const contact = [data.market.whatsapp ? `WhatsApp ${data.market.whatsapp}` : null, data.market.phone && !data.market.whatsapp ? data.market.phone : null, data.market.instagram ? `@${data.market.instagram.replace(/^@/, "")}` : null].filter(Boolean).join("   ");
+  const opRodape = resolverRodape(data.rodape);
+  const dados = rodapeDados(data.market, opRodape);
+  const addr = dados.linha2;
+  const contact = dados.contato;
+  // fundos de arte: uma linha só sob o nome (contatos, ou endereço) e, se houver, o horário
+  const linhaArte = [contact || addr, dados.horario].filter(Boolean).join("   ·   ");
   const d = r(84 * s);
 
   const element = (
@@ -711,54 +746,49 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       {/* rodapé */}
       {arte && fino ? (
         <div style={{ ...row, position: "absolute", left: 0, top: H - (spec.safeBottom ? r(spec.safeBottom * 0.6) : 0) - r(16 * s) - r(68 * s), width: W, height: r(68 * s), alignItems: "center", justifyContent: "center" }}>
-          <div style={{ ...row, alignItems: "center", height: r(68 * s), padding: `0 ${r(24 * s)}px 0 ${r(10 * s)}px`, borderRadius: r(34 * s), backgroundColor: "rgba(10,14,22,0.8)", border: `${r(2.5 * s)}px solid ${t.gold}`, boxShadow: `0 ${r(6 * s)}px ${r(16 * s)}px rgba(0,0,0,0.35)` }}>
-            {data.market.logoUrl ? (
-              <div style={{ ...row, width: r(48 * s), height: r(48 * s), borderRadius: r(48 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                <Img src={data.market.logoUrl} w={r(48 * s) * 0.82} h={r(48 * s) * 0.82} style={{ objectFit: "contain" }} />
-              </div>
-            ) : (
-              <Selo kind="festonado" w={r(48 * s)} h={r(48 * s)} fill={t.gold} edge="#ffffff" edgeW={2 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: t.ink }]} />
-            )}
-            <div style={{ ...col, marginLeft: r(14 * s) }}>
-              <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(26 * s), color: "#fff", letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
-              {contact || addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(18 * s), color: t.gold, whiteSpace: "nowrap", lineHeight: 1.1 }}>{contact || addr}</div> : null}
-            </div>
-          </div>
+          <PilulaArte s={s} t={t} dados={dados} logoUrl={data.market.logoUrl} cor={opRodape.cor} linha={linhaArte} h={r(68 * s)} />
         </div>
       ) : arte ? (
-        <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", padding: `0 ${padX}px` }}>
-          {data.market.logoUrl ? (
-            <div style={{ ...row, width: r(60 * s), height: r(60 * s), borderRadius: r(60 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
-              <Img src={data.market.logoUrl} w={r(60 * s) * 0.82} h={r(60 * s) * 0.82} style={{ objectFit: "contain" }} />
-            </div>
-          ) : (
-            <Selo kind="festonado" w={r(60 * s)} h={r(60 * s)} fill={t.gold} edge="#ffffff" edgeW={2.5 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: t.ink }]} />
-          )}
-          <div style={{ ...col, marginLeft: r(18 * s), flex: 1 }}>
-            <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(32 * s), color: arte.faixaClara ? "#1b2a22" : "#fff", letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
-            {contact || addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: arte.faixaClara ? "#1b2a22" : t.gold, whiteSpace: "nowrap", lineHeight: 1.15 }}>{contact || addr}</div> : null}
+        opRodape.estilo === "pilula" ? (
+          <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", justifyContent: "center" }}>
+            <PilulaArte s={s} t={t} dados={dados} logoUrl={data.market.logoUrl} cor={opRodape.cor} linha={linhaArte} h={r(64 * s)} />
           </div>
-        </div>
+        ) : (
+          <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", justifyContent: opRodape.estilo === "centro" ? "center" : "flex-start", padding: `0 ${padX}px` }}>
+            {!dados.mostrarSelo ? null : data.market.logoUrl ? (
+              <div style={{ ...row, width: r(60 * s), height: r(60 * s), borderRadius: r(60 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
+                <Img src={data.market.logoUrl} w={r(60 * s) * 0.82} h={r(60 * s) * 0.82} style={{ objectFit: "contain" }} />
+              </div>
+            ) : (
+              <Selo kind="festonado" w={r(60 * s)} h={r(60 * s)} fill={t.gold} edge="#ffffff" edgeW={2.5 * s} lines={[{ text: marketInitials(dados.iniciaisDe), variant: "lilita400", font: FONT_LILITA, color: t.ink }]} />
+            )}
+            <div style={{ ...col, marginLeft: dados.mostrarSelo ? r(18 * s) : 0, ...(opRodape.estilo === "centro" ? {} : { flex: 1 }) }}>
+              {dados.mostrarNome ? <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(32 * s), color: arte.faixaClara ? "#1b2a22" : "#fff", letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{dados.nome.toUpperCase()}</div> : null}
+              {linhaArte ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: arte.faixaClara ? "#1b2a22" : t.gold, whiteSpace: "nowrap", lineHeight: 1.15 }}>{linhaArte}</div> : null}
+            </div>
+          </div>
+        )
       ) : cfg.rodape === "cerca" ? (
         <>
           <Img src={cercaUri(W, r(70 * s))} w={W} h={r(70 * s)} style={{ position: "absolute", left: 0, top: H - footerH - r(60 * s) }} />
           <div style={{ ...row, position: "absolute", left: 0, top: H - footerH + r(10 * s), width: W, height: footerH - r(10 * s), backgroundColor: "#FFFFFF", alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
-            {data.market.logoUrl ? (
+            {!dados.mostrarSelo ? null : data.market.logoUrl ? (
               <div style={{ ...row, width: d, height: d, borderRadius: d, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.bg1}` }}>
                 <Img src={data.market.logoUrl} w={d * 0.82} h={d * 0.82} style={{ objectFit: "contain" }} />
               </div>
             ) : (
-              <Selo kind="festonado" w={d} h={d} fill={t.bg1} edge={t.gold} edgeW={3 * s} lines={[{ text: marketInitials(data.market.name), variant: "lilita400", font: FONT_LILITA, color: "#FFFFFF" }]} />
+              <Selo kind="festonado" w={d} h={d} fill={t.bg1} edge={t.gold} edgeW={3 * s} lines={[{ text: marketInitials(dados.iniciaisDe), variant: "lilita400", font: FONT_LILITA, color: "#FFFFFF" }]} />
             )}
-            <div style={{ ...col, marginLeft: r(20 * s), flex: 1 }}>
-              <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(34 * s), color: t.bg1, letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{data.market.name.toUpperCase()}</div>
+            <div style={{ ...col, marginLeft: dados.mostrarSelo ? r(20 * s) : 0, flex: 1 }}>
+              {dados.mostrarNome ? <div style={{ display: "flex", fontFamily: FONT_ANTON, fontSize: r(34 * s), color: t.bg1, letterSpacing: 1 * s, whiteSpace: "nowrap", lineHeight: 1.1 }}>{dados.nome.toUpperCase()}</div> : null}
               {addr ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: t.cardMuted, whiteSpace: "nowrap", lineHeight: 1.15 }}>{addr}</div> : null}
+              {dados.horario ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(22 * s), color: t.cardMuted, whiteSpace: "nowrap", lineHeight: 1.15 }}>{dados.horario}</div> : null}
               {contact ? <div style={{ display: "flex", fontFamily: FONT_BALOO, fontWeight: 800, fontSize: r(26 * s), color: t.bg0, whiteSpace: "nowrap", lineHeight: 1.15 }}>{contact}</div> : null}
             </div>
           </div>
         </>
       ) : (
-        <RodapePadrao W={W} H={H} s={s} padX={padX} footerH={footerH} safeBottom={spec.safeBottom} d={d} t={t} logoUrl={data.market.logoUrl} nome={data.market.name} addr={addr} contact={contact} opcoes={resolverRodape(data.rodape)} />
+        <RodapePadrao W={W} H={H} s={s} padX={padX} footerH={footerH} safeBottom={spec.safeBottom} d={d} t={t} logoUrl={data.market.logoUrl} dados={dados} opcoes={opRodape} />
       )}
     </div>
   );

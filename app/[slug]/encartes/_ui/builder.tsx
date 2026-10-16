@@ -34,7 +34,7 @@ import { Glass, Button, Segmented, Input, Field, PriceTag, cn, inputClass } from
 import { capacidadeGrade, FORMATS } from "@/lib/encarte/formats";
 import { resolverValidade, VALIDADE_PADRAO, type ValidadeOpcoes } from "@/lib/encarte/validade";
 import { ValidadePicker } from "./validade-picker";
-import { RodapePicker } from "./rodape-picker";
+import { RodapePicker, type MercadoRodapeInfo } from "./rodape-picker";
 import { resolverRodape, type RodapeOpcoes } from "@/lib/encarte/rodape";
 import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
@@ -128,6 +128,8 @@ export function EncarteBuilder({
   suggestedThemeKeys,
   initial,
   today,
+  mercado,
+  rodapePadrao,
 }: {
   marketId: string;
   slug: string;
@@ -135,6 +137,8 @@ export function EncarteBuilder({
   themes: ThemeOption[];
   suggestedThemeKeys: string[];
   initial: BuilderInitial;
+  mercado: MercadoRodapeInfo;
+  rodapePadrao: Partial<RodapeOpcoes> | null;
   today: string;
 }) {
   const router = useRouter();
@@ -159,6 +163,7 @@ export function EncarteBuilder({
   const [emblemaEscala, setEmblemaEscala] = useState<number>(clampEscala(initial.emblemaEscala));
   const [validade, setValidade] = useState<ValidadeOpcoes>(resolverValidade(initial.validade));
   const [rodape, setRodape] = useState<RodapeOpcoes>(resolverRodape(initial.rodape));
+  const [padraoSalvo, setPadraoSalvo] = useState<Partial<RodapeOpcoes> | null>(rodapePadrao);
   const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
@@ -1131,7 +1136,7 @@ export function EncarteBuilder({
         <Chip on={false} onClick={() => { const s = nextWeekday(today, 6); setValidFrom(s); setValidUntil(addDays(s, 1)); }}>Fim de semana</Chip>
         <Chip on={false} onClick={() => { setValidFrom(""); setValidUntil(""); }}>Sem data</Chip>
       </div>
-      <RodapePicker valor={rodape} onChange={setRodape} endereco="" />
+      <RodapePicker marketId={marketId} valor={rodape} onChange={setRodape} mercado={mercado} arte={!!fundo && FUNDOS_ARTE.some((a) => a.id === fundo)} padraoSalvo={padraoSalvo} onPadraoSalvo={setPadraoSalvo} />
     </Glass>
   );
 

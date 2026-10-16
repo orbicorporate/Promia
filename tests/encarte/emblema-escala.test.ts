@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clampEscala, juntarEmblema, lerEmblema } from "@/lib/encarte/emblema-escala";
-import { limparRodape, RODAPE_PADRAO } from "@/lib/encarte/rodape";
+import { limparRodape, rodapeDados, RODAPE_PADRAO } from "@/lib/encarte/rodape";
 import { limparValidade } from "@/lib/encarte/validade";
 
 describe("tamanho do logo", () => {
@@ -48,7 +48,7 @@ describe("rodapé junto do emblema", () => {
   it("grava estilo, cor e frase, e lê de volta", () => {
     const raw = juntarEmblema("a", 1, {}, { estilo: "pilula", cor: "preto", texto: "Aberto até as 22h ~" });
     expect(raw).toBe(`a~rpilula~kpreto~x${encodeURIComponent("Aberto até as 22h")}`);
-    expect(lerEmblema(raw).rodape).toEqual({ estilo: "pilula", cor: "preto", texto: "Aberto até as 22h" });
+    expect(lerEmblema(raw).rodape).toEqual({ ...RODAPE_PADRAO, estilo: "pilula", cor: "preto", texto: "Aberto até as 22h" });
     expect(lerEmblema("a").rodape).toEqual(RODAPE_PADRAO);
   });
   it("vale também sem logo de campanha", () => {
@@ -59,6 +59,20 @@ describe("rodapé junto do emblema", () => {
     expect(lido.validade.posicao).toBe("base");
     expect(lido.rodape.estilo).toBe("claro");
     expect(juntarEmblema(null, 1)).toBeNull();
+  });
+  it("grava nome, contatos, horário e as partes escondidas", () => {
+    const op = { nome: "Mercado Bom Preço", whatsapp: "(15) 99999-0000", instagram: "bompreco", horario: "Seg a Sáb 8h às 20h", ocultar: ["selo", "endereco"] as ("selo" | "endereco")[] };
+    const raw = juntarEmblema("a", 1, {}, op);
+    expect(raw).toContain("~m" + "se");
+    const lido = lerEmblema(raw).rodape;
+    expect(lido).toMatchObject({ nome: "Mercado Bom Preço", whatsapp: "(15) 99999-0000", instagram: "bompreco", horario: "Seg a Sáb 8h às 20h", ocultar: ["selo", "endereco"] });
+    expect(juntarEmblema("a", 1, {}, {})).toBe("a");
+  });
+  it("monta o que aparece, com o digitado por cima do cadastro", () => {
+    const m = { name: "Mercado X", address: "Rua A, 1", city: "Votorantim", whatsapp: "111", instagram: "@mx" };
+    expect(rodapeDados(m, RODAPE_PADRAO)).toMatchObject({ nome: "Mercado X", linha2: "Rua A, 1 - Votorantim", contato: "WhatsApp 111   @mx", horario: "", mostrarSelo: true });
+    const d = rodapeDados(m, { ...RODAPE_PADRAO, nome: "MX Atacado", whatsapp: "222", ocultar: ["endereco", "selo"], horario: "24h" });
+    expect(d).toMatchObject({ nome: "MX Atacado", linha2: "", contato: "WhatsApp 222   @mx", horario: "24h", mostrarSelo: false });
   });
   it("ignora valores inválidos", () => {
     expect(limparRodape({ estilo: "x", cor: "verde", texto: 5 })).toEqual({ cor: "verde" });

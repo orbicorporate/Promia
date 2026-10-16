@@ -9,6 +9,8 @@ import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } fro
 import { EncarteBuilder, type BuilderInitial, type BuilderItem } from "../_ui/builder";
 import { loadBuilderData } from "../_ui/builder-data";
 import { lerEmblema } from "@/lib/encarte/emblema-escala";
+import { lerRodapePadrao } from "@/lib/server/rodape-padrao";
+import { mercadoRodapeInfo } from "@/lib/encarte/rodape";
 
 export const metadata = { title: "Novo encarte" };
 
@@ -19,7 +21,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const { market } = await requireMarketPage(slug);
   const titulo = one(sp.titulo)?.slice(0, 80);
-  const data = await loadBuilderData(market.id, titulo ? [titulo] : []);
+  const [data, rodapePadrao] = await Promise.all([loadBuilderData(market.id, titulo ? [titulo] : []), lerRodapePadrao(createAdminClient(), market.id)]);
 
   const tema = one(sp.tema);
   const de = one(sp.de);
@@ -39,6 +41,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     modelo: "cx01",
     emblema: "ofertas-da-semana",
     emblemaEscala: 1,
+    rodape: rodapePadrao ?? undefined,
     fundo: null,
     themeKey,
     validFrom,
@@ -111,6 +114,8 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
           themes={data.themes}
           suggestedThemeKeys={data.suggested}
           initial={initial}
+          mercado={mercadoRodapeInfo(market)}
+          rodapePadrao={rodapePadrao}
           today={data.today}
         />
       )}
