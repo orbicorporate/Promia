@@ -74,6 +74,20 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
         return serverError("foto/confirmar", err, "Não consegui usar essa foto. Tente outra.");
       }
     }
+    case "palpite": {
+      // aplica uma opção já achada como palpite para confirmar: não entra no banco compartilhado
+      const url = String(body.url ?? "").trim();
+      if (!/^https:\/\//i.test(url)) return NextResponse.json({ error: "Endereço inválido." }, { status: 400 });
+      const stored = await storeImageFromUrl(admin, base, url);
+      if (!stored) return NextResponse.json({ error: "Não abriu." }, { status: 422 });
+      const resto = (Array.isArray(product.image_candidates) ? (product.image_candidates as unknown[]) : []).filter((c) => typeof c === "string" && c !== url).slice(0, 6);
+      const { error } = await admin
+        .from("products")
+        .update({ image_url: stored.url, image_status: "revisar", image_origin: "web", image_source_url: url, image_candidates: resto.length ? (resto as never) : null, image_claimed_at: null })
+        .eq("id", id);
+      if (error) return serverError("foto/palpite", error, "Não consegui salvar a foto.");
+      return NextResponse.json({ imageUrl: stored.url, resto });
+    }
     case "pesquisar": {
       const termo = String(body.termo ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
       if (termo.length < 2) return NextResponse.json({ error: "Digite o nome do que você quer buscar." }, { status: 400 });

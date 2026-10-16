@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { cn } from "./cn";
 
-type Variant = "primario" | "vidro" | "fantasma" | "perigo" | "ia";
+type Variant = "primario" | "vidro" | "fantasma" | "perigo" | "ia" | "rosa";
 type Size = "md" | "lg" | "sm";
 
 const base =
@@ -16,6 +16,7 @@ const variants: Record<Variant, string> = {
   vidro: "vidro text-[var(--ink)] hover:bg-[var(--glass-strong)]",
   fantasma: "text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--line)]",
   perigo: "bg-[var(--perigo)] text-white hover:brightness-110",
+  rosa: "bg-[#e11d74] text-white shadow-[0_12px_28px_-12px_rgba(225,29,116,0.75)] hover:bg-[#c8135f] hover:-translate-y-px",
   ia: "text-white [background-image:var(--ai)] shadow-[0_12px_30px_-12px_rgba(107,77,255,0.7)] hover:-translate-y-px",
 };
 
