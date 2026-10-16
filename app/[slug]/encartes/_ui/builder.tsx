@@ -1153,7 +1153,7 @@ export function EncarteBuilder({
               <Chip on={filtroFundo === "Todos"} cor="#b3122f" onClick={() => setFiltroFundo("Todos")}>
                 Todos
               </Chip>
-              <div className="flex basis-full flex-col gap-2 rounded-2xl bg-gradient-to-br from-[#fff3c4]/90 to-[#ffe9a8]/40 p-3 ring-1 ring-[#e0a500]/50 sm:basis-auto">
+              <div className="flex basis-full flex-col gap-2 sm:basis-auto">
                 <span className="flex items-center gap-1.5 text-xs font-extrabold text-[#8a5a00]">
                   <Crown className="size-4" aria-hidden /> Layout premium
                 </span>
