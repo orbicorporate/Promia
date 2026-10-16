@@ -553,7 +553,7 @@ export function EncarteBuilder({
                 <Reorder.Item
                   key={it.productId}
                   value={it}
-                  className="rounded-2xl bg-[var(--glass-strong)] ring-1 ring-[var(--line)]"
+                  className="rounded-2xl bg-[var(--glass-strong)] ring-1 ring-[#b3122f]/25"
                   whileDrag={{ scale: 1.02, boxShadow: "0 20px 40px -20px rgba(0,0,0,0.4)" }}
                 >
                   <div className="flex items-center gap-2 p-2 pr-3">
@@ -575,7 +575,7 @@ export function EncarteBuilder({
                       type="button"
                       onClick={() => setEditing(open ? null : it.productId)}
                       aria-pressed={open}
-                      className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold ring-1 transition", open ? "bg-[var(--ink)] text-[var(--bg)] ring-transparent" : "bg-[var(--glass-strong)] ring-[var(--line)] hover:bg-[var(--line)]")}
+                      className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-[1.5px] transition", open ? "bg-[#b3122f] text-white ring-transparent" : "bg-white/70 text-[#b3122f] ring-[#b3122f]/60 hover:bg-[#b3122f]/10 hover:ring-[#b3122f]")}
                     >
                       <Pencil className="size-4" aria-hidden /> <span className="hidden sm:inline">{open ? "Fechar" : "Editar"}</span>
                     </button>
