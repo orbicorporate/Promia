@@ -183,53 +183,36 @@ export function EncarteViewer({
         )}
       </div>
 
-      <aside className="vidro space-y-3 rounded-[24px] p-4 lg:sticky lg:top-8">
-        <p className="px-1 text-sm text-[var(--ink-2)]">
-          {plural(products, "produto", "produtos")} em {plural(pages, "página", "páginas")}
-        </p>
+      <aside className="vidro space-y-5 rounded-[28px] p-5 lg:sticky lg:top-8">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-white/70 px-3 py-1 text-sm font-medium text-[var(--ink-2)] ring-1 ring-[var(--line)]">{plural(products, "produto", "produtos")}</span>
+          <span className="rounded-full bg-white/70 px-3 py-1 text-sm font-medium text-[var(--ink-2)] ring-1 ring-[var(--line)]">{plural(pages, "página", "páginas")}</span>
+        </div>
         {canShare && (
           <Button size="lg" className="w-full" onClick={share} loading={busy === "share"} icon={<Share2 className="size-5" />}>
             Compartilhar
           </Button>
         )}
-        <a
-          href={src(page, true)}
-          download
-          className={cn(
-            "flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl font-medium transition active:scale-[0.97]",
-            canShare ? "vidro hover:bg-[var(--glass-strong)]" : "bg-[var(--ink)] text-[var(--bg)]"
-          )}
-        >
-          <Download className="size-5" /> Baixar imagem{pages > 1 ? ` (página ${page})` : ""}
-        </a>
-        <a
-          href={`/api/encartes/${id}/pdf?v=${encodeURIComponent(version)}`}
-          className="vidro flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
-        >
-          <FileDown className="size-5" /> Baixar PDF para imprimir
-        </a>
-        <a
-          href={`/api/encartes/${id}/pdf?grafica=1&v=${encodeURIComponent(version)}`}
-          className="vidro flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl px-3 py-2 text-center font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
-        >
-          <Scissors className="size-5 shrink-0" /> PDF para gráfica (sangria 3 mm e marcas de corte)
-        </a>
-        <a
-          href={`/api/encartes/${id}/cartazes`}
-          className="vidro flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl font-medium transition hover:bg-[var(--glass-strong)] active:scale-[0.97]"
-        >
-          <Printer className="size-5" /> Cartazes de gôndola (A4)
-        </a>
-        <div className="grid grid-cols-3 gap-2 pt-1">
-          <ButtonLink href={`/${slug}/encartes/${id}/editar`} variant="fantasma" size="sm" className="flex-col h-auto py-2.5 gap-1" icon={<Pencil className="size-[18px]" />}>
+        <div className="space-y-2">
+          <p className="px-1 text-xs font-semibold text-[var(--ink-3)]">Baixar</p>
+          <AcaoLinha href={src(page, true)} download cor={["#fb7185", "#be123c"]} icone={<Download className="size-5" />} titulo={`Imagem${pages > 1 ? ` (página ${page})` : ""}`} sub="PNG para redes sociais e WhatsApp" />
+          <AcaoLinha href={`/api/encartes/${id}/pdf?v=${encodeURIComponent(version)}`} cor={["#38bdf8", "#2563eb"]} icone={<FileDown className="size-5" />} titulo="PDF" sub="Para imprimir em casa ou enviar" />
+        </div>
+        <div className="space-y-2">
+          <p className="px-1 text-xs font-semibold text-[var(--ink-3)]">Imprimir</p>
+          <AcaoLinha href={`/api/encartes/${id}/pdf?grafica=1&v=${encodeURIComponent(version)}`} cor={["#fbbf24", "#f97316"]} icone={<Scissors className="size-5" />} titulo="PDF para gráfica" sub="Sangria de 3 mm e marcas de corte" />
+          <AcaoLinha href={`/api/encartes/${id}/cartazes`} cor={["#2dd4bf", "#0d9488"]} icone={<Printer className="size-5" />} titulo="Cartazes de gôndola" sub="Um cartaz A4 por produto" />
+        </div>
+        <div className="flex items-center gap-2 border-t border-[var(--line)] pt-4">
+          <ButtonLink href={`/${slug}/encartes/${id}/editar`} variant="vidro" size="sm" className="flex-1 rounded-full" icon={<Pencil className="size-[18px]" />}>
             Editar
           </ButtonLink>
-          <ButtonLink href={`/${slug}/encartes/novo?copiar=${id}`} variant="fantasma" size="sm" className="flex-col h-auto py-2.5 gap-1" icon={<Copy className="size-[18px]" />}>
+          <ButtonLink href={`/${slug}/encartes/novo?copiar=${id}`} variant="vidro" size="sm" className="flex-1 rounded-full" icon={<Copy className="size-[18px]" />}>
             Duplicar
           </ButtonLink>
-          <Button variant="fantasma" size="sm" className="flex-col h-auto py-2.5 gap-1 hover:text-[var(--perigo)]" onClick={() => setConfirmDelete(true)} icon={<Trash2 className="size-[18px]" />}>
-            Apagar
-          </Button>
+          <button type="button" onClick={() => setConfirmDelete(true)} aria-label="Apagar encarte" className="grid size-10 shrink-0 place-items-center rounded-full text-[var(--ink-3)] transition hover:bg-[var(--perigo)]/10 hover:text-[var(--perigo)]">
+            <Trash2 className="size-[18px]" />
+          </button>
         </div>
       </aside>
 
@@ -252,5 +235,30 @@ export function EncarteViewer({
         <p className="text-sm text-[var(--ink-2)]">{name}</p>
       </Sheet>
     </div>
+  );
+}
+
+
+// linha de ação do painel: ícone em esfera colorida, título e uma linha explicando
+function AcaoLinha({ href, download, cor, icone, titulo, sub }: { href: string; download?: boolean; cor: [string, string]; icone: React.ReactNode; titulo: string; sub: string }) {
+  return (
+    <a
+      href={href}
+      download={download}
+      className="group flex items-center gap-3 rounded-2xl bg-white/70 p-2.5 pr-3 ring-1 ring-[var(--line)] transition hover:-translate-y-px hover:bg-white hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.35)] active:scale-[0.98]"
+    >
+      <span
+        className="grid size-11 shrink-0 place-items-center rounded-full text-white"
+        style={{ backgroundColor: cor[1], backgroundImage: `radial-gradient(circle at 30% 26%, rgba(255,255,255,0.9) 0, rgba(255,255,255,0) 34%), linear-gradient(145deg, ${cor[0]}, ${cor[1]})`, boxShadow: `0 8px 16px -8px ${cor[1]}, inset 0 -3px 6px rgba(0,0,0,0.15)` }}
+        aria-hidden
+      >
+        {icone}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-semibold leading-tight">{titulo}</span>
+        <span className="block text-xs leading-snug text-[var(--ink-3)]">{sub}</span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-[var(--ink-3)] transition group-hover:translate-x-0.5" aria-hidden />
+    </a>
   );
 }
