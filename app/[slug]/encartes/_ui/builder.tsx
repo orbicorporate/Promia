@@ -26,6 +26,8 @@ import {
   Pencil,
   Minus,
   Plus,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
@@ -184,6 +186,104 @@ export function EncarteBuilder({
   const [category, setCategory] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+
+  // histórico para desfazer e refazer: guarda o estado das escolhas do encarte
+  const instantaneo = {
+    name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, themeKey, validFrom, validUntil, items, temaPronto,
+  };
+  type Instantaneo = typeof instantaneo;
+  const instRef = useRef(instantaneo);
+  const histRef = useRef<{ atual: string | null; pilha: string[]; futuro: string[] }>({ atual: null, pilha: [], futuro: [] });
+  const histTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [hist, setHist] = useState({ passado: 0, futuro: 0, atual: "" });
+  const sincHist = () => {
+    const h = histRef.current;
+    setHist({ passado: h.pilha.length, futuro: h.futuro.length, atual: h.atual ?? "" });
+  };
+  const chaveInst = JSON.stringify(instantaneo);
+  useEffect(() => {
+    instRef.current = JSON.parse(chaveInst) as Instantaneo;
+  }, [chaveInst]);
+  useEffect(() => {
+    const h = histRef.current;
+    if (h.atual === null) {
+      h.atual = chaveInst;
+      sincHist();
+      return;
+    }
+    if (chaveInst === h.atual) return;
+    // agrupa mudanças seguidas (digitar, arrastar) numa só entrada
+    if (histTimer.current) clearTimeout(histTimer.current);
+    histTimer.current = setTimeout(() => {
+      if (h.atual !== null && h.atual !== chaveInst) {
+        h.pilha.push(h.atual);
+        if (h.pilha.length > 60) h.pilha.shift();
+        h.futuro = [];
+        h.atual = chaveInst;
+        sincHist();
+      }
+    }, 400);
+    return () => {
+      if (histTimer.current) clearTimeout(histTimer.current);
+    };
+  }, [chaveInst]);
+  const aplicarInst = (v: Instantaneo) => {
+    setName(v.name);
+    setHeadline(v.headline);
+    setSubheadline(v.subheadline);
+    setFormat(v.format);
+    setLayout(v.layout);
+    setModelo(v.modelo);
+    setEmblema(v.emblema);
+    setEmblemaEscala(v.emblemaEscala);
+    setValidade(v.validade);
+    setRodape(v.rodape);
+    setFundo(v.fundo);
+    setThemeKey(v.themeKey);
+    setValidFrom(v.validFrom);
+    setValidUntil(v.validUntil);
+    setItems(v.items);
+    setTemaPronto(v.temaPronto);
+  };
+  const desfazer = () => {
+    const h = histRef.current;
+    if (histTimer.current) clearTimeout(histTimer.current);
+    const agora = JSON.stringify(instRef.current);
+    // muda ainda não gravada entra no histórico antes de voltar
+    if (h.atual !== null && h.atual !== agora) {
+      h.pilha.push(h.atual);
+      h.atual = agora;
+    }
+    const anterior = h.pilha.pop();
+    if (anterior === undefined) return;
+    h.futuro.push(h.atual ?? agora);
+    h.atual = anterior;
+    aplicarInst(JSON.parse(anterior) as Instantaneo);
+    sincHist();
+  };
+  const refazer = () => {
+    const h = histRef.current;
+    const proximo = h.futuro.pop();
+    if (proximo === undefined) return;
+    if (h.atual !== null) h.pilha.push(h.atual);
+    h.atual = proximo;
+    aplicarInst(JSON.parse(proximo) as Instantaneo);
+    sincHist();
+  };
+  const podeDesfazer = hist.passado > 0 || (hist.atual !== "" && hist.atual !== chaveInst);
+  const podeRefazer = hist.futuro > 0;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      e.preventDefault();
+      if (e.shiftKey) refazer();
+      else desfazer();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   // cópia local do catálogo: trocar a foto de um produto atualiza a lista e a prévia na hora
   const [cat, setCat] = useState<CatalogProduct[]>(catalog);
@@ -1401,6 +1501,16 @@ export function EncarteBuilder({
             );
           })}
         </ol>
+        {(podeDesfazer || podeRefazer) && (
+          <div className="mt-2 flex justify-end gap-2">
+            <button type="button" onClick={desfazer} disabled={!podeDesfazer} className="vidro-forte inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-[#b3122f] ring-1 ring-[#b3122f]/40 transition hover:bg-[#b3122f]/10 active:scale-95 disabled:opacity-40">
+              <Undo2 className="size-4" aria-hidden /> Desfazer
+            </button>
+            <button type="button" onClick={refazer} disabled={!podeRefazer} className="vidro-forte inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-[var(--ink-2)] ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+              <Redo2 className="size-4" aria-hidden /> Refazer
+            </button>
+          </div>
+        )}
       </nav>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
