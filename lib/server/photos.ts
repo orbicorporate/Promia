@@ -3,7 +3,8 @@ import type { Database, Json } from "@/lib/supabase/database.types";
 import { findProductImage } from "@/lib/ai/imageSearch";
 import { normalizeName, photoKey } from "@/lib/photos/key";
 import { fallbackPlan, type SearchPlan } from "@/lib/photos/plan";
-import { searchImages, serperEnabled, type ImageHit } from "@/lib/photos/serper";
+import { searchImages, searchShopping, serperEnabled, type ImageHit } from "@/lib/photos/serper";
+import { searchOpenFoodFacts } from "@/lib/photos/catalog";
 import { AiUnavailable, judgeCandidates } from "@/lib/photos/judge";
 import { storeImageFromUrl } from "./media";
 
@@ -100,6 +101,15 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
     if (next?.status === "encontrada") return next;
     if (next) outcomes.push(next);
   }
+  // último recurso para item de marca: catálogo aberto (Open Food Facts) pelo nome
+  if (!plan.generic) {
+    const off = await searchOpenFoodFacts(plan.query);
+    if (off.length) {
+      const next = await searchOnce(admin, marketId, p, plan, "openfoodfacts", off);
+      if (next?.status === "encontrada") return next;
+      if (next) outcomes.push(next);
+    }
+  }
   // nenhuma foi confirmada: junta as opções e aplica a melhor como palpite,
   // para o produto nunca ficar sem imagem; o dono confirma ou troca
   const merged = [...new Set(outcomes.flatMap((o) => ("candidates" in o ? o.candidates : [])))].slice(0, 8);
@@ -110,16 +120,24 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
   return { status: merged.length ? "revisar" : "nao_encontrada", sourceUrl: null, candidates: merged.slice(0, 6), usedAi: true };
 }
 
-async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan, query: string): Promise<PhotoOutcome | null> {
-  const raw = await searchImages(query);
-  if (raw === null) return null;
+async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan, query: string, preset?: ImageHit[]): Promise<PhotoOutcome | null> {
+  let raw: ImageHit[];
+  if (preset) {
+    raw = preset;
+  } else {
+    // item de marca: a foto de catálogo do Google Shopping entra junto, na frente
+    const [imgs, shop] = await Promise.all([searchImages(query), plan.generic ? Promise.resolve(null) : searchShopping(query)]);
+    if (imgs === null) return null;
+    const seen = new Set<string>();
+    raw = [...(shop ?? []), ...imgs].filter((h) => (seen.has(h.imageUrl) ? false : (seen.add(h.imageUrl), true)));
+  }
   // foto pequena demais não serve para encarte (item sem embalagem aceita a partir de 200 px)
   const minLado = plan.generic ? 200 : 300;
   const sized = raw.filter((h) => !h.width || !h.height || Math.min(h.width, h.height) >= minLado);
   // fotos cujo título traz a marca pedida vêm primeiro (o juiz vê só 8)
   const brandKey = plan.brand ? normalizeName(plan.brand).replace(/[^a-z0-9]/g, "") : "";
   const hasBrand = (h: ImageHit) => !!brandKey && normalizeName(`${h.title} ${h.imageUrl}`).replace(/[^a-z0-9]/g, "").includes(brandKey);
-  const hits: ImageHit[] = [...sized.filter(hasBrand), ...sized.filter((h) => !hasBrand(h))].slice(0, 8);
+  const hits: ImageHit[] = [...sized.filter(hasBrand), ...sized.filter((h) => !hasBrand(h))].slice(0, 10);
   if (hits.length === 0) return { status: "nao_encontrada", sourceUrl: null, candidates: [], usedAi: true };
 
   const verdict = await judgeCandidates({ name: p.name, brand: p.brand, expect: plan.expect, generic: plan.generic }, hits);

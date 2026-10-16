@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui";
 import { plural } from "@/lib/plural";
 
 // Roda a fila de fotos em lotes até acabar, mostrando o progresso.
-export function FindPhotos({ marketId, pending }: { marketId: string; pending: number }) {
+export function FindPhotos({ marketId, pending, auto = true }: { marketId: string; pending: number; auto?: boolean }) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(0);
@@ -51,6 +51,16 @@ export function FindPhotos({ marketId, pending }: { marketId: string; pending: n
       router.refresh();
     }
   }
+
+  // a fila começa sozinha ao abrir a tela (uma vez): ninguém precisa lembrar de clicar
+  const iniciou = useRef(false);
+  useEffect(() => {
+    if (auto && pending > 0 && !iniciou.current) {
+      iniciou.current = true;
+      void start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, pending]);
 
   if (!pending && !running) return null;
   const pct = total ? Math.round((done / total) * 100) : 0;
