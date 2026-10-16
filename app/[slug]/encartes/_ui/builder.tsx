@@ -100,6 +100,15 @@ const PASSOS = [
   { key: "textos", nome: "Título e datas", curto: "Textos", pergunta: "Título e validade", agora: "Escreva o título (se quiser, o logo já serve) e a validade da oferta." },
   { key: "revisar", nome: "Revisar", curto: "Revisar", pergunta: "Confira e salve", agora: "Veja a arte final. Se estiver certa, salve: depois você baixa em PNG ou PDF." },
 ] as const;
+// uma cor para cada passo (esfera da trilha)
+const PASSO_CORES: [string, string][] = [
+  ["#8b5cf6", "#4f46e5"], // objetivo
+  ["#38bdf8", "#2563eb"], // fundo
+  ["#2dd4bf", "#0d9488"], // caixas
+  ["#fbbf24", "#f97316"], // produtos
+  ["#f472b6", "#db2777"], // textos
+  ["#fb7185", "#be123c"], // revisar
+];
 const P_PRODUTOS = 3;
 const P_TEXTOS = 4;
 
@@ -1319,22 +1328,45 @@ export function EncarteBuilder({
     <div className="space-y-5 pb-36 xl:pb-0">
       {/* trilha de passos: é uma sequência de verdade, então vai numerada, com o nome sempre à vista */}
       <nav aria-label="Passos do encarte" className="sticky top-[76px] lg:top-4 z-20">
-        <ol className="vidro-forte flex items-start rounded-2xl px-2 py-2.5">
+        <ol className="vidro-forte relative flex items-start overflow-hidden rounded-2xl px-2 py-3">
+          {/* luz que passa devagar pela barra */}
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/5 overflow-hidden">
+            <span className="passo-luz block h-full w-full bg-gradient-to-r from-transparent via-white/45 to-transparent" />
+          </span>
           {PASSOS.map((p, i) => {
             const atual = i === step;
             const feito = i < step;
+            const [c1, c2] = PASSO_CORES[i];
+            const esfera = `radial-gradient(circle at 30% 26%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0) 34%), linear-gradient(145deg, ${c1}, ${c2})`;
             return (
               <li key={p.key} className="relative min-w-0 flex-1">
-                {i > 0 && <span aria-hidden className={cn("absolute right-1/2 top-[20px] h-0.5 w-full -translate-y-1/2 rounded-full transition-colors", i <= step ? "bg-[var(--folha)]" : "bg-[var(--line-strong)]")} />}
+                {i > 0 && (
+                  <span aria-hidden className="absolute right-1/2 top-[23px] h-[3px] w-full -translate-y-1/2 overflow-hidden rounded-full bg-[var(--line-strong)]/70">
+                    <span className="block h-full origin-left rounded-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ transform: `scaleX(${i <= step ? 1 : 0})`, background: `linear-gradient(90deg, ${PASSO_CORES[i - 1][1]}, ${c1})` }} />
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => (i > P_PRODUTOS && items.length === 0 ? toast.error("Escolha pelo menos um produto primeiro.") : setStep(i))}
                   aria-current={atual ? "step" : undefined}
                   aria-label={`Passo ${i + 1}: ${p.nome}${feito ? " (feito)" : ""}`}
-                  className="group relative flex w-full flex-col items-center gap-1 rounded-xl px-0.5 py-0.5"
+                  className="group relative flex w-full flex-col items-center gap-1.5 rounded-xl px-0.5 py-0.5"
                 >
-                  <span className={cn("relative grid size-9 place-items-center rounded-full text-sm font-bold tabular transition-all", atual ? "bg-[var(--ink)] text-[var(--bg)] ring-4 ring-[var(--ink)]/15" : feito ? "bg-[var(--folha)] text-white" : "bg-[var(--bg)] text-[var(--ink-2)] ring-2 ring-[var(--line-strong)] group-hover:ring-[var(--ink-3)]")}>
-                    {feito ? <Check className="size-4" strokeWidth={3.5} /> : i + 1}
+                  <span className="relative grid size-11 place-items-center">
+                    {atual && <span aria-hidden className="passo-halo absolute inset-1 rounded-full" style={{ background: c1 }} />}
+                    <span
+                      className={cn(
+                        "relative grid size-10 place-items-center rounded-full text-sm font-bold tabular transition-[transform,box-shadow,background] duration-300",
+                        atual ? "passo-flutua text-white" : feito ? "text-white group-hover:scale-105" : "text-[var(--ink-2)] ring-1 ring-white/70 group-hover:scale-105",
+                      )}
+                      style={
+                        atual || feito
+                          ? { background: esfera, boxShadow: `0 8px 18px -6px ${c2}, inset 0 -3px 6px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.5)`, textShadow: "0 1px 2px rgba(0,0,0,0.25)" }
+                          : { background: `radial-gradient(circle at 30% 26%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0) 40%), linear-gradient(145deg, color-mix(in srgb, ${c1} 18%, #fff), color-mix(in srgb, ${c2} 30%, #fff))`, boxShadow: `0 4px 10px -6px ${c2}, inset 0 -2px 4px rgba(0,0,0,0.06)` }
+                      }
+                    >
+                      {feito ? <Check className="size-4" strokeWidth={3.5} /> : i + 1}
+                    </span>
                   </span>
                   <span className={cn("max-w-full truncate text-[11px] leading-tight sm:text-xs", atual ? "font-bold text-[var(--ink)]" : "font-medium text-[var(--ink-3)]")}>{p.curto}</span>
                 </button>
