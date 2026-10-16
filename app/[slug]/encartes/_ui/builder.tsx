@@ -1343,6 +1343,7 @@ export function EncarteBuilder({
                 {i > 0 && (
                   <span aria-hidden className="absolute right-1/2 top-[23px] h-[3px] w-full -translate-y-1/2 overflow-hidden rounded-full bg-[var(--line-strong)]/70">
                     <span className="block h-full origin-left rounded-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ transform: `scaleX(${i <= step ? 1 : 0})`, background: `linear-gradient(90deg, ${PASSO_CORES[i - 1][1]}, ${c1})` }} />
+                    {atual && <span aria-hidden className="passo-chega absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white to-transparent" />}
                   </span>
                 )}
                 <button
@@ -1352,17 +1353,18 @@ export function EncarteBuilder({
                   aria-label={`Passo ${i + 1}: ${p.nome}${feito ? " (feito)" : ""}`}
                   className="group relative flex w-full flex-col items-center gap-1.5 rounded-xl px-0.5 py-0.5"
                 >
-                  <span className="relative grid size-11 place-items-center">
+                  <span className="relative z-10 grid size-11 place-items-center">
                     {atual && <span aria-hidden className="passo-halo absolute inset-1 rounded-full" style={{ background: c1 }} />}
+                    {atual && <span aria-hidden className="passo-orbita absolute inset-0 rounded-full" style={{ background: `conic-gradient(from 0deg, transparent 0 55%, ${c1} 82%, #fff 100%)`, WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))", mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))" }} />}
                     <span
                       className={cn(
-                        "relative grid size-10 place-items-center rounded-full text-sm font-bold tabular transition-[transform,box-shadow,background] duration-300",
+                        "relative z-10 grid size-10 place-items-center rounded-full text-sm font-bold tabular transition-[transform,box-shadow,background] duration-300",
                         atual ? "passo-flutua text-white" : feito ? "text-white group-hover:scale-105" : "text-[var(--ink-2)] ring-1 ring-white/70 group-hover:scale-105",
                       )}
                       style={
                         atual || feito
-                          ? { background: esfera, boxShadow: `0 8px 18px -6px ${c2}, inset 0 -3px 6px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.5)`, textShadow: "0 1px 2px rgba(0,0,0,0.25)" }
-                          : { background: `radial-gradient(circle at 30% 26%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0) 40%), linear-gradient(145deg, color-mix(in srgb, ${c1} 18%, #fff), color-mix(in srgb, ${c2} 30%, #fff))`, boxShadow: `0 4px 10px -6px ${c2}, inset 0 -2px 4px rgba(0,0,0,0.06)` }
+                          ? { backgroundColor: c2, backgroundImage: esfera, boxShadow: `0 8px 18px -6px ${c2}, inset 0 -3px 6px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.5)`, textShadow: "0 1px 2px rgba(0,0,0,0.25)" }
+                          : { backgroundColor: "#fff", backgroundImage: `radial-gradient(circle at 30% 26%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0) 40%), linear-gradient(145deg, color-mix(in srgb, ${c1} 18%, #fff), color-mix(in srgb, ${c2} 30%, #fff))`, boxShadow: `0 4px 10px -6px ${c2}, inset 0 -2px 4px rgba(0,0,0,0.06)` }
                       }
                     >
                       {feito ? <Check className="size-4" strokeWidth={3.5} /> : i + 1}

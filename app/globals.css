@@ -311,7 +311,11 @@ select {
 @keyframes passo-luz { 0% { transform: translateX(-130%) skewX(-18deg); } 55%, 100% { transform: translateX(480%) skewX(-18deg); } }
 @keyframes passo-flutua { 0%, 100% { transform: translateY(0) scale(1.1); } 50% { transform: translateY(-2.5px) scale(1.1); } }
 @keyframes passo-halo { 0% { transform: scale(1); opacity: 0.45; } 70%, 100% { transform: scale(1.75); opacity: 0; } }
+@keyframes passo-chega { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateX(300%); opacity: 0; } }
+@keyframes passo-orbita { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: no-preference) {
+  .passo-chega { animation: passo-chega 2.2s ease-in-out infinite; }
+  .passo-orbita { animation: passo-orbita 2.4s linear infinite; }
   .passo-luz { animation: passo-luz 7s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
   .passo-flutua { animation: passo-flutua 3.4s ease-in-out infinite; }
   .passo-halo { animation: passo-halo 2.6s ease-out infinite; }
