@@ -54,3 +54,33 @@ export async function searchImages(q: string, { num = 10, timeoutMs = 6000 } = {
     clearTimeout(timer);
   }
 }
+
+// Google Shopping pela mesma chave do Serper: devolve a foto de catálogo do
+// produto (embalagem de frente, fundo limpo), a melhor fonte para item de marca.
+export async function searchShopping(q: string, { timeoutMs = 6000 } = {}): Promise<ImageHit[] | null> {
+  const key = process.env.SERPER_API_KEY?.trim();
+  if (!key) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch("https://google.serper.dev/shopping", {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "X-API-KEY": key, "content-type": "application/json" },
+      body: JSON.stringify({ q, gl: "br", hl: "pt-br", num: 10 }),
+    });
+    if (!res.ok) {
+      console.error("[serper/shopping]", res.status);
+      return null;
+    }
+    const json = (await res.json()) as { shopping?: { title?: string; imageUrl?: string; source?: string }[] };
+    return (json.shopping ?? [])
+      .filter((i) => i.imageUrl?.startsWith("https://") && !NOISE.test(i.imageUrl ?? ""))
+      .map((i) => ({ title: i.title ?? "", imageUrl: i.imageUrl!, thumbnailUrl: null, width: null, height: null, domain: i.source ?? null }));
+  } catch (err) {
+    console.error("[serper/shopping] falhou", err);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}

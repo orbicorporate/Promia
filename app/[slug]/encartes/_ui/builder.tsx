@@ -212,7 +212,8 @@ export function EncarteBuilder({
   function patchProduct(id: string, change: Partial<CatalogProduct>) {
     setCat((prev) => prev.map((p) => (p.id === id ? { ...p, ...change } : p)));
   }
-  const semFoto = (p: CatalogProduct | undefined) => !!p && !p.image_url;
+  const semFoto = (p: CatalogProduct | undefined) => !!p && !p.image_url && p.image_status !== "pendente";
+  const naFila = (p: CatalogProduct | undefined) => !!p && !p.image_url && p.image_status === "pendente";
   const paraConfirmar = (p: CatalogProduct | undefined) => !!p && !!p.image_url && p.image_status === "revisar";
   const selecionadosSemFoto = items.filter((i) => semFoto(byId.get(i.productId))).length;
   const selecionadosConfirmar = items.filter((i) => paraConfirmar(byId.get(i.productId))).length;
@@ -465,7 +466,7 @@ export function EncarteBuilder({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{p.name}</span>
                     <span className="block truncate text-xs text-[var(--ink-3)]">
-                      {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : null}
+                      {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : naFila(p) ? <span className="font-semibold text-[var(--ink-2)]">Buscando foto · </span> : null}
                       {[p.brand, p.category].filter(Boolean).join(" · ") || "sem categoria"}
                     </span>
                   </span>
@@ -535,7 +536,7 @@ export function EncarteBuilder({
                     <button type="button" onClick={() => setEditing(open ? null : it.productId)} className="min-w-0 flex-1 text-left" aria-expanded={open}>
                       <span className="block truncate text-[15px] font-medium">{p.name}</span>
                       <span className="block truncate text-xs text-[var(--ink-3)]">
-                        {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : paraConfirmar(p) ? <span className="font-semibold text-[#b45309]">Confira a foto · </span> : null}
+                        {semFoto(p) ? <span className="font-semibold text-[#b45309]">Sem foto · </span> : naFila(p) ? <span className="font-semibold text-[var(--ink-2)]">Buscando foto · </span> : paraConfirmar(p) ? <span className="font-semibold text-[#b45309]">Confira a foto · </span> : null}
                         {it.oldPrice ? `de R$ ${money(it.oldPrice)} · ` : ""}
                         {it.label ?? ""}
                         {it.limitQty ? ` · limite ${it.limitQty}` : ""}
