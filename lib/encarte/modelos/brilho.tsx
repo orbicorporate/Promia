@@ -456,7 +456,9 @@ function paletaRodape(t: BT, cor: RodapeOpcoes["cor"]) {
   };
 }
 
-function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, dados, opcoes }: RodapeProps): ReactElement {
+function RodapePadrao({ W, H, s, padX: padXBase, footerH, safeBottom, d, t, logoUrl, dados, opcoes }: RodapeProps): ReactElement {
+  // o rodapé tem margem lateral maior que o corpo: o selo e o texto não ficam colados na borda
+  const padX = r(padXBase * 1.35);
   const p = paletaRodape(t, opcoes.cor);
   const nome = dados.nome;
   // endereço e horário dividem a mesma linha: o rodapé não ganha altura
@@ -466,7 +468,7 @@ function RodapePadrao({ W, H, s, padX, footerH, safeBottom, d, t, logoUrl, dados
   // sem o selo, o texto encosta na borda em vez de deixar o vão
   const ml = (n: number) => (mostrarSelo ? r(n * s) : 0);
   // respiro embaixo: o texto do rodapé não encosta na borda da página
-  const pad = Math.max(safeBottom ? r(safeBottom * 0.55) : 0, r(22 * s));
+  const pad = Math.max(safeBottom ? r(safeBottom * 0.55) : 0, r(32 * s));
   const logo = (size: number, borda: string, fundo: string, tinta: string) =>
     !mostrarSelo ? null : logoUrl ? (
       <div style={{ ...row, width: size, height: size, borderRadius: size, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${borda}`, flexShrink: 0 }}>
@@ -645,7 +647,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const embH = fino ? r(Math.min(H * 0.21, W * 0.28)) : 0;
   const rodapeFino = fino ? r(H * 0.115) : 0;
   const faixaH = fino ? 0 : r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
-  const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 140 : 124) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
+  const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 156 : 142) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
   const heroH = arte ? cutPx - cropTop + (fino ? r(embH * 0.5) : 0) : r(H * heroFrac) + spec.safeTop;
   // validade: posição, alinhamento, estilo e cor escolhidos (padrão: cheia e branca, na emenda do cabeçalho)
