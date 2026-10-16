@@ -9,18 +9,41 @@ import { Button } from "@/components/ui";
 import { plural } from "@/lib/plural";
 
 // Roda a fila de fotos em lotes até acabar, mostrando o progresso.
-export function FindPhotos({ marketId, pending, auto = true }: { marketId: string; pending: number; auto?: boolean }) {
+export function FindPhotos({ marketId, pending, semFoto = 0, auto = true }: { marketId: string; pending: number; semFoto?: number; auto?: boolean }) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(0);
   const [found, setFound] = useState(0);
   const [total, setTotal] = useState(pending);
 
-  async function start() {
+  async function refazer() {
+    setRunning(true);
+    try {
+      const res = await fetch("/api/produtos/buscar-imagens", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ marketId, refazer: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.requeued) {
+        setRunning(false);
+        if (!res.ok) toast.error(data.error || "Não consegui recolocar na fila.");
+        else toast.message("Nenhum produto para buscar de novo. Os que sobraram pedem foto manual.");
+        return;
+      }
+      setRunning(false);
+      await start(data.requeued);
+    } catch {
+      setRunning(false);
+      toast.error("Sem conexão. Tente de novo.");
+    }
+  }
+
+  async function start(qtd: number = pending) {
     setRunning(true);
     setDone(0);
     setFound(0);
-    setTotal(pending);
+    setTotal(qtd);
     let processed = 0;
     let achadas = 0;
     try {
@@ -62,17 +85,17 @@ export function FindPhotos({ marketId, pending, auto = true }: { marketId: strin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto, pending]);
 
-  if (!pending && !running) return null;
+  if (!pending && !running && !semFoto) return null;
   const pct = total ? Math.round((done / total) * 100) : 0;
 
   return (
     <div data-trabalhando={running} className="borda-ia vidro flex flex-wrap items-center gap-4 rounded-[22px] p-4">
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
-          {running ? `Buscando fotos: ${done} de ${total}` : `${plural(pending, "produto esperando", "produtos esperando")} foto`}
+          {running ? `Buscando fotos: ${done} de ${total}` : pending > 0 ? `${plural(pending, "produto esperando", "produtos esperando")} foto` : `${plural(semFoto, "produto sem foto", "produtos sem foto")}`}
         </p>
         <p className="text-sm text-[var(--ink-2)]">
-          {running ? `${plural(found, "encontrada", "encontradas")} até agora. Pode continuar usando o Promia.` : "Primeiro pelo código de barras, depois na internet com conferência da IA."}
+          {running ? `${plural(found, "encontrada", "encontradas")} até agora. Pode continuar usando o Promia.` : pending > 0 ? "Primeiro pelo código de barras, depois na internet com conferência da IA." : "A busca agora olha também o Google Shopping e o catálogo aberto de produtos."}
         </p>
         {running && (
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--line)]">
@@ -80,9 +103,14 @@ export function FindPhotos({ marketId, pending, auto = true }: { marketId: strin
           </div>
         )}
       </div>
-      {!running && (
-        <Button variant="ia" icon={<Sparkles className="size-4" />} onClick={start}>
+      {!running && pending > 0 && (
+        <Button variant="ia" icon={<Sparkles className="size-4" />} onClick={() => start()}>
           Buscar fotos
+        </Button>
+      )}
+      {!running && pending === 0 && semFoto > 0 && (
+        <Button variant="ia" icon={<Sparkles className="size-4" />} onClick={refazer}>
+          Buscar de novo os {semFoto} sem foto
         </Button>
       )}
     </div>

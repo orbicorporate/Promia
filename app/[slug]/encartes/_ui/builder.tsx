@@ -511,7 +511,7 @@ export function EncarteBuilder({
                 </p>
               </div>
             )}
-            {selecionadosPendentes > 0 && <div className="mt-3"><FindPhotos marketId={marketId} pending={selecionadosPendentes} /></div>}
+            {(selecionadosPendentes > 0 || selecionadosSemFoto > 0) && <div className="mt-3"><FindPhotos marketId={marketId} pending={selecionadosPendentes} semFoto={selecionadosSemFoto} /></div>}
           </>
         )}
         {items.length > 0 && (
