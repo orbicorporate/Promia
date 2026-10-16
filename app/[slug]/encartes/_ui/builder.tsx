@@ -147,7 +147,7 @@ export function EncarteBuilder({
   const [destacarLogo, setDestacarLogo] = useState(false);
   const secaoLogoRef = useRef<HTMLDivElement | null>(null);
   const [buscaPronto, setBuscaPronto] = useState("");
-  const [limitePronto, setLimitePronto] = useState(8);
+  const [limitePronto, setLimitePronto] = useState(6);
   const [verTodosTemas, setVerTodosTemas] = useState(false);
   const [name, setName] = useState(initial.name);
   const [headline, setHeadline] = useState(initial.headline);
@@ -835,7 +835,7 @@ export function EncarteBuilder({
             value={buscaPronto}
             onChange={(e) => {
               setBuscaPronto(e.target.value);
-              setLimitePronto(8);
+              setLimitePronto(6);
             }}
             placeholder="Buscar: carne, natal, sábado, bebidas..."
             className="pl-10"
@@ -847,7 +847,7 @@ export function EncarteBuilder({
             on={!temaPronto}
             onClick={() => {
               setTemaPronto(null);
-              setLimitePronto(8);
+              setLimitePronto(6);
             }}
           >
             Todos
@@ -862,7 +862,7 @@ export function EncarteBuilder({
                 cor={cor}
                 onClick={() => {
                   setTemaPronto(on ? null : t.id);
-                  setLimitePronto(8);
+                  setLimitePronto(6);
                 }}
               >
                 {t.nome}
@@ -905,8 +905,13 @@ export function EncarteBuilder({
             })}
           </div>
           {prontosFiltrados.length > limitePronto && (
-            <Button variant="vidro" onClick={() => setLimitePronto((n) => n + 12)} className="w-full">
-              Ver mais {prontosFiltrados.length - limitePronto} combinações
+            <Button
+              variant="rosa"
+              size="lg"
+              onClick={() => setLimitePronto((n) => n + 12)}
+              className="group w-full overflow-hidden before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-gradient-to-b before:from-white/40 before:to-transparent after:pointer-events-none after:absolute after:inset-y-0 after:-left-1/3 after:w-1/4 after:-skew-x-12 after:bg-white/30 after:opacity-0 motion-safe:after:transition-all motion-safe:after:duration-700 hover:after:left-[110%] hover:after:opacity-100"
+            >
+              Mostrar mais {Math.min(12, prontosFiltrados.length - limitePronto)} (faltam {prontosFiltrados.length - limitePronto})
             </Button>
           )}
         </div>
