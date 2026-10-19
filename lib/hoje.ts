@@ -35,6 +35,8 @@ export type HojeInput = {
   } | null;
   // produtos que o cliente compara em que o mercado está mais caro
   pricier?: { name: string; ours: number; theirs: number; competitor: string }[];
+  // concorrente que baixou preço desde o último encarte lido
+  quedas?: { competitor: string; product: string; change: number; agora: number }[];
 };
 
 const brl = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
@@ -103,6 +105,20 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
       title: `Você está mais caro em ${plural(i.pricier.length, "produto", "produtos")} que o cliente compara`,
       detail: `${ex.name}: ${brl(ex.ours)} aqui, ${brl(ex.theirs)} no ${ex.competitor}. O preço sugerido já está pronto.`,
       cta: "Ajustar preços",
+      href: `/${i.slug}/concorrencia`,
+    });
+  }
+
+  // concorrente baixou preço: avisa antes de perder cliente
+  if (i.quedas && i.quedas.length > 0) {
+    const q = i.quedas[0];
+    out.push({
+      id: "concorrente-baixou",
+      tone: "urgente",
+      icon: "concorrencia",
+      title: `${q.competitor} baixou ${q.product} em ${Math.round(Math.abs(q.change) * 100)}%`,
+      detail: `Agora a ${brl(q.agora)}.${i.quedas.length > 1 ? ` Mais ${plural(i.quedas.length - 1, "queda", "quedas")} de preço na região.` : ""} Veja se vale responder.`,
+      cta: "Ver concorrência",
       href: `/${i.slug}/concorrencia`,
     });
   }

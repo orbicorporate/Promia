@@ -12,6 +12,7 @@ import { buildHojeActions } from "@/lib/hoje";
 import { normalizeCampaign } from "@/lib/ai/campaign";
 import { plural } from "@/lib/plural";
 import { loadSalesAnalysis } from "@/lib/sales/load";
+import { movimentos } from "@/lib/competition/insights";
 import { compareprices } from "@/lib/competition/compare";
 
 export const metadata = { title: "Início" };
@@ -99,8 +100,13 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
       .map((r) => ({ name: r.name, ours: r.ours as number, theirs: r.theirs, competitor: r.competitor }));
   }
 
+  const quedas = movimentos((obs ?? []).map((o) => ({ ...o, price: Number(o.price) })), 0.08)
+    .filter((m) => m.change < 0 && m.em >= addDaysISO(today, -10))
+    .map((m) => ({ competitor: m.competitor, product: m.product, change: m.change, agora: m.agora }));
+
   const actions = buildHojeActions({
     pricier,
+    quedas,
     sales:
       salesData.imports.length === 0
         ? null
