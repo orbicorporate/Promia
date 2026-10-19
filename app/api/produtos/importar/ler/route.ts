@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const storagePath = String(body.path || "").trim();
   // só arquivos da pasta do próprio mercado, sem subir de pasta
-  const validPath = new RegExp(`^${marketId}/[\\w-]+\\.(xlsx|csv)$`);
+  const validPath = new RegExp(`^${marketId}/[\\w-]+\\.(xlsx|xls|csv|txt)$`);
   if (!validPath.test(storagePath)) {
     return NextResponse.json({ error: "Arquivo inválido. Envie a planilha de novo." }, { status: 400 });
   }

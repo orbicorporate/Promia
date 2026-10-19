@@ -1,11 +1,21 @@
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Package, Megaphone, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Package, Megaphone, ArrowRight, Sparkles, Flame, Gem, Repeat, Info } from "lucide-react";
 import { Glass, cn } from "@/components/ui";
 import type { SalesAnalysis } from "@/lib/sales/analyze";
+import { sugerir, type Sugestao } from "@/lib/sales/suggest";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: n >= 1000 ? 0 : 2 });
 const pct = (n: number, sign = false) => `${sign && n > 0 ? "+" : ""}${(n * 100).toLocaleString("pt-BR", { maximumFractionDigits: Math.abs(n) < 0.1 ? 1 : 0 })}%`;
 const dm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+const TOM: Record<Sugestao["tom"], { Icon: typeof Flame; cor: string }> = {
+  alta: { Icon: TrendingUp, cor: "#1f8a4c" },
+  queda: { Icon: TrendingDown, cor: "#d6213c" },
+  parado: { Icon: Package, cor: "#c9803a" },
+  margem: { Icon: Gem, cor: "#8b5cf6" },
+  campanha: { Icon: Repeat, cor: "#1c8fe0" },
+  aviso: { Icon: Info, cor: "#6f8178" },
+};
 
 function Kpi({ label, value, note, tone }: { label: string; value: string; note?: string | null; tone?: "up" | "down" | null }) {
   return (
@@ -36,6 +46,7 @@ export function VendasView({ slug, analysis: a, imports }: { slug: string; analy
   if (!a.period) return null;
   const change = a.kpis.revenueChange;
   const maxCat = Math.max(...a.categories.map((c) => c.revenue), 0);
+  const sugestoes = sugerir(a);
   const encarteHref = (ids: (string | null)[]) => `/${slug}/encartes/novo?produtos=${ids.filter(Boolean).slice(0, 30).join(",")}`;
 
   return (
@@ -51,6 +62,43 @@ export function VendasView({ slug, analysis: a, imports }: { slug: string; analy
           <Kpi label="Margem bruta" value={a.kpis.grossMargin == null ? "sem custo" : pct(a.kpis.grossMargin)} note={a.kpis.grossMargin == null ? "Precisa do custo no relatório ou no catálogo" : null} />
         </div>
       </section>
+
+      {sugestoes.length > 0 && (
+        <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="sugestoes">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-2xl text-white [background-image:linear-gradient(135deg,#e8284f,#b3122f_60%,#8c0c26)]">
+              <Sparkles className="size-5" />
+            </span>
+            <div>
+              <h2 id="sugestoes" className="text-lg font-bold">Sugestões do Promia</h2>
+              <p className="text-sm text-[var(--ink-2)]">O que fazer esta semana, com base nos seus relatórios.</p>
+            </div>
+          </div>
+          <ul className="grid gap-3 lg:grid-cols-2">
+            {sugestoes.map((g) => {
+              const { Icon, cor } = TOM[g.tom];
+              const href = g.encarteId ? `/${slug}/encartes/${g.encarteId}` : g.produtos?.some(Boolean) ? encarteHref(g.produtos) : null;
+              return (
+                <li key={g.id} className="vidro flex flex-col gap-2 rounded-[20px] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full text-white" style={{ background: cor }}>
+                      <Icon className="size-4" aria-hidden />
+                    </span>
+                    <p className="font-semibold leading-snug">{g.titulo}</p>
+                  </div>
+                  <p className="text-sm text-[var(--ink-2)]"><span className="font-medium text-[var(--ink)]">Por quê:</span> {g.porque}</p>
+                  <p className="text-sm text-[var(--ink-2)]"><span className="font-medium text-[var(--ink)]">Faça:</span> {g.fazer}</p>
+                  {href && (
+                    <Link href={href} className="mt-1 inline-flex h-10 items-center gap-1.5 self-start rounded-full px-4 text-sm font-semibold text-white [background-image:linear-gradient(135deg,#e8284f,#b3122f_60%,#8c0c26)] transition hover:-translate-y-px">
+                      {g.encarteId ? "Abrir o encarte" : "Criar encarte com esses produtos"} <ArrowRight className="size-4" />
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </Glass>
+      )}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
         <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="abc">

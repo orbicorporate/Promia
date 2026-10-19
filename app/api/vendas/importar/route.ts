@@ -18,13 +18,8 @@ export async function POST(req: NextRequest) {
   if (!access.ok) return access.response;
   const marketId = body.marketId as string;
 
-  const de = body.de;
-  const ate = body.ate;
-  if (!isISODate(de) || !isISODate(ate) || de > ate) {
-    return NextResponse.json({ error: "Informe o período do relatório: data inicial e final." }, { status: 400 });
-  }
   const path = String(body.path ?? "").trim();
-  if (!new RegExp(`^${marketId}/[\\w-]+\\.(xlsx|csv)$`).test(path)) {
+  if (!new RegExp(`^${marketId}/[\\w-]+\\.(xlsx|xls|csv|txt)$`).test(path)) {
     return NextResponse.json({ error: "Arquivo inválido. Envie o relatório de novo." }, { status: 400 });
   }
 
@@ -42,6 +37,12 @@ export async function POST(req: NextRequest) {
   }
   if (parsed.rows.length === 0) return NextResponse.json({ error: "O relatório não tem nenhuma linha com venda." }, { status: 422 });
 
+  // o período escrito no relatório vale mais que o digitado; sem ele, vale o digitado
+  const typed = isISODate(body.de) && isISODate(body.ate) && body.de <= body.ate ? { de: body.de as string, ate: body.ate as string } : null;
+  const periodo = parsed.period ?? typed;
+  if (!periodo) return NextResponse.json({ error: "Não achei o período no relatório. Informe a data inicial e final." }, { status: 400 });
+  const { de, ate } = periodo;
+
   // liga ao catálogo: código interno, código de barras, depois nome
   const { data: products } = await admin.from("products").select("id, sku, ean, name, brand").eq("market_id", marketId).limit(20000);
   const bySku = new Map<string, string>();
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
   const productIdFor = (r: (typeof parsed.rows)[number]) => (r.ean && byEan.get(r.ean)) || (r.sku && bySku.get(r.sku)) || byName.get(photoKey(r.name)) || null;
 
   // mesmo período de novo: substitui
-  await admin.from("sales_imports").delete().eq("market_id", marketId).eq("period_start", de).eq("period_end", ate);
+  const { data: antigos } = await admin.from("sales_imports").delete().eq("market_id", marketId).eq("period_start", de).eq("period_end", ate).select("id");
 
   const rows = parsed.rows.map((r) => ({ ...r, product_id: productIdFor(r) }));
   const matched = rows.filter((r) => r.product_id).length;
@@ -89,5 +90,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ rows: rows.length, matched, skipped: parsed.skipped, columns: parsed.columns });
+  const semLigacao = rows.filter((r) => !r.product_id).sort((a, b) => b.revenue - a.revenue || b.qty - a.qty).slice(0, 5).map((r) => r.name);
+  return NextResponse.json({ rows: rows.length, matched, skipped: parsed.skipped, columns: parsed.columns, de, ate, daRelatorio: !!parsed.period, substituiu: (antigos?.length ?? 0) > 0, semLigacao });
 }

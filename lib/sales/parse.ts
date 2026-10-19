@@ -6,7 +6,7 @@ import { columnUsesDotDecimal, normalizeEan, normalizeHeader, normalizeSku, pars
 
 export type SalesField = "ean" | "sku" | "name" | "qty" | "revenue" | "cost" | "category";
 export type SalesRow = { sku: string | null; ean: string | null; name: string; category: string | null; qty: number; revenue: number; cost: number | null };
-export type SalesParse = { rows: SalesRow[]; columns: Partial<Record<SalesField, string>>; headerRow: number; skipped: number };
+export type SalesParse = { rows: SalesRow[]; columns: Partial<Record<SalesField, string>>; headerRow: number; skipped: number; period: { de: string; ate: string } | null };
 
 type Cell = string | number | null;
 
@@ -60,6 +60,28 @@ function mapColumns(header: Cell[]): Partial<Record<SalesField, number>> {
   return map;
 }
 
+// "Período: 01/10/2026 a 07/10/2026" costuma vir no topo do relatório do caixa.
+// Só vale quando as duas datas estão juntas na mesma célula (data de emissão sozinha não conta).
+function iso(d: string, m: string, y: string): string | null {
+  const yy = y.length === 2 ? `20${y}` : y;
+  const t = `${yy}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  const dt = new Date(`${t}T12:00:00Z`);
+  return Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== t ? null : t;
+}
+export function detectPeriod(rows: Cell[][]): { de: string; ate: string } | null {
+  for (const r of rows.slice(0, 20)) {
+    for (const c of r ?? []) {
+      if (typeof c !== "string") continue;
+      const m = c.match(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})\D{1,12}?(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})/);
+      if (!m) continue;
+      const de = iso(m[1], m[2], m[3]);
+      const ate = iso(m[4], m[5], m[6]);
+      if (de && ate && de <= ate && (new Date(ate).getTime() - new Date(de).getTime()) / 864e5 <= 400) return { de, ate };
+    }
+  }
+  return null;
+}
+
 export function rowsToSales(rows: Cell[][]): SalesParse {
   let best: { index: number; map: Partial<Record<SalesField, number>>; score: number } | null = null;
   for (let i = 0; i < Math.min(rows.length, 25); i++) {
@@ -70,7 +92,8 @@ export function rowsToSales(rows: Cell[][]): SalesParse {
     if (!best || score > best.score) best = { index: i, map, score };
   }
   if (!best) {
-    throw new SpreadsheetError("Não achei as colunas do relatório. Ele precisa ter o produto (nome ou código) e a quantidade ou o valor vendido.");
+    const vistas = (rows.slice(0, 25).find((r) => (r ?? []).filter((c) => c != null && String(c).trim() !== "").length >= 3) ?? []).filter((c) => c != null && String(c).trim() !== "").slice(0, 8).map((c) => String(c).trim()).join(", ");
+    throw new SpreadsheetError(`Não achei as colunas do relatório. Ele precisa ter o produto (nome ou código) e a quantidade ou o valor vendido.${vistas ? ` Colunas que vi: ${vistas}.` : ""} Se o seu caixa usa outros nomes, baixe o modelo e cole os dados nele.`);
   }
   const { index, map } = best;
   const body = rows.slice(index + 1);
@@ -107,7 +130,7 @@ export function rowsToSales(rows: Cell[][]): SalesParse {
   }
   const columns: Partial<Record<SalesField, string>> = {};
   for (const [f, idx] of Object.entries(map) as [SalesField, number][]) columns[f] = String(rows[index][idx] ?? "");
-  return { rows: out, columns, headerRow: index, skipped };
+  return { rows: out, columns, headerRow: index, skipped, period: detectPeriod(rows.slice(0, index + 1)) };
 }
 
 export async function parseSalesSpreadsheet(buffer: ArrayBuffer, filename: string): Promise<SalesParse> {
