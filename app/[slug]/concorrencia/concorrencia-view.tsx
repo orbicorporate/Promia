@@ -184,8 +184,41 @@ export function ConcorrenciaView({
   }, [compare.rows, filtro]);
   const anunciar = compare.rows.filter((r) => r.advice.kind === "anunciar");
 
+  const comeco = competitors.length === 0 && placar.length === 0 && flyers.length === 0;
+  const passos = [
+    { ok: hasAddress, titulo: "Cadastre o endereço do seu mercado", texto: "É o ponto de partida do mapa e das distâncias.", acao: hasAddress ? null : { href: `/${slug}/mercado`, rotulo: "Cadastrar endereço" } },
+    { ok: competitors.length > 0, titulo: "Busque os mercados por perto", texto: "O Promia acha os concorrentes num raio de 1 a 10 km e põe no mapa.", acao: null },
+    { ok: flyers.length > 0, titulo: "Envie o encarte de um concorrente", texto: "Foto, print do Instagram ou do WhatsApp. A IA lê os preços e compara com os seus.", acao: null },
+  ];
+
   return (
     <div className="space-y-6">
+      {comeco && (
+        <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="comeco">
+          <div>
+            <h2 id="comeco" className="text-lg font-bold">Comece em 3 passos</h2>
+            <p className="text-sm text-[var(--ink-2)]">Quando houver dados, esta tela mostra o mapa dos concorrentes, quem está mais barato que você, o que mudou nos preços e a cesta que o cliente compara.</p>
+          </div>
+          <ol className="grid gap-3 md:grid-cols-3">
+            {passos.map((p, i) => (
+              <li key={p.titulo} className="vidro flex gap-3 rounded-[20px] p-4">
+                <span className={cn("mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-sm font-bold", p.ok ? "bg-[var(--folha)] text-white" : "bg-[var(--line)] text-[var(--ink-2)]")}>
+                  {p.ok ? <Check className="size-4" aria-hidden /> : i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-semibold leading-snug">{p.titulo}</span>
+                  <span className="mt-1 block text-sm text-[var(--ink-2)]">{p.texto}</span>
+                  {p.acao && (
+                    <Link href={p.acao.href} className="mt-2 inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-white [background-image:linear-gradient(135deg,#e8284f,#b3122f_60%,#8c0c26)] transition hover:-translate-y-px">
+                      {p.acao.rotulo} <ArrowRight className="size-4" />
+                    </Link>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Glass>
+      )}
       {compare.index != null && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="vidro rounded-[22px] p-5">
@@ -290,7 +323,7 @@ export function ConcorrenciaView({
               <h2 id="perto" className="flex items-center gap-2 text-lg font-bold">
                 <MapPin className="size-5 text-[var(--tomate)]" /> Mercados por perto
               </h2>
-              <p className="text-sm text-[var(--ink-2)]">{hasAddress ? "Concorrentes em volta do endereço abaixo." : "Coloque o endereço em Mercado para achar."}</p>
+              <p className="text-sm text-[var(--ink-2)]">{hasAddress ? "Concorrentes em volta do endereço abaixo." : <>Falta o endereço do mercado. <Link href={`/${slug}/mercado`} className="font-medium text-[var(--folha)] underline underline-offset-2">Cadastrar agora</Link>.</>}</p>
             </div>
             <Button size="sm" variant="vidro" onClick={findCompetitors} loading={searching} disabled={!hasAddress} icon={<Search className="size-4" />}>
               {competitors.length ? "Atualizar" : "Buscar"}
