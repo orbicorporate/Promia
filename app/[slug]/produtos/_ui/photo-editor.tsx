@@ -15,6 +15,7 @@ export type PhotoProduct = {
   image_url: string | null;
   image_status: string | null;
   image_candidates: string[] | null;
+  image_note?: string | null;
 };
 
 const proxied = (u: string) => `/api/imagem?u=${encodeURIComponent(u)}`;
@@ -214,7 +215,7 @@ export function PhotoEditor({
 
       {product.image_status === "nao_encontrada" && !showBusca && !achadas && (
         <p className="text-sm text-[var(--ink-2)]">
-          Não achei uma foto que desse para confiar. Toque em <span className="font-medium">Mais opções de foto</span> e, se precisar, digite outro nome, por exemplo, &quot;bife de contrafilé cru&quot;.
+          {product.image_note ? `${product.image_note} ` : "Não achei uma foto que desse para confiar. "}Toque em <span className="font-medium">Mais opções de foto</span> e, se precisar, digite outro nome, por exemplo, &quot;bife de contrafilé cru&quot;.
         </p>
       )}
 

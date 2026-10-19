@@ -14,7 +14,7 @@ export type PhotoProduct = { id: string; name: string; brand: string | null; ean
 
 export type PhotoOutcome =
   | { status: "encontrada"; origin: "banco" | "catalogo" | "web"; imageUrl: string; sourceUrl: string | null; candidates: string[]; usedAi: boolean }
-  | { status: "revisar" | "nao_encontrada"; sourceUrl: string | null; candidates: string[]; usedAi: boolean; imageUrl?: string }
+  | { status: "revisar" | "nao_encontrada"; sourceUrl: string | null; candidates: string[]; usedAi: boolean; imageUrl?: string; motivo?: string }
   | { status: "erro" };
 
 // Ordem de busca, da mais barata e certeira para a mais cara:
@@ -115,9 +115,10 @@ async function searchAndJudge(admin: Admin, marketId: string, p: PhotoProduct, p
   const merged = [...new Set(outcomes.flatMap((o) => ("candidates" in o ? o.candidates : [])))].slice(0, 8);
   for (const url of merged.slice(0, 8)) {
     const stored = await storeImageFromUrl(admin, `${marketId}/produtos/${p.id}`, url);
-    if (stored) return { status: "revisar", imageUrl: stored.url, sourceUrl: url, candidates: merged.filter((c) => c !== url).slice(0, 6), usedAi: true };
+    if (stored) return { status: "revisar", imageUrl: stored.url, sourceUrl: url, candidates: merged.filter((c) => c !== url).slice(0, 6), usedAi: true, motivo: "Palpite da IA: nenhuma foto passou com segurança. Confira antes de usar." };
   }
-  return { status: merged.length ? "revisar" : "nao_encontrada", sourceUrl: null, candidates: merged.slice(0, 6), usedAi: true };
+  const motivoFinal = outcomes.map((o) => ("motivo" in o ? o.motivo : undefined)).find((m): m is string => !!m);
+  return { status: merged.length ? "revisar" : "nao_encontrada", sourceUrl: null, candidates: merged.slice(0, 6), usedAi: true, motivo: motivoFinal ?? (merged.length ? "Não consegui abrir nenhuma das fotos achadas." : "Não achei foto confiável desse produto.") };
 }
 
 async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan: SearchPlan, query: string, preset?: ImageHit[]): Promise<PhotoOutcome | null> {
@@ -138,7 +139,9 @@ async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan:
   const brandKey = plan.brand ? normalizeName(plan.brand).replace(/[^a-z0-9]/g, "") : "";
   const hasBrand = (h: ImageHit) => !!brandKey && normalizeName(`${h.title} ${h.imageUrl}`).replace(/[^a-z0-9]/g, "").includes(brandKey);
   const hits: ImageHit[] = [...sized.filter(hasBrand), ...sized.filter((h) => !hasBrand(h))].slice(0, 10);
-  if (hits.length === 0) return { status: "nao_encontrada", sourceUrl: null, candidates: [], usedAi: true };
+  if (hits.length === 0) {
+    return { status: "nao_encontrada", sourceUrl: null, candidates: [], usedAi: true, motivo: raw.length === 0 ? "A busca não achou nenhuma imagem com esse nome." : "As imagens achadas eram pequenas demais para o encarte." };
+  }
 
   const verdict = await judgeCandidates({ name: p.name, brand: p.brand, expect: plan.expect, generic: plan.generic }, hits);
   console.info("[fotos] veredito", JSON.stringify({ produto: p.name, busca: query, melhor: verdict?.best ?? null, confianca: verdict?.confidence ?? null, servem: verdict?.order.length ?? null, fotos: hits.length }));
@@ -164,9 +167,17 @@ async function searchOnce(admin: Admin, marketId: string, p: PhotoProduct, plan:
       }
     }
     console.info("[fotos] nenhuma aprovada pôde ser copiada", p.name);
+    return { status: "revisar", sourceUrl: null, candidates: candidates.slice(0, 6), usedAi: true, motivo: "Achei fotos boas, mas os sites delas bloqueiam a cópia. Escolha uma nas opções ou envie a sua." };
   }
   // sem confiança (ou nenhuma serviu): as opções, na ordem da IA, ficam para o dono
-  return { status: verdict && verdict.order.length === 0 ? "nao_encontrada" : "revisar", sourceUrl: null, candidates: candidates.slice(0, 6), usedAi: true };
+  const nenhuma = !!verdict && verdict.order.length === 0;
+  return {
+    status: nenhuma ? "nao_encontrada" : "revisar",
+    sourceUrl: null,
+    candidates: candidates.slice(0, 6),
+    usedAi: true,
+    motivo: nenhuma ? "As fotos achadas não eram desse produto." : "A IA não teve certeza de que a foto é a certa. Confira antes de usar.",
+  };
 }
 
 export async function openFoodFactsImage(ean: string): Promise<string | null> {
@@ -211,6 +222,7 @@ export function outcomeToUpdate(o: Exclude<PhotoOutcome, { status: "erro" }>) {
     image_source_url: o.sourceUrl,
     image_candidates: (o.candidates.length ? o.candidates.slice(0, 6) : null) as Json,
     image_claimed_at: null,
+    image_note: o.status === "encontrada" ? null : (o.motivo ?? null),
   };
 }
 

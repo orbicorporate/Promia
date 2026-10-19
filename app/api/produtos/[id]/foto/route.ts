@@ -27,7 +27,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
   const apply = async (url: string, path: string | null, origin: "url" | "upload") => {
     const { error } = await admin
       .from("products")
-      .update({ image_url: url, image_status: "encontrada", image_origin: origin, image_candidates: null, image_claimed_at: null })
+      .update({ image_url: url, image_status: "encontrada", image_origin: origin, image_candidates: null, image_claimed_at: null, image_note: null })
       .eq("id", id);
     if (error) return serverError("foto", error, "Não consegui salvar a foto.");
     // Só foto da internet ou do catálogo vai para o banco compartilhado. Foto
@@ -83,7 +83,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       const resto = (Array.isArray(product.image_candidates) ? (product.image_candidates as unknown[]) : []).filter((c) => typeof c === "string" && c !== url).slice(0, 6);
       const { error } = await admin
         .from("products")
-        .update({ image_url: stored.url, image_status: "revisar", image_origin: "web", image_source_url: url, image_candidates: resto.length ? (resto as never) : null, image_claimed_at: null })
+        .update({ image_url: stored.url, image_status: "revisar", image_origin: "web", image_source_url: url, image_candidates: resto.length ? (resto as never) : null, image_claimed_at: null, image_note: "Opção escolhida por você entre os palpites. Confirme se é a foto certa." })
         .eq("id", id);
       if (error) return serverError("foto/palpite", error, "Não consegui salvar a foto.");
       return NextResponse.json({ imageUrl: stored.url, resto });
@@ -108,7 +108,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       await forgetAiPhoto(admin, [product.name, product.canonical_name], product.brand, product.image_url);
       const { error } = await admin
         .from("products")
-        .update({ image_status: "pendente", image_claimed_at: null, image_candidates: null })
+        .update({ image_status: "pendente", image_claimed_at: null, image_candidates: null, image_note: null })
         .eq("id", id);
       if (error) return serverError("foto/buscar", error, "Não consegui colocar na fila.");
       return NextResponse.json({ ok: true });
@@ -117,7 +117,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/produtos
       await forgetAiPhoto(admin, [product.name, product.canonical_name], product.brand, product.image_url);
       const { error } = await admin
         .from("products")
-        .update({ image_status: "nao_encontrada", image_url: null, image_origin: null, image_candidates: null })
+        .update({ image_status: "nao_encontrada", image_url: null, image_origin: null, image_candidates: null, image_note: "Você marcou como sem foto." })
         .eq("id", id);
       if (error) return serverError("foto/sem", error, "Não consegui salvar.");
       return NextResponse.json({ ok: true });
