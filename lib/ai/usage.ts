@@ -35,7 +35,7 @@ export async function remainingToday(marketId: string, kind: UsageKind): Promise
   return Math.max(0, DAILY_LIMITS[kind] - (await usedToday(marketId, kind)));
 }
 
-export async function recordUsage(marketId: string, userId: string, kind: UsageKind, units: number) {
+export async function recordUsage(marketId: string, userId: string | null, kind: UsageKind, units: number) {
   if (units <= 0) return;
   const admin = createAdminClient();
   const { error } = await admin.from("ai_usage").insert({ market_id: marketId, user_id: userId, kind, units });

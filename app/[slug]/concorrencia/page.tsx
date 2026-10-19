@@ -2,6 +2,7 @@ import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addDaysISO, todayInSaoPaulo } from "@/lib/dates";
 import { compareprices } from "@/lib/competition/compare";
+import { whatsappConfigurado } from "@/lib/whatsapp";
 import { cadencia, cesta, movimentos, placar } from "@/lib/competition/insights";
 import { ConcorrenciaView } from "./concorrencia-view";
 
@@ -40,6 +41,7 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
         origem={{ name: market.name, address: market.address, city: market.city }}
         competitors={(competitors ?? []).map((c) => ({ ...c, rating: c.rating == null ? null : Number(c.rating), latitude: c.latitude == null ? null : Number(c.latitude), longitude: c.longitude == null ? null : Number(c.longitude) }))}
         flyers={(flyers ?? []).slice(0, 12)}
+        whatsapp={whatsappConfigurado() && process.env.WHATSAPP_DISPLAY_NUMBER ? { numero: process.env.WHATSAPP_DISPLAY_NUMBER.replace(/\D/g, ""), cadastrado: !!market.whatsapp } : null}
         placar={placar(obsNum, prodNum)}
         cesta={cesta(cmp.rows)}
         movimentos={movimentos(obsNum).slice(0, 12)}
