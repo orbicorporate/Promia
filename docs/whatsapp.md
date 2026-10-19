@@ -1,4 +1,6 @@
-# WhatsApp do Promia (encarte do concorrente por foto)
+# WhatsApp do Promia (encarte do concorrente por foto) - Beta
+
+Status: código pronto e publicado, desligado. Falta contratar o número, criar o app na Meta e cadastrar as variáveis na Vercel. Enquanto isso o cartão não aparece no app. Quando ligar, ele aparece com o selo Beta.
 
 O dono manda a foto do encarte de um concorrente para o número do Promia, com o nome do mercado na legenda, e recebe a comparação de preços na própria conversa.
 

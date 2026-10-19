@@ -259,7 +259,7 @@ export function ConcorrenciaView({
           </Button>
           {whatsapp && (
             <div className="rounded-2xl bg-[#e7f7ec] p-3.5 text-sm ring-1 ring-[#bfe5cb]">
-              <p className="flex items-center gap-1.5 font-semibold text-[#14532d]"><MessageCircle className="size-4" /> Ou mande pelo WhatsApp</p>
+              <p className="flex items-center gap-1.5 font-semibold text-[#14532d]"><MessageCircle className="size-4" /> Ou mande pelo WhatsApp <span className="rounded-full bg-[#14532d] px-2 py-0.5 text-[11px] font-semibold text-white">Beta</span></p>
               <p className="mt-1 text-[#14532d]/85">
                 {whatsapp.cadastrado
                   ? "Mande a foto do encarte para o número do Promia, com o nome do mercado na legenda. A comparação volta na conversa em cerca de 30 segundos."
