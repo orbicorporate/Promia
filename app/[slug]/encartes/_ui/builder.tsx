@@ -43,7 +43,7 @@ import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PAS
 import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
-import { FUNDOS_ARTE } from "@/lib/encarte/modelos/fundos-arte";
+import { FUNDOS_ARTE, GRUPOS_FUNDO_ARTE } from "@/lib/encarte/modelos/fundos-arte";
 import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
@@ -52,7 +52,9 @@ import { quandoFitsRange } from "@/lib/emblemas/quando";
 
 const FUNDOS_BASE = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as EncarteFundo[];
 // fundos de arte completa: ganham destaque dourado no seletor
-const GRUPOS_PREMIUM = ["Cabeçalhos temáticos", "Semanas e festivais"];
+const GRUPOS_PREMIUM = GRUPOS_FUNDO_ARTE;
+// quantos fundos premium aparecem por categoria antes do "Ver todos" (cerca de 3 fileiras)
+const PREMIUM_VISIVEIS = 12;
 const GRUPOS_CENARIO: CenarioGrupo[] = ["Palco", "Papel", "Cortinas", "Festas", "Departamentos"];
 
 export type CatalogProduct = {
@@ -1135,7 +1137,7 @@ export function EncarteBuilder({
     </div>
   );
 
-  const gruposFundo: { grupo: string; ids: (EncarteFundo | null)[] }[] = [{ grupo: "Cabeçalhos temáticos", ids: FUNDOS_ARTE.filter((a) => !a.grupo).map((a) => a.id as EncarteFundo) }, { grupo: "Semanas e festivais", ids: FUNDOS_ARTE.filter((a) => a.grupo === "Semanas e festivais").map((a) => a.id as EncarteFundo) }, { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))];
+  const gruposFundo: { grupo: string; ids: (EncarteFundo | null)[] }[] = [...GRUPOS_FUNDO_ARTE.map((g) => ({ grupo: g, ids: FUNDOS_ARTE.filter((a) => a.grupo === g).map((a) => a.id as EncarteFundo) })), { grupo: "Efeitos", ids: [null, ...FUNDOS_BASE] as (EncarteFundo | null)[] }, ...GRUPOS_CENARIO.map((g) => ({ grupo: g, ids: CENARIOS.filter((c) => c.grupo === g).map((c) => c.id as EncarteFundo) }))];
   const buscaFundoN = buscaFundo.trim().toLowerCase();
   const gruposFundoVisiveis = gruposFundo
     .filter((g) => filtroFundo === "Todos" || g.grupo === filtroFundo)
@@ -1179,7 +1181,18 @@ export function EncarteBuilder({
                   {GRUPOS_PREMIUM.includes(grupo) && <Crown className="size-4" aria-hidden />}
                   {grupo}
                 </p>
-                <div className={cn("-mx-1 flex gap-3 px-1 pb-2", filtroFundo === grupo ? "flex-wrap" : "rolagem overflow-x-auto")}>{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+                {GRUPOS_PREMIUM.includes(grupo) || filtroFundo === grupo ? (
+                  <>
+                    <div className="-mx-1 flex flex-wrap gap-3 px-1 pb-2">{(filtroFundo === grupo || buscaFundoN ? ids : ids.slice(0, PREMIUM_VISIVEIS)).map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+                    {filtroFundo !== grupo && !buscaFundoN && ids.length > PREMIUM_VISIVEIS && (
+                      <button type="button" onClick={() => setFiltroFundo(grupo)} className="inline-flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold text-[#4a2e00] shadow-[0_8px_18px_-8px_rgba(217,138,6,0.9)] transition hover:-translate-y-px active:scale-95" style={{ backgroundImage: "linear-gradient(135deg,#fde68a,#f5b52a 55%,#d98a06)" }}>
+                        <Crown className="size-4" aria-hidden /> Ver todos os {ids.length}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="rolagem -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">{ids.map((f) => miniFundo(f, f ? FUNDO_LABELS[f].replace(/^\w{2}\d{2} /, "") : "Do estilo"))}</div>
+                )}
               </div>
             ))}
           </div>
