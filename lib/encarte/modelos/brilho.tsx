@@ -775,7 +775,7 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
       ) : cfg.rodape === "cerca" ? (
         <>
           <Img src={cercaUri(W, r(70 * s))} w={W} h={r(70 * s)} style={{ position: "absolute", left: 0, top: H - footerH - r(60 * s) }} />
-          <div style={{ ...row, position: "absolute", left: 0, top: H - footerH + r(10 * s), width: W, height: footerH - r(10 * s), backgroundColor: "#FFFFFF", alignItems: "center", padding: `0 ${padX}px`, paddingBottom: spec.safeBottom ? r(spec.safeBottom * 0.55) : 0 }}>
+          <div style={{ ...row, position: "absolute", left: 0, top: H - footerH + r(10 * s), width: W, height: footerH - r(10 * s), backgroundColor: "#FFFFFF", alignItems: "center", padding: `0 ${padX}px`, paddingBottom: Math.max(spec.safeBottom ? r(spec.safeBottom * 0.55) : 0, r(32 * s)) }}>
             {!dados.mostrarSelo ? null : data.market.logoUrl ? (
               <div style={{ ...row, width: d, height: d, borderRadius: d, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.bg1}` }}>
                 <Img src={data.market.logoUrl} w={d * 0.82} h={d * 0.82} style={{ objectFit: "contain" }} />
