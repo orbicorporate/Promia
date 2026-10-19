@@ -2,6 +2,7 @@ import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addDaysISO, todayInSaoPaulo } from "@/lib/dates";
 import { compareprices } from "@/lib/competition/compare";
+import { cadencia, cesta, movimentos, placar } from "@/lib/competition/insights";
 import { ConcorrenciaView } from "./concorrencia-view";
 
 export const metadata = { title: "Concorrência" };
@@ -13,7 +14,7 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
   const since = addDaysISO(todayInSaoPaulo(), -45);
   const [{ data: competitors }, { data: flyers }, { data: obs }] = await Promise.all([
     admin.from("competitors").select("id, name, address, rating, reviews, category, latitude, longitude").eq("market_id", market.id).order("reviews", { ascending: false, nullsFirst: false }).limit(30),
-    admin.from("competitor_flyers").select("id, competitor_name, observed_on, items, valid_until").eq("market_id", market.id).order("created_at", { ascending: false }).limit(12),
+    admin.from("competitor_flyers").select("id, competitor_name, observed_on, items, valid_until").eq("market_id", market.id).order("created_at", { ascending: false }).limit(60),
     admin.from("competitor_prices").select("product_id, product_name, competitor_name, price, observed_on").eq("market_id", market.id).gte("observed_on", since).limit(5000),
   ]);
   const ids = [...new Set((obs ?? []).map((o) => o.product_id).filter((x): x is string => !!x))];
@@ -22,6 +23,8 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
     (obs ?? []).map((o) => ({ ...o, price: Number(o.price) })),
     (products ?? []).map((p) => ({ ...p, price: p.price == null ? null : Number(p.price) }))
   );
+  const obsNum = (obs ?? []).map((o) => ({ ...o, price: Number(o.price) }));
+  const prodNum = (products ?? []).map((p) => ({ ...p, price: p.price == null ? null : Number(p.price) }));
   const unmatched = (obs ?? []).filter((o) => !o.product_id).length;
 
   return (
@@ -36,7 +39,11 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
         hasAddress={!!(market.address || market.city)}
         origem={{ name: market.name, address: market.address, city: market.city }}
         competitors={(competitors ?? []).map((c) => ({ ...c, rating: c.rating == null ? null : Number(c.rating), latitude: c.latitude == null ? null : Number(c.latitude), longitude: c.longitude == null ? null : Number(c.longitude) }))}
-        flyers={flyers ?? []}
+        flyers={(flyers ?? []).slice(0, 12)}
+        placar={placar(obsNum, prodNum)}
+        cesta={cesta(cmp.rows)}
+        movimentos={movimentos(obsNum).slice(0, 12)}
+        cadencia={cadencia(flyers ?? [])}
         compare={cmp}
         unmatched={unmatched}
       />

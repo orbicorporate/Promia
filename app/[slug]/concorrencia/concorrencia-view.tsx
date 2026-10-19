@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check } from "lucide-react";
+import dynamic from "next/dynamic";
+import { MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { toJpeg } from "@/lib/client/image";
@@ -11,6 +12,13 @@ import { Button, Field, Glass, Input, Segmented, Select, cn } from "@/components
 import type { CompareRow } from "@/lib/competition/compare";
 import { plural } from "@/lib/plural";
 import { distanceKm } from "@/lib/competition/places";
+import type { Cadencia, Movimento, Placar } from "@/lib/competition/insights";
+import type { PinConcorrente } from "./mapa";
+
+const MapaConcorrentes = dynamic(() => import("./mapa").then((m) => m.MapaConcorrentes), { ssr: false, loading: () => <div className="h-[360px] animate-pulse rounded-[20px] bg-[var(--line)] sm:h-[420px]" /> });
+const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+const adsUrl = (nome: string) => `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BR&q=${encodeURIComponent(nome)}&search_type=keyword_unordered`;
+const instaUrl = (nome: string, cidade: string | null) => `https://www.google.com/search?q=${encodeURIComponent(`site:instagram.com ${nome} ${cidade ?? ""}`)}`;
 
 type Competitor = { id: string; name: string; address: string | null; rating: number | null; reviews: number | null; category: string | null; latitude: number | null; longitude: number | null };
 type Coords = { latitude: number; longitude: number };
@@ -32,6 +40,10 @@ export function ConcorrenciaView({
   flyers,
   compare,
   unmatched,
+  placar,
+  cesta,
+  movimentos,
+  cadencia,
 }: {
   slug: string;
   marketId: string;
@@ -41,6 +53,10 @@ export function ConcorrenciaView({
   flyers: Flyer[];
   compare: { rows: CompareRow[]; index: number | null; cheaper: number; pricier: number };
   unmatched: number;
+  placar: Placar[];
+  cesta: { itens: number; indice: number } | null;
+  movimentos: Movimento[];
+  cadencia: Cadencia[];
 }) {
   const router = useRouter();
   const [searching, setSearching] = useState(false);
@@ -57,6 +73,7 @@ export function ConcorrenciaView({
   const [applied, setApplied] = useState<Record<string, number>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const [radiusKm, setRadiusKm] = useState(3);
+  const [ativo, setAtivo] = useState<string | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const radiusKey = `promia:raio:${marketId}`;
 
@@ -95,6 +112,18 @@ export function ConcorrenciaView({
     const dentro = withDist.filter((c) => c.dist == null || c.dist <= radiusKm).sort((a, b) => (a.dist ?? 99) - (b.dist ?? 99));
     return { dentro, fora: withDist.length - dentro.length };
   }, [competitors, coords, radiusKm]);
+  const pins = useMemo<PinConcorrente[]>(() => {
+    const por = new Map(placar.map((x) => [x.name, x]));
+    return perto.dentro
+      .filter((c) => c.latitude != null && c.longitude != null)
+      .map((c) => {
+        const x = por.get(c.name);
+        const cor = !x ? "#8a948f" : x.indice > 0.01 ? "#d6213c" : x.indice < -0.01 ? "#1f8a4c" : "#f0a30a";
+        const nota = !x ? "Sem encarte lido ainda" : x.indice > 0.01 ? `Mais barato que você em ${x.maisCaro} de ${x.comuns} produtos` : x.indice < -0.01 ? `Mais caro que você em ${x.maisBarato} de ${x.comuns} produtos` : "Preços parecidos com os seus";
+        return { id: c.id, name: c.name, latitude: c.latitude!, longitude: c.longitude!, dist: c.dist, rating: c.rating, reviews: c.reviews, address: c.address, cor, nota };
+      });
+  }, [perto.dentro, placar]);
+  const responder = compare.rows.filter((r) => r.role === "atracao" && r.advice.kind === "baixar");
   const enderecoCompleto = [origem.address, origem.city].filter(Boolean).join(", ");
 
   async function findCompetitors() {
@@ -156,7 +185,7 @@ export function ConcorrenciaView({
   return (
     <div className="space-y-6">
       {compare.index != null && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="vidro rounded-[22px] p-5">
             <p className="text-sm text-[var(--ink-2)]">Seu preço contra o concorrente mais barato</p>
             <p className={cn("mt-1 flex items-center gap-2 font-display text-4xl font-extrabold tabular", compare.index > 0.01 ? "text-[var(--perigo)]" : compare.index < -0.01 ? "text-[var(--folha)]" : "")}>
@@ -168,8 +197,21 @@ export function ConcorrenciaView({
           <div className="vidro rounded-[22px] p-5">
             <p className="text-sm text-[var(--ink-2)]">Você é mais caro em</p>
             <p className="mt-1 font-display text-4xl font-extrabold tabular">{compare.pricier}</p>
-            <p className="mt-1 text-sm text-[var(--ink-3)]">{compare.pricier === 1 ? "produto" : "produtos"}</p>
+            {responder.length > 0 ? (
+              <Link href={`/${slug}/encartes/novo?produtos=${responder.map((r) => r.productId).slice(0, 30).join(",")}&titulo=${encodeURIComponent("Cobrimos qualquer preço")}`} className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[var(--perigo)] hover:underline">
+                Responder com encarte <ArrowRight className="size-4" />
+              </Link>
+            ) : (
+              <p className="mt-1 text-sm text-[var(--ink-3)]">{compare.pricier === 1 ? "produto" : "produtos"}</p>
+            )}
           </div>
+          {cesta && (
+            <div className="vidro rounded-[22px] p-5">
+              <p className="flex items-center gap-1.5 text-sm text-[var(--ink-2)]"><ShoppingBasket className="size-4" /> Cesta que o cliente compara</p>
+              <p className={cn("mt-1 font-display text-4xl font-extrabold tabular", cesta.indice > 0.01 ? "text-[var(--perigo)]" : cesta.indice < -0.01 ? "text-[var(--folha)]" : "")}>{pct(cesta.indice)}</p>
+              <p className="mt-1 text-sm text-[var(--ink-3)]">{cesta.indice > 0.01 ? "acima" : cesta.indice < -0.01 ? "abaixo" : "alinhado"} dos concorrentes em {plural(cesta.itens, "item", "itens")} de atração</p>
+            </div>
+          )}
           <div className="vidro rounded-[22px] p-5">
             <p className="text-sm text-[var(--ink-2)]">Você é mais barato em</p>
             <p className="mt-1 font-display text-4xl font-extrabold tabular">{compare.cheaper}</p>
@@ -269,12 +311,23 @@ export function ConcorrenciaView({
               </div>
             </div>
           )}
+          {coords && pins.length > 0 && (
+            <div className="space-y-2">
+              <MapaConcorrentes origem={{ name: origem.name, latitude: coords.latitude, longitude: coords.longitude }} pins={pins} raioKm={radiusKm} ativo={ativo} onPick={setAtivo} />
+              <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--ink-2)]">
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#d6213c]" /> mais barato que você</span>
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#1f8a4c]" /> mais caro que você</span>
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#f0a30a]" /> parecido</span>
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#8a948f]" /> sem encarte lido</span>
+              </p>
+            </div>
+          )}
           {perto.dentro.length === 0 ? (
             <p className="text-sm text-[var(--ink-3)]">{competitors.length ? `Nenhum concorrente em até ${radiusKm} km. Aumente o raio.` : "Nenhum concorrente ainda."}</p>
           ) : (
             <ul className="rolagem max-h-[340px] divide-y divide-[var(--line)] overflow-y-auto">
               {perto.dentro.map((c) => (
-                <li key={c.id} className="flex items-start justify-between gap-3 py-2.5">
+                <li key={c.id} onMouseEnter={() => setAtivo(c.id)} className={cn("flex items-start justify-between gap-3 rounded-xl px-2 py-2.5 transition-colors", ativo === c.id && "bg-[color-mix(in_srgb,var(--tomate)_8%,transparent)]")}>
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{c.name}</span>
                     <span className="block truncate text-xs text-[var(--ink-3)]">{c.dist != null ? <strong className="font-semibold text-[var(--ink-2)]">{km(c.dist)} · </strong> : null}{c.address}</span>
@@ -285,6 +338,12 @@ export function ConcorrenciaView({
                         <Star className="size-4 fill-[var(--banana)] text-[#c99a00]" /> {c.rating.toLocaleString("pt-BR")}
                       </span>
                     )}
+                    <a href={adsUrl(c.name)} target="_blank" rel="noopener noreferrer" className="grid size-10 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--ink)]" aria-label={`Ver anúncios de ${c.name} no Facebook e Instagram`} title="Anúncios ativos (Facebook e Instagram)">
+                      <Megaphone className="size-4" />
+                    </a>
+                    <a href={instaUrl(c.name, origem.city)} target="_blank" rel="noopener noreferrer" className="grid size-10 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--ink)]" aria-label={`Achar o Instagram de ${c.name}`} title="Achar o Instagram">
+                      <AtSign className="size-4" />
+                    </a>
                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${c.name} ${c.address ?? ""}`)}`} target="_blank" rel="noopener noreferrer" className="grid size-10 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--ink)]" aria-label={`Ver ${c.name} no mapa`}>
                       <ExternalLink className="size-4" />
                     </a>
@@ -295,6 +354,62 @@ export function ConcorrenciaView({
           )}
         </Glass>
       </div>
+
+      {(placar.length > 0 || movimentos.length > 0) && (
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
+          {placar.length > 0 && (
+            <Glass as="section" className="space-y-3 p-5 sm:p-6" aria-labelledby="placar">
+              <h2 id="placar" className="flex items-center gap-2 text-lg font-bold"><Swords className="size-5 text-[var(--tomate)]" /> Você contra cada um</h2>
+              <ul className="space-y-3">
+                {placar.map((x) => {
+                  const mais = x.indice > 0.01;
+                  const menos = x.indice < -0.01;
+                  const larg = Math.min(100, Math.abs(x.indice) * 400);
+                  return (
+                    <li key={x.name}>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="truncate font-medium">{x.name}</span>
+                        <span className={cn("shrink-0 font-semibold tabular", mais ? "text-[var(--perigo)]" : menos ? "text-[var(--folha)]" : "text-[var(--ink-2)]")}>{pct(x.indice)}</span>
+                      </div>
+                      <span className="mt-1 block h-2 overflow-hidden rounded-full bg-[var(--line)]" aria-hidden>
+                        <span className="block h-full rounded-full" style={{ width: `${Math.max(4, larg)}%`, background: mais ? "#d6213c" : menos ? "#1f8a4c" : "#f0a30a" }} />
+                      </span>
+                      <p className="mt-1 text-xs text-[var(--ink-3)]">
+                        {mais ? "Você está mais caro" : menos ? "Você está mais barato" : "Preços parecidos"} em {x.comuns} produtos em comum (mais barato em {x.maisBarato}, mais caro em {x.maisCaro}). Visto em {dm(x.visto)}.
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+              {cadencia.length > 0 && (
+                <div className="space-y-1 rounded-2xl bg-white/60 p-3 text-sm ring-1 ring-[var(--line)]">
+                  <p className="flex items-center gap-1.5 font-medium"><CalendarClock className="size-4" /> Quando eles soltam encarte</p>
+                  {cadencia.map((c) => (
+                    <p key={c.competitor} className="text-[var(--ink-2)]">{c.competitor} costuma publicar na {DIAS[c.dia]} ({c.vezes} de {c.total} encartes). Solte o seu um dia antes.</p>
+                  ))}
+                </div>
+              )}
+            </Glass>
+          )}
+          {movimentos.length > 0 && (
+            <Glass as="section" className="space-y-3 p-5 sm:p-6" aria-labelledby="mudou">
+              <h2 id="mudou" className="text-lg font-bold">O que mudou nos concorrentes</h2>
+              <p className="text-sm text-[var(--ink-2)]">Mesmo produto, preço novo contra o anterior.</p>
+              <ul className="divide-y divide-[var(--line)]">
+                {movimentos.map((m, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{m.product}</span>
+                      <span className="block truncate text-xs text-[var(--ink-3)]">{m.competitor}, {dm(m.em)}: de {brl(m.antes)} para {brl(m.agora)}</span>
+                    </span>
+                    <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold tabular", m.change < 0 ? "bg-[#fde3e6] text-[var(--perigo)]" : "bg-[#dff3e6] text-[var(--folha)]")}>{m.change < 0 ? "▼" : "▲"} {pct(m.change)}</span>
+                  </li>
+                ))}
+              </ul>
+            </Glass>
+          )}
+        </div>
+      )}
 
       {compare.rows.length > 0 && (
         <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="precos">
