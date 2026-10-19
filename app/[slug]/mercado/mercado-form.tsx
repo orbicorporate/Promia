@@ -30,11 +30,22 @@ export type MarketForm = {
 };
 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-const SUGESTOES: [number, string, string][] = [
-  [3, "Quarta do Hortifrúti", "hortifruti"],
-  [4, "Quinta da Carne", "açougue"],
-  [2, "Terça da Limpeza", "limpeza"],
-  [5, "Sexta da Cerveja", "bebidas"],
+const CORES_DIA = ["#8b5cf6", "#14b8a6", "#1c8fe0", "#22a447", "#f0a30a", "#e8561c", "#d6213c"];
+const SUGESTOES: [number, string, string, string][] = [
+  [3, "Quarta do Hortifrúti", "hortifruti", "#22a447"],
+  [4, "Quinta da Carne", "açougue", "#d6213c"],
+  [2, "Terça da Limpeza", "limpeza", "#1c8fe0"],
+  [5, "Sexta da Cerveja", "bebidas", "#f0a30a"],
+  [1, "Segunda do Pão", "padaria", "#c9803a"],
+  [6, "Sábado do Churrasco", "açougue", "#e8561c"],
+  [0, "Domingo da Família", "mercearia", "#8b5cf6"],
+  [2, "Terça do Frango", "aves", "#f59e0b"],
+  [4, "Quinta dos Frios", "frios", "#ec4899"],
+  [1, "Segunda da Higiene", "higiene", "#14b8a6"],
+  [3, "Quarta do Leite e Laticínios", "laticínios", "#38bdf8"],
+  [5, "Sexta da Pizza", "congelados", "#ef4444"],
+  [6, "Sábado do Hortifrúti", "hortifruti", "#84cc16"],
+  [0, "Domingo do Doce", "doces", "#f472b6"],
 ];
 
 // Cores mais marcantes do logo, para o dono escolher com um toque.
@@ -308,6 +319,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
                     exit={{ opacity: 0, height: 0 }}
                     className="flex items-center gap-3 rounded-2xl bg-[var(--glass-strong)] px-4 py-2.5 ring-1 ring-[var(--line)]"
                   >
+                    <span className="size-2.5 shrink-0 rounded-full ring-2 ring-white/70" style={{ background: SUGESTOES.find((x) => x[1] === p.name)?.[3] ?? CORES_DIA[p.weekday] }} aria-hidden />
                     <span className="w-16 text-sm text-[var(--ink-3)]">{DIAS[p.weekday]}</span>
                     <span className="flex-1 font-medium">{p.name}</span>
                     <button onClick={() => removePromo(p.id)} className="grid size-11 place-items-center rounded-full text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--perigo)]" aria-label={`Remover ${p.name}`}>
@@ -317,15 +329,19 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
                 ))}
             </AnimatePresence>
           </ul>
-          {promos.length === 0 && (
+          <div>
+            <p className="mb-2 text-xs font-medium text-[var(--ink-3)]">Toque para adicionar</p>
             <div className="flex flex-wrap gap-2">
-              {SUGESTOES.map(([d, n, c]) => (
-                <button key={n} onClick={() => addPromo({ weekday: d, name: n, categoryHint: c })} className="vidro flex h-10 items-center gap-1.5 rounded-full px-3.5 text-sm hover:bg-[var(--glass-strong)]">
-                  <Plus className="size-4" /> {n}
+              {SUGESTOES.filter(([d, n]) => !promos.some((p) => p.weekday === d && p.name === n)).map(([d, n, c, cor]) => (
+                <button key={n} type="button" onClick={() => addPromo({ weekday: d, name: n, categoryHint: c })} className="vidro flex h-10 items-center gap-2 rounded-full pl-3 pr-3.5 text-sm transition hover:-translate-y-px hover:bg-[var(--glass-strong)] active:scale-[0.97]">
+                  <span className="size-2.5 rounded-full ring-2 ring-white/70" style={{ background: cor }} aria-hidden />
+                  <span>{n}</span>
+                  <span className="text-xs text-[var(--ink-3)]">{DIAS[d].slice(0, 3)}</span>
+                  <Plus className="size-3.5 text-[var(--ink-3)]" />
                 </button>
               ))}
             </div>
-          )}
+          </div>
           <form
             className="grid gap-2 sm:grid-cols-[130px_1fr_auto]"
             onSubmit={(e) => {
@@ -335,7 +351,7 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
           >
             <Select value={novo.weekday} onChange={(e) => setNovo((x) => ({ ...x, weekday: Number(e.target.value) }))} aria-label="Dia da semana">
               {DIAS.map((d, i) => (
-                <option key={d} value={i}>
+                <option key={d} value={i} data-dot={CORES_DIA[i]}>
                   {d}
                 </option>
               ))}

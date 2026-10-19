@@ -67,7 +67,7 @@ export function AppShell({
         </Link>
         <Link
           href={`/${market.slug}/encartes/novo`}
-          className="mt-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--tomate)] font-semibold text-white shadow-[0_14px_30px_-14px_var(--tomate)] transition hover:-translate-y-px active:scale-[0.97]"
+          className="relative mt-4 flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full font-semibold text-white [background-image:linear-gradient(135deg,#e8284f_0%,#b3122f_55%,#8c0c26_100%)] shadow-[0_14px_30px_-14px_rgba(179,18,47,0.8)] transition before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-gradient-to-b before:from-white/30 before:to-transparent hover:-translate-y-px active:scale-[0.97]"
         >
           <Plus className="size-5" /> Novo encarte
         </Link>
@@ -146,7 +146,7 @@ export function AppShell({
           <Link
             href={`/${market.slug}/encartes/novo`}
             aria-label="Novo encarte"
-            className="grid size-14 -my-4 place-items-center rounded-full bg-[var(--tomate)] text-white shadow-[0_14px_30px_-10px_var(--tomate)] ring-4 ring-[var(--bg)] transition active:scale-95"
+            className="grid size-14 -my-4 place-items-center rounded-full [background-image:linear-gradient(135deg,#e8284f_0%,#b3122f_55%,#8c0c26_100%)] text-white shadow-[0_14px_30px_-10px_rgba(179,18,47,0.8)] ring-4 ring-[var(--bg)] transition active:scale-95"
           >
             <Plus className="size-7" />
           </Link>
