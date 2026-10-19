@@ -50,8 +50,8 @@ export default function LoginPage() {
       <section className="flex flex-col justify-between gap-10 px-5 py-8 sm:px-10 lg:py-12">
         <PromiaLogo className="h-9" />
         <div className="mx-auto w-full max-w-sm">
-          <h1 className="font-display text-4xl font-extrabold leading-[1.02] sm:text-5xl">Ofertas da semana, prontas para postar.</h1>
-          <p className="mt-3 text-[var(--ink-2)]">Entre para montar os encartes do seu mercado.</p>
+          <h1 className="font-display text-4xl font-extrabold leading-[1.02] sm:text-5xl">A inteligência artificial do seu mercado.</h1>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--ink-2)] sm:text-lg">Crie tabloides estratégicos, organize promoções, gerencie preços e ofertas com a IA que conhece sua região e sua prateleira.</p>
           <form onSubmit={handleSubmit} className="vidro mt-8 space-y-4 rounded-[26px] p-6">
             <Field label="Email" htmlFor="email">
               <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
