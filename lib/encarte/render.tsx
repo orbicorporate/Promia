@@ -777,7 +777,7 @@ function Footer({ ctx, market, m, page }: { ctx: Ctx; market: EncarteData["marke
   const legalLines = wrapMeasured(legal, innerW, "text500", lf, 2);
 
   return (
-    <div style={{ ...flexRow, width: m.W, height: m.footerH + m.safeBottom, paddingBottom: m.safeBottom, paddingLeft: m.pad, paddingRight: m.pad, backgroundColor: ctx.c.brandBg, color: ctx.c.brandText, alignItems: "center" }}>
+    <div style={{ ...flexRow, width: m.W, height: m.footerH + m.safeBottom, paddingBottom: m.safeBottom + 10, paddingLeft: Math.round(m.pad * 1.35), paddingRight: Math.round(m.pad * 1.35), backgroundColor: ctx.c.brandBg, color: ctx.c.brandText, alignItems: "center" }}>
       <div style={{ ...flexCol, width: innerW, justifyContent: "center" }}>
         {infos.length ? (
           <div style={{ ...flexRow, flexWrap: "wrap", alignItems: "center", fontSize: f, fontWeight: 600, lineHeight: 1.25 }}>
