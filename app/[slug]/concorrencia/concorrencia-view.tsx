@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket } from "lucide-react";
+import { MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { toJpeg } from "@/lib/client/image";
@@ -40,6 +40,7 @@ export function ConcorrenciaView({
   flyers,
   compare,
   unmatched,
+  whatsapp,
   placar,
   cesta,
   movimentos,
@@ -53,6 +54,7 @@ export function ConcorrenciaView({
   flyers: Flyer[];
   compare: { rows: CompareRow[]; index: number | null; cheaper: number; pricier: number };
   unmatched: number;
+  whatsapp: { numero: string; cadastrado: boolean } | null;
   placar: Placar[];
   cesta: { itens: number; indice: number } | null;
   movimentos: Movimento[];
@@ -255,6 +257,19 @@ export function ConcorrenciaView({
           <Button size="lg" className="w-full" variant="ia" loading={reading} icon={<Camera className="size-5" />} onClick={() => fileRef.current?.click()}>
             {reading ? "Lendo o encarte, leva uns 30 segundos" : "Fotografar ou enviar encarte"}
           </Button>
+          {whatsapp && (
+            <div className="rounded-2xl bg-[#e7f7ec] p-3.5 text-sm ring-1 ring-[#bfe5cb]">
+              <p className="flex items-center gap-1.5 font-semibold text-[#14532d]"><MessageCircle className="size-4" /> Ou mande pelo WhatsApp</p>
+              <p className="mt-1 text-[#14532d]/85">
+                {whatsapp.cadastrado
+                  ? "Mande a foto do encarte para o número do Promia, com o nome do mercado na legenda. A comparação volta na conversa em cerca de 30 segundos."
+                  : "Cadastre o WhatsApp do seu mercado em Mercado. Só ele pode mandar encartes para o Promia."}
+              </p>
+              <a href={`https://wa.me/${whatsapp.numero}`} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1f8a4c] px-4 font-semibold text-white transition hover:-translate-y-px">
+                Abrir conversa <ArrowRight className="size-4" />
+              </a>
+            </div>
+          )}
           {flyers.length > 0 && (
             <ul className="space-y-1.5 text-sm">
               {flyers.slice(0, 5).map((f) => (
