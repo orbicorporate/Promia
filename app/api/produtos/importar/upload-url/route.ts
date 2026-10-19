@@ -12,14 +12,8 @@ export async function POST(req: NextRequest) {
   const marketId = body.marketId as string;
 
   const fileName = String(body.fileName || "").trim().toLowerCase();
-  const ext = fileName.endsWith(".xlsx") ? "xlsx" : fileName.endsWith(".csv") ? "csv" : null;
-  if (fileName.endsWith(".xls")) {
-    return NextResponse.json(
-      { error: "Arquivos .xls (Excel antigo) não são lidos. Abra no Excel e salve como .xlsx, ou exporte em .csv." },
-      { status: 400 }
-    );
-  }
-  if (!ext) return NextResponse.json({ error: "Formato não suportado. Envie .xlsx ou .csv." }, { status: 400 });
+  const ext = /\.(xlsx|xls|csv|txt)$/.exec(fileName)?.[1] ?? null;
+  if (!ext) return NextResponse.json({ error: "Formato não suportado. Envie Excel (.xlsx ou .xls) ou CSV." }, { status: 400 });
 
   const admin = createAdminClient();
   const path = `${marketId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;

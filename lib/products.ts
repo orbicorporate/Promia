@@ -394,19 +394,49 @@ export function excelCellValue(v: ExcelJS.CellValue): Cell {
   return null;
 }
 
+// Muitos sistemas de caixa gravam uma tabela HTML (ou XML) com extensão .xls.
+// Isso é lido aqui; o .xls binário de verdade ainda precisa virar .xlsx.
+function htmlEntities(t: string): string {
+  return t
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
+export function htmlTableRows(html: string): Cell[][] {
+  const rows: Cell[][] = [];
+  for (const tr of html.match(/<tr[\s\S]*?<\/tr>/gi) ?? []) {
+    const cells = (tr.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) ?? []).map((td) => {
+      const t = htmlEntities(td.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+      return t === "" ? null : t;
+    });
+    if (cells.length) rows.push(cells);
+  }
+  return rows;
+}
+
 export async function readSheetRows(buffer: ArrayBuffer, filename: string): Promise<Cell[][]> {
   const lower = filename.toLowerCase();
-  if (lower.endsWith(".xls")) {
-    throw new SpreadsheetError(
-      "Arquivos .xls (Excel antigo) não são lidos. Abra no Excel e use Salvar como .xlsx, ou exporte em .csv."
-    );
+  const bytes = new Uint8Array(buffer);
+  const zip = bytes[0] === 0x50 && bytes[1] === 0x4b;
+  const biff = bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0;
+  if (biff) {
+    throw new SpreadsheetError("Esse é um Excel antigo (.xls). Abra no Excel, use Salvar como .xlsx (Pasta de Trabalho do Excel), ou exporte em CSV.");
   }
-  if (lower.endsWith(".csv") || lower.endsWith(".txt")) {
-    const text = decodeText(new Uint8Array(buffer));
+  if (!zip) {
+    const text = decodeText(bytes);
+    if (/^\s*</.test(text)) {
+      if (/<tr[\s>]/i.test(text)) return htmlTableRows(text);
+      throw new SpreadsheetError("Não consegui ler esse arquivo. Exporte o relatório do caixa em Excel (.xlsx) ou CSV.");
+    }
+    if (lower.endsWith(".xls") && !/[;,\t]/.test(text.slice(0, 2000))) {
+      throw new SpreadsheetError("Arquivos .xls (Excel antigo) não são lidos. Abra no Excel e use Salvar como .xlsx, ou exporte em .csv.");
+    }
+    if (lower.endsWith(".xlsx")) throw new SpreadsheetError("Não consegui abrir esse .xlsx. Confira se o arquivo não está corrompido ou protegido por senha.");
     return parseCsv(text, detectDelimiter(text));
-  }
-  if (!lower.endsWith(".xlsx")) {
-    throw new SpreadsheetError("Formato não suportado. Envie .xlsx ou .csv.");
   }
 
   const workbook = new ExcelJS.Workbook();

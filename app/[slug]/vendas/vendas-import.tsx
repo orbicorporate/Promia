@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileSpreadsheet, Loader2, Upload, CheckCircle2 } from "lucide-react";
+import { FileSpreadsheet, Loader2, Upload, CheckCircle2, Download, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button, Field, Glass, Input, Sheet, cn } from "@/components/ui";
@@ -26,6 +26,17 @@ function presets(today: string) {
   ];
 }
 
+const fmt = (iso: string) => iso.split("-").reverse().join("/");
+
+function baixarModelo() {
+  const csv = "\uFEFFCódigo;Código de barras;Produto;Quantidade;Valor total\n1;7891234567890;Arroz Tipo 1 5kg;120;3108,00\n2;;Banana Prata kg;85,5;597,65\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "modelo-relatorio-de-vendas.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function ImportForm({ marketId, today, onDone }: { marketId: string; today: string; onDone: () => void }) {
   const router = useRouter();
   const p = presets(today);
@@ -33,11 +44,14 @@ function ImportForm({ marketId, today, onDone }: { marketId: string; today: stri
   const [ate, setAte] = useState(p[0].ate);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [result, setResult] = useState<{ rows: number; matched: number } | null>(null);
+  const [result, setResult] = useState<{ rows: number; matched: number; de: string; ate: string; daRelatorio: boolean; substituiu: boolean; semLigacao: string[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function send(file: File) {
     if (!de || !ate || de > ate) return toast.error("Confira o período do relatório.");
+    if (!/\.(xlsx|xls|csv|txt)$/i.test(file.name)) return toast.error("Esse arquivo não serve. Envie o Excel (.xlsx ou .xls) ou CSV que o caixa exporta. PDF e foto não dá para ler.");
+    if (file.size > 25 * 1024 * 1024) return toast.error("Arquivo grande demais (acima de 25 MB). Exporte um período menor.");
+    if (file.size === 0) return toast.error("O arquivo está vazio. Exporte o relatório de novo.");
     setBusy(true);
     setResult(null);
     try {
@@ -49,7 +63,7 @@ function ImportForm({ marketId, today, onDone }: { marketId: string; today: stri
       const res = await fetch("/api/vendas/importar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ marketId, path: u.path, fileName: file.name, de, ate }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return toast.error(data.error || "Não consegui ler o relatório.");
-      setResult({ rows: data.rows, matched: data.matched });
+      setResult(data);
       toast.success(`${data.rows} produtos lidos, ${data.matched} ligados ao catálogo.`);
       router.refresh();
       onDone();
@@ -108,15 +122,36 @@ function ImportForm({ marketId, today, onDone }: { marketId: string; today: stri
           busy && "varredura pointer-events-none"
         )}
       >
-        <input ref={fileRef} type="file" accept=".xlsx,.csv" className="sr-only" disabled={busy} onChange={(e) => e.target.files?.[0] && send(e.target.files[0])} />
+        <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.txt" className="sr-only" disabled={busy} onChange={(e) => e.target.files?.[0] && send(e.target.files[0])} />
         <span className="grid size-12 place-items-center rounded-2xl bg-[var(--folha)] text-white">{busy ? <Loader2 className="size-5 animate-spin" /> : <FileSpreadsheet className="size-5" />}</span>
         <span className="font-display text-lg font-bold">{busy ? "Lendo o relatório" : "Solte o relatório de vendas aqui"}</span>
-        <span className="max-w-md text-sm text-[var(--ink-2)]">Excel ou CSV exportado do caixa (curva ABC, vendas por produto). Precisa do produto e da quantidade ou do valor vendido.</span>
+        <span className="max-w-md text-sm text-[var(--ink-2)]">Excel ou CSV que o caixa exporta (curva ABC, vendas por produto). Precisa do produto e da quantidade ou do valor vendido. Pode clicar aqui para escolher o arquivo.</span>
       </label>
+      <p className="text-sm text-[var(--ink-3)]">
+        No caixa, procure em Relatórios por Vendas por produto, Curva ABC ou Mapa de vendas, e exporte em Excel. Não achou o seu? Use o{" "}
+        <button type="button" onClick={baixarModelo} className="inline-flex items-center gap-1 font-medium text-[var(--folha)] underline underline-offset-2">
+          <Download className="size-3.5" /> modelo pronto
+        </button>{" "}
+        e cole os dados.
+      </p>
       {result && (
-        <p className="flex items-center gap-2 rounded-2xl bg-[var(--folha-soft)] px-4 py-3 text-sm font-medium text-[var(--folha)]">
-          <CheckCircle2 className="size-5" /> {result.rows} produtos lidos, {result.matched} ligados ao catálogo.
-        </p>
+        <div className="space-y-2 rounded-2xl bg-[var(--folha-soft)] px-4 py-3 text-sm text-[var(--folha)]" role="status">
+          <p className="flex items-center gap-2 font-medium">
+            <CheckCircle2 className="size-5 shrink-0" /> {result.rows} produtos lidos, {result.matched} ligados ao catálogo.
+          </p>
+          <p>
+            Período gravado: {fmt(result.de)} a {fmt(result.ate)}
+            {result.daRelatorio ? " (lido de dentro do relatório)" : ""}.{result.substituiu ? " Substituiu o envio anterior desse mesmo período." : ""}
+          </p>
+          {result.rows - result.matched > 0 && (
+            <p className="flex items-start gap-2 text-[var(--ink-2)]">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <span>
+                {result.rows - result.matched} sem cadastro no catálogo{result.semLigacao.length ? `, por exemplo ${result.semLigacao.slice(0, 3).join(", ")}` : ""}. Eles entram na soma, mas não aparecem como produto até o cadastro bater pelo código, código de barras ou nome.
+              </span>
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

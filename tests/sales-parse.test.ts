@@ -27,3 +27,17 @@ describe("relatório de vendas", () => {
     expect(() => rowsToSales([["a", "b"], ["1", "2"]])).toThrow(/colunas do relatório/);
   });
 });
+
+describe("período e formatos", () => {
+  it("lê o período escrito no topo do relatório", async () => {
+    const { detectPeriod } = await import("@/lib/sales/parse");
+    expect(detectPeriod([["Vendas por produto - Período: 01/10/2026 a 07/10/2026"], ["Emitido em 08/10/2026"]])).toEqual({ de: "2026-10-01", ate: "2026-10-07" });
+    expect(detectPeriod([["Emitido em 08/10/2026"]])).toBeNull();
+  });
+  it("lê .xls que na verdade é tabela HTML", async () => {
+    const { readSheetRows } = await import("@/lib/products");
+    const html = "<table><tr><th>Produto</th><th>Qtd</th></tr><tr><td>Leite&nbsp;1L</td><td>10</td></tr></table>";
+    const rows = await readSheetRows(new TextEncoder().encode(html).buffer as ArrayBuffer, "vendas.xls");
+    expect(rows).toEqual([["Produto", "Qtd"], ["Leite 1L", "10"]]);
+  });
+});
