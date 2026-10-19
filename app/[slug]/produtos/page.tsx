@@ -54,7 +54,7 @@ export default async function ProdutosPage({ params, searchParams }: PageProps<"
 
   let query = admin
     .from("products")
-    .select("id, sku, ean, name, brand, category, unit, price, cost, active, image_url, image_status, image_candidates", { count: "exact" })
+    .select("id, sku, ean, name, brand, category, unit, price, cost, active, image_url, image_status, image_candidates, image_note", { count: "exact" })
     .eq("market_id", market.id);
   if (filtro === "inativos") query = query.eq("active", false);
   else query = query.eq("active", true);

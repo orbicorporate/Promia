@@ -59,6 +59,7 @@ export function ProductList({ rows, review, categories }: { rows: Row[]; review:
                 <div className="min-w-0">
                   <p className="font-semibold leading-snug">{r.name}</p>
                   <p className="text-xs text-[var(--ink-3)]">{[r.brand, r.ean ? `EAN ${r.ean}` : null].filter(Boolean).join(" · ") || r.category}</p>
+                  {r.image_note && <p className="mt-1 text-xs text-[var(--ink-2)]">{r.image_note}</p>}
                 </div>
                 <Badge tone={STATUS[r.image_status ?? ""]?.tone ?? "neutro"}>{STATUS[r.image_status ?? ""]?.label ?? "sem foto"}</Badge>
               </div>
