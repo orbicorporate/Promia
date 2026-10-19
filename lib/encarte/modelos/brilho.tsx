@@ -646,7 +646,9 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const cropTop = arte ? (fino ? Math.max(0, cutPx - r(H * 0.19)) : data.format === "quadrado" ? r(cutPx * 0.16) : 0) : 0;
   const embH = fino ? r(Math.min(H * 0.21, W * 0.28)) : 0;
   const rodapeFino = fino ? r(H * 0.115) : 0;
-  const faixaH = fino ? 0 : r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
+  // respiro mínimo embaixo da faixa do nome, também nos formatos sem área segura
+  const baixoFaixa = Math.max(spec.safeBottom ? r(spec.safeBottom * 0.55) : 0, r(30 * s));
+  const faixaH = fino ? 0 : r(76 * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0) + Math.max(0, r(30 * s) - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0));
   const footerH = arte ? (fino ? rodapeFino : r((arte.baseH - arte.fade * 0.8) * ak) + faixaH) : r((data.format === "story" ? 156 : 142) * s) + (spec.safeBottom ? Math.max(0, spec.safeBottom - r(60 * s)) : 0);
   const heroFrac = cfg.heroScale ?? (data.format === "quadrado" ? 0.3 : data.format === "story" ? 0.24 : data.format === "a4" ? 0.27 : 0.285);
   const heroH = arte ? cutPx - cropTop + (fino ? r(embH * 0.5) : 0) : r(H * heroFrac) + spec.safeTop;
@@ -749,16 +751,16 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
 
       {/* rodapé */}
       {arte && fino ? (
-        <div style={{ ...row, position: "absolute", left: 0, top: H - (spec.safeBottom ? r(spec.safeBottom * 0.6) : 0) - r(16 * s) - r(68 * s), width: W, height: r(68 * s), alignItems: "center", justifyContent: "center" }}>
+        <div style={{ ...row, position: "absolute", left: 0, top: H - (spec.safeBottom ? r(spec.safeBottom * 0.6) : 0) - r(30 * s) - r(68 * s), width: W, height: r(68 * s), alignItems: "center", justifyContent: "center" }}>
           <PilulaArte s={s} t={t} dados={dados} logoUrl={data.market.logoUrl} cor={opRodape.cor} linha={linhaArte} h={r(68 * s)} />
         </div>
       ) : arte ? (
         opRodape.estilo === "pilula" ? (
-          <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", justifyContent: "center" }}>
+          <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - baixoFaixa, alignItems: "center", justifyContent: "center" }}>
             <PilulaArte s={s} t={t} dados={dados} logoUrl={data.market.logoUrl} cor={opRodape.cor} linha={linhaArte} h={r(64 * s)} />
           </div>
         ) : (
-          <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - (spec.safeBottom ? r(spec.safeBottom * 0.55) : 0), alignItems: "center", justifyContent: opRodape.estilo === "centro" ? "center" : "flex-start", padding: `0 ${padX}px` }}>
+          <div style={{ ...row, position: "absolute", left: 0, top: H - faixaH, width: W, height: faixaH - baixoFaixa, alignItems: "center", justifyContent: opRodape.estilo === "centro" ? "center" : "flex-start", padding: `0 ${padX}px` }}>
             {!dados.mostrarSelo ? null : data.market.logoUrl ? (
               <div style={{ ...row, width: r(60 * s), height: r(60 * s), borderRadius: r(60 * s), backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden", border: `${r(3 * s)}px solid ${t.gold}` }}>
                 <Img src={data.market.logoUrl} w={r(60 * s) * 0.82} h={r(60 * s) * 0.82} style={{ objectFit: "contain" }} />
