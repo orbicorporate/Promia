@@ -5,8 +5,8 @@ import { FUNDOS_ARTE, fundoArtePorId } from "@/lib/encarte/modelos/fundos-arte";
 import { isEncarteFundo } from "@/lib/encarte/types";
 
 describe("fundos de arte", () => {
-  it("tem 60 fundos, com ids válidos e arquivos no lugar", () => {
-    expect(FUNDOS_ARTE).toHaveLength(60);
+  it("tem 100 fundos, com ids válidos e arquivos no lugar", () => {
+    expect(FUNDOS_ARTE).toHaveLength(100);
     for (const a of FUNDOS_ARTE) {
       expect(isEncarteFundo(a.id)).toBe(true);
       expect(fundoArtePorId(a.id)?.slug).toBe(a.slug);
