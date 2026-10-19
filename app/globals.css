@@ -320,3 +320,13 @@ select {
   .passo-flutua { animation: passo-flutua 3.4s ease-in-out infinite; }
   .passo-halo { animation: passo-halo 2.6s ease-out infinite; }
 }
+
+/* vitrine da tela de entrada: raios que giram devagar, luz que cruza o painel e cartões que flutuam */
+@keyframes vitrine-gira { to { transform: rotate(360deg); } }
+@keyframes vitrine-passa { 0% { transform: translateX(0) skewX(-12deg); } 45%, 100% { transform: translateX(520%) skewX(-12deg); } }
+@keyframes vitrine-flutua { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-7px) rotate(0.8deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  .vitrine-raios { animation: vitrine-gira 160s linear infinite; }
+  .vitrine-luz { animation: vitrine-passa 9s cubic-bezier(0.4, 0, 0.2, 1) 1.5s infinite; }
+  .vitrine-flutua { animation: vitrine-flutua var(--dur, 6s) ease-in-out var(--atraso, 0s) infinite; }
+}
