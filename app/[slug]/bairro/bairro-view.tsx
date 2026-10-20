@@ -82,9 +82,15 @@ export function BairroView({
                 : "O Promia levanta o que existe em volta do mercado, cruza com suas vendas, catálogo e concorrentes, e diz quais públicos trabalhar, que setores implantar e como expor."}
             </p>
             {!hasAddress && (
-              <p className="mt-2 flex items-center gap-1.5 text-sm text-[var(--ink-3)]">
-                <MapPin className="size-4" /> Coloque o endereço em <Link href={`/${slug}/mercado#contatos`} className="underline underline-offset-4">Mercado</Link> primeiro.
-              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Link
+                  href={`/${slug}/mercado#contatos`}
+                  className="relative inline-flex h-11 items-center gap-2 overflow-hidden rounded-full px-5 text-sm font-semibold text-white [background-image:linear-gradient(135deg,#e8284f_0%,#b3122f_55%,#8c0c26_100%)] shadow-[0_14px_30px_-14px_rgba(179,18,47,0.8)] transition before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-gradient-to-b before:from-white/30 before:to-transparent hover:-translate-y-px active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b3122f]"
+                >
+                  <MapPin className="size-4" /> Cadastrar endereço do mercado
+                </Link>
+                <span className="text-sm text-[var(--ink-3)]">Sem o endereço não dá para analisar o bairro.</span>
+              </div>
             )}
           </div>
           <Button variant="ia" size="lg" onClick={run} loading={running} disabled={!hasAddress} icon={<Sparkles className="size-5" />}>

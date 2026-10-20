@@ -41,6 +41,16 @@ const POR_GRUPO: Record<string, string> = {
   "Setores de casa e cuidados": "#0284c7",
   "Clientes e calendário": "#0d9488",
   "Sugestões de mercado": "#a21caf",
+  "Datas comemorativas": "#9333ea",
+  "Promoções e descontos": "#e11d48",
+  "Urgência e prazo": "#ea580c",
+  "Dias e semanas fixos": "#1d4ed8",
+  "Carnes e churrasco": "#991b1b",
+  "Mercearia e bebidas": "#a16207",
+  "Frescos, congelados e doces": "#15803d",
+  "Casa, higiene e bazar": "#0369a1",
+  "Receitas e ocasiões": "#c2410c",
+  "Serviços e institucional": "#0f766e",
 };
 export function corDoGrupo(nome: string, indice: number): string {
   return POR_GRUPO[nome] ?? RESERVA[indice % RESERVA.length];
