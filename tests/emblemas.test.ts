@@ -63,7 +63,7 @@ describe("catálogo de emblemas", () => {
     }
     const prontos = new Set(EMBLEMAS.map((e) => e.nome));
     for (const p of PLANEJADOS) expect(prontos.has(p.nome)).toBe(false);
-    expect(EMBLEMAS).toHaveLength(160);
+    expect(EMBLEMAS).toHaveLength(270);
     // todos os emblemas foram recriados em alta resolução
     expect(EMBLEMAS.filter((e) => e.baixaResolucao)).toHaveLength(0);
   });
