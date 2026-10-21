@@ -396,32 +396,54 @@ export function ConcorrenciaView({
           {perto.dentro.length === 0 ? (
             <p className="text-sm text-[var(--ink-3)]">{competitors.length ? `Nenhum concorrente em até ${radiusKm} km. Aumente o raio.` : "Nenhum concorrente ainda."}</p>
           ) : (
-            <ul className="rolagem max-h-[340px] divide-y divide-[var(--line)] overflow-y-auto">
-              {perto.dentro.map((c) => (
-                <li key={c.id} onMouseEnter={() => setAtivo(c.id)} className={cn("flex items-start justify-between gap-3 rounded-xl px-2 py-2.5 transition-colors", ativo === c.id && "bg-[color-mix(in_srgb,var(--tomate)_8%,transparent)]")}>
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{c.name}</span>
-                    <span className="block truncate text-xs text-[var(--ink-3)]">{c.dist != null ? <strong className="font-semibold text-[var(--ink-2)]">{km(c.dist)} · </strong> : null}{c.address}</span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-2 text-sm">
-                    {c.rating != null && (
-                      <span className="flex items-center gap-1 tabular text-[var(--ink-2)]" title={`${c.reviews ?? 0} avaliações`}>
-                        <Star className="size-4 fill-[var(--banana)] text-[#c99a00]" /> {c.rating.toLocaleString("pt-BR")}
-                      </span>
-                    )}
-                    <a href={adsUrl(c.name)} target="_blank" rel="noopener noreferrer" className="grid size-10 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--ink)]" aria-label={`Ver anúncios de ${c.name} no Facebook e Instagram`} title="Anúncios ativos (Facebook e Instagram)">
-                      <Megaphone className="size-4" />
-                    </a>
-                    <a href={instaUrl(c.name, origem.city)} target="_blank" rel="noopener noreferrer" className="grid size-10 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--ink)]" aria-label={`Achar o Instagram de ${c.name}`} title="Achar o Instagram">
-                      <AtSign className="size-4" />
-                    </a>
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${c.name} ${c.address ?? ""}`)}`} target="_blank" rel="noopener noreferrer" className="grid size-10 place-items-center rounded-xl text-[var(--ink-3)] hover:bg-[var(--line)] hover:text-[var(--ink)]" aria-label={`Ver ${c.name} no mapa`}>
-                      <ExternalLink className="size-4" />
-                    </a>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="rounded-xl bg-white/60 px-3 py-2 text-xs leading-relaxed text-[var(--ink-2)] ring-1 ring-[var(--line)]">
+                Em cada mercado: a <Star className="-mt-0.5 inline size-3.5 fill-[var(--banana)] text-[#c99a00]" /> é a nota dele no Google, <strong className="font-semibold">Anúncios</strong> abre as propagandas que ele está rodando agora no Facebook e Instagram, <strong className="font-semibold">Instagram</strong> procura o perfil dele, e <strong className="font-semibold">Mapa</strong> abre o endereço. A faixa colorida compara os preços dele com os seus (precisa ler o encarte dele).
+              </p>
+              <ul className="rolagem max-h-[640px] space-y-2 overflow-y-auto pr-1 lg:max-h-[780px]">
+                {perto.dentro.map((c) => {
+                  const pin = pins.find((p) => p.id === c.id);
+                  const botao = "inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-[var(--ink-2)] ring-1 ring-[var(--line)] transition hover:bg-white hover:text-[var(--ink)] active:scale-[0.97]";
+                  return (
+                    <li
+                      key={c.id}
+                      onMouseEnter={() => setAtivo(c.id)}
+                      className={cn("rounded-2xl bg-white/50 p-3.5 ring-1 ring-[var(--line)] transition-colors", ativo === c.id && "bg-white ring-[var(--tomate)]")}
+                      style={{ borderLeft: `5px solid ${pin?.cor ?? "#8a948f"}` }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="min-w-0">
+                          <span className="block font-semibold leading-snug">{c.name}</span>
+                          <span className="mt-0.5 block text-xs leading-snug text-[var(--ink-3)]">
+                            {c.dist != null ? <strong className="font-semibold text-[var(--ink-2)]">{km(c.dist)} do seu mercado</strong> : null}
+                            {c.dist != null && c.address ? " · " : ""}
+                            {c.address}
+                          </span>
+                        </span>
+                        {c.rating != null && (
+                          <span className="flex shrink-0 flex-col items-end text-sm tabular text-[var(--ink-2)]">
+                            <span className="flex items-center gap-1 font-semibold"><Star className="size-4 fill-[var(--banana)] text-[#c99a00]" /> {c.rating.toLocaleString("pt-BR")}</span>
+                            <span className="text-[11px] text-[var(--ink-3)]">{(c.reviews ?? 0).toLocaleString("pt-BR")} avaliações</span>
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs font-medium" style={{ color: pin?.cor ?? "#6b756f" }}>{pin?.nota ?? "Sem encarte lido ainda"}</p>
+                      <div className="mt-2.5 flex flex-wrap gap-2">
+                        <a href={adsUrl(c.name)} target="_blank" rel="noopener noreferrer" className={botao} title="Propagandas ativas no Facebook e Instagram">
+                          <Megaphone className="size-4" /> Anúncios
+                        </a>
+                        <a href={instaUrl(c.name, origem.city)} target="_blank" rel="noopener noreferrer" className={botao} title="Achar o perfil no Instagram">
+                          <AtSign className="size-4" /> Instagram
+                        </a>
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${c.name} ${c.address ?? ""}`)}`} target="_blank" rel="noopener noreferrer" className={botao} title="Abrir no Google Maps">
+                          <ExternalLink className="size-4" /> Mapa
+                        </a>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </Glass>
 
