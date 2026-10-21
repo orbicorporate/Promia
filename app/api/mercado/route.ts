@@ -1,3 +1,4 @@
+import { UFS } from "@/lib/competition/pesquisa-online";
 import { NextResponse } from "next/server";
 import { readJson, requireMarketAccess, serverError } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -32,6 +33,11 @@ export async function PATCH(req: Request) {
   for (const [key, column, max] of fields) {
     if (key in body) update[column] = text(body[key], max);
   }
+  if ("state" in body) {
+    const uf = String(body.state ?? "").trim().toUpperCase();
+    if (uf && !UFS.includes(uf)) return NextResponse.json({ error: "Estado inválido." }, { status: 400 });
+    update.state = uf || null;
+  }
   if ("name" in body && !update.name) return NextResponse.json({ error: "O mercado precisa de um nome." }, { status: 400 });
   if ("whatsapp" in body) {
     const digits = String(body.whatsapp ?? "").replace(/\D/g, "");
@@ -58,7 +64,13 @@ export async function PATCH(req: Request) {
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: true });
 
   const admin = createAdminClient();
-  const { error } = await admin.from("markets").update(update as TablesUpdate<"markets">).eq("id", body.marketId as string);
+  let { error } = await admin.from("markets").update(update as TablesUpdate<"markets">).eq("id", body.marketId as string);
+  if (error && "state" in update && /state/i.test(error.message)) {
+    // coluna do estado ainda não criada no banco: salva o resto normalmente
+    const { state: _ignorado, ...resto } = update;
+    void _ignorado;
+    ({ error } = Object.keys(resto).length ? await admin.from("markets").update(resto as TablesUpdate<"markets">).eq("id", body.marketId as string) : { error: null });
+  }
   if (error) return serverError("mercado", error, "Não consegui salvar. Tente de novo.");
   return NextResponse.json({ ok: true });
 }

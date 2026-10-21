@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readJson, requireMarketAccess, serverError } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { distanceKm, geocodeAddress, searchNearbyMarkets } from "@/lib/competition/places";
+import { distanceKm, geocodeAddress, localDoMercado, searchNearbyMarkets } from "@/lib/competition/places";
 import { similarity } from "@/lib/competition/match";
 
 export const maxDuration = 30;
@@ -14,8 +14,8 @@ export async function POST(req: Request) {
   if (!access.ok) return access.response;
   const marketId = body.marketId as string;
   const admin = createAdminClient();
-  const { data: market } = await admin.from("markets").select("name, address, city").eq("id", marketId).single();
-  const location = [market?.address, market?.city].filter(Boolean).join(", ");
+  const { data: market } = await admin.from("markets").select("*").eq("id", marketId).single();
+  const location = localDoMercado(market?.address, market?.city, market?.state);
   if (!location) return NextResponse.json({ error: "Coloque o endereço e a cidade do mercado em Mercado para achar os concorrentes." }, { status: 400 });
 
   const radiusKm = [1, 2, 3, 5, 10].includes(Number(body.radiusKm)) ? Number(body.radiusKm) : 3;

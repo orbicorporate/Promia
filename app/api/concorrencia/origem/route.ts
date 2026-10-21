@@ -12,8 +12,8 @@ export async function POST(req: Request) {
   const access = await requireMarketAccess(body.marketId);
   if (!access.ok) return access.response;
   const admin = createAdminClient();
-  const { data: market } = await admin.from("markets").select("address, city").eq("id", body.marketId as string).single();
-  const location = localDoMercado(market?.address, market?.city);
+  const { data: market } = await admin.from("markets").select("*").eq("id", body.marketId as string).single();
+  const location = localDoMercado(market?.address, market?.city, market?.state);
   const origin = location ? await geocodeAddress(location) : null;
   return NextResponse.json({ origin });
 }

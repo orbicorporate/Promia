@@ -53,7 +53,7 @@ export function PesquisaOnline({ marketId, cidade, ufInicial, achados }: { marke
       <div className="flex gap-2.5 rounded-2xl bg-[var(--line)]/50 p-3.5 text-sm text-[var(--ink-2)]">
         <Info className="mt-0.5 size-4 shrink-0" />
         <p>
-          Cada preço mostra de onde veio (site, rede social ou loja online) e a data. Os preços podem ser de outra marca, tamanho ou região, ou estar desatualizados, então abra o link para conferir antes de tomar decisão.
+          Só entram preços publicados nos últimos 7 dias, e os mais antigos somem da lista. Cada preço mostra de onde veio (site, rede social ou loja online) e a data. Os preços podem ser de outra marca, tamanho ou região, ou estar desatualizados, então abra o link para conferir antes de tomar decisão.
         </p>
       </div>
 

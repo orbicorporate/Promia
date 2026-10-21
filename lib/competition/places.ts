@@ -16,8 +16,10 @@ export function distanceKm(a: Origin, b: Origin): number {
 
 // Endereço do mercado para as buscas: sempre termina em "Brasil", senão o
 // Google pode achar uma cidade ou rua homônima no exterior (Nápoles, Itália).
-export function localDoMercado(address: string | null | undefined, city: string | null | undefined): string {
-  const partes = [address, city].map((x) => (x ?? "").trim()).filter(Boolean);
+export function localDoMercado(address: string | null | undefined, city: string | null | undefined, state?: string | null): string {
+  const uf = (state ?? "").trim().toUpperCase();
+  const cidadeJaTemUf = new RegExp(`[\\s\\-/,]${uf}\\s*$`, "i").test((city ?? "").trim());
+  const partes = [address, city, uf && !cidadeJaTemUf ? uf : ""].map((x) => (x ?? "").trim()).filter(Boolean);
   if (partes.length === 0) return "";
   const texto = partes.join(", ");
   return /\bbrasil\b|\bbrazil\b/i.test(texto) ? texto : `${texto}, Brasil`;

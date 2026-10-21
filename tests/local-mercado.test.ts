@@ -11,3 +11,10 @@ describe("localDoMercado", () => {
     expect(localDoMercado("", null)).toBe("");
   });
 });
+
+describe("localDoMercado com estado", () => {
+  it("inclui a UF e não duplica quando a cidade já termina nela", () => {
+    expect(localDoMercado("Rua A, 1", "Sorocaba", "SP")).toBe("Rua A, 1, Sorocaba, SP, Brasil");
+    expect(localDoMercado("Rua A, 1", "Sorocaba - SP", "SP")).toBe("Rua A, 1, Sorocaba - SP, Brasil");
+  });
+});

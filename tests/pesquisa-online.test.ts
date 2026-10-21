@@ -18,3 +18,22 @@ describe("pesquisa online", () => {
     expect(ufDaCidade("Sorocaba")).toBe("");
   });
 });
+
+import { dataDoResultado } from "@/lib/competition/pesquisa-online";
+
+describe("data do resultado da pesquisa", () => {
+  const hoje = "2026-10-21";
+  it("entende datas relativas em português e inglês", () => {
+    expect(dataDoResultado("há 2 dias", hoje)).toBe("2026-10-19");
+    expect(dataDoResultado("3 days ago", hoje)).toBe("2026-10-18");
+    expect(dataDoResultado("5 horas atrás", hoje)).toBe(hoje);
+    expect(dataDoResultado("1 semana atrás", hoje)).toBe("2026-10-14");
+    expect(dataDoResultado("2 meses atrás", hoje)).toBe("2026-08-22");
+  });
+  it("entende data escrita e recusa o que não tem data", () => {
+    expect(dataDoResultado("14 de out. de 2025", hoje)).toBe("2025-10-14");
+    expect(dataDoResultado("Oct 14, 2025", hoje)).toBe("2025-10-14");
+    expect(dataDoResultado(undefined, hoje)).toBeNull();
+    expect(dataDoResultado("sem data", hoje)).toBeNull();
+  });
+});
