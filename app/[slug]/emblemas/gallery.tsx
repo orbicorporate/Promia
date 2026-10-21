@@ -13,6 +13,8 @@ import { quandoTexto } from "@/lib/emblemas/quando";
 import { FERIADOS, TIPOS, TIPO_HINT, TIPO_LABEL, type Feriado, type TipoOferta } from "@/lib/emblemas/tipos";
 
 type Aba = "prontos" | "faltam";
+// A aba "Faltam criar" é ferramenta de produção (lista de pedidos para o gerador de imagens). Fica escondida; mude para true quando for planejar novos emblemas.
+const MOSTRAR_FALTAM = false;
 type Fundo = "claro" | "escuro" | "mercado";
 
 const JANELAS: { value: Janela; label: string }[] = [
@@ -82,7 +84,7 @@ export function EmblemasGallery({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Segmented
+        {MOSTRAR_FALTAM ? <Segmented
           label="Mostrar"
           value={aba}
           onChange={setAba}
@@ -90,7 +92,7 @@ export function EmblemasGallery({
             { value: "prontos", label: `Prontos (${emblemas.length})` },
             { value: "faltam", label: `Faltam criar (${planejados.length})` },
           ]}
-        />
+        /> : <p className="text-lg font-bold">{emblemas.length} emblemas prontos</p>}
         {aba === "prontos" ? (
           <Segmented
             label="Fundo da prévia"
@@ -181,7 +183,7 @@ export function EmblemasGallery({
         prontos.length === 0 ? (
           <Glass>
             <EmptyState title="Nenhum emblema com esses filtros" action={<Button variant="vidro" onClick={() => setF(FILTRO_VAZIO)}>Limpar filtros</Button>}>
-              Tente outro tipo, outra data ou veja na aba Faltam criar se já está na lista.
+              Tente outro tipo ou outra data.
             </EmptyState>
           </Glass>
         ) : (
