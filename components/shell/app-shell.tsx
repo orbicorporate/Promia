@@ -56,7 +56,7 @@ export function AppShell({
       {/* barra lateral no computador */}
       <aside className="hidden lg:flex fixed inset-y-4 left-4 w-[248px] flex-col vidro rounded-[28px] p-4 z-30">
         <div className="px-2 pt-1 pb-5">
-          <PromiaLogo className="h-7" />
+          <PromiaLogo className="h-10" />
         </div>
         <Link href={`/${market.slug}/mercado`} className="flex items-center gap-3 rounded-2xl p-2 hover:bg-[var(--line)] transition">
           <MarketMark name={market.name} logoUrl={market.logoUrl} color={market.colorPrimary} size={40} />

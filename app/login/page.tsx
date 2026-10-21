@@ -99,7 +99,7 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-dvh lg:grid-cols-[1fr_1.1fr]">
       <section className="flex flex-col justify-between gap-10 px-5 py-8 sm:px-10 lg:py-12">
-        <PromiaLogo className="h-9" />
+        <PromiaLogo className="h-14" />
         <div className="mx-auto w-full max-w-sm">
           <h1 className="font-display text-4xl font-extrabold leading-[1.02] sm:text-5xl">A inteligência artificial do seu mercado.</h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--ink-2)] sm:text-lg">Crie tabloides estratégicos, organize promoções, gerencie preços e ofertas com a IA que conhece sua região e sua prateleira.</p>
