@@ -92,6 +92,7 @@ export type BuilderInitial = {
   modelo: EncarteModelo | null;
   emblema: string | null;
   emblemaEscala?: number;
+  fotoExtra?: string | null;
   validade?: Partial<ValidadeOpcoes>;
   rodape?: Partial<RodapeOpcoes>;
   fundo: EncarteFundo | null;
@@ -187,6 +188,7 @@ export function EncarteBuilder({
   const [rodape, setRodape] = useState<RodapeOpcoes>(resolverRodape(initial.rodape));
   const [padraoSalvo, setPadraoSalvo] = useState<Partial<RodapeOpcoes> | null>(rodapePadrao);
   const [fundo, setFundo] = useState<EncarteFundo | null>(initial.fundo);
+  const [fotoExtra, setFotoExtra] = useState<string | null>(initial.fotoExtra ?? null);
   const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [validFrom, setValidFrom] = useState(initial.validFrom);
   const [validUntil, setValidUntil] = useState(initial.validUntil);
@@ -198,7 +200,7 @@ export function EncarteBuilder({
 
   // histórico para desfazer e refazer: guarda o estado das escolhas do encarte
   const instantaneo = {
-    name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, themeKey, validFrom, validUntil, items, temaPronto,
+    name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items, temaPronto,
   };
   type Instantaneo = typeof instantaneo;
   const instRef = useRef(instantaneo);
@@ -248,6 +250,7 @@ export function EncarteBuilder({
     setValidade(v.validade);
     setRodape(v.rodape);
     setFundo(v.fundo);
+    setFotoExtra(v.fotoExtra);
     setThemeKey(v.themeKey);
     setValidFrom(v.validFrom);
     setValidUntil(v.validUntil);
@@ -391,6 +394,7 @@ export function EncarteBuilder({
       validade,
       rodape,
       fundo,
+      fotoExtra,
       themeKey,
       validFrom: validFrom || null,
       validUntil: validUntil || null,
@@ -417,7 +421,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, themeKey, validFrom, validUntil, items, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -536,7 +540,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1224,6 +1228,35 @@ export function EncarteBuilder({
           </div>
           </details>
         </Glass>
+      <Glass className="p-4 sm:p-5">
+        <details open={!!fotoExtra}>
+          <summary className="cursor-pointer font-bold">Foto extra <span className="text-sm font-normal text-[var(--ink-3)]">({fotoExtra ? "uma imagem sua entre o título e os produtos" : "opcional"})</span></summary>
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-[var(--ink-2)]">Uma imagem sua, como a fachada da loja ou uma foto de campanha, numa faixa acima dos produtos. Os produtos ficam um pouco menores.</p>
+            {arquivos.length === 0 ? (
+              <p className="text-sm text-[var(--ink-3)]">
+                Você ainda não enviou imagens. <Link href={`/${slug}/arquivos`} className="font-semibold text-[var(--folha)] underline underline-offset-2">Enviar uma imagem</Link>.
+              </p>
+            ) : (
+              <div className="rolagem -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+                <button type="button" aria-pressed={!fotoExtra} onClick={() => setFotoExtra(null)} className={cn(miniaturaClass(!fotoExtra), "w-[124px] shrink-0")}>
+                  <span className="grid aspect-[4/3] w-full place-items-center bg-[var(--line)] text-xs font-semibold text-[var(--ink-3)]">Sem foto extra</span>
+                  <span className={cn("block truncate px-1.5 py-1 text-[11px] font-semibold", !fotoExtra ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>Nenhuma</span>
+                </button>
+                {arquivos.map((a) => {
+                  const on = fotoExtra === a.path;
+                  return (
+                    <button key={a.path} type="button" aria-pressed={on} onClick={() => setFotoExtra(a.path)} className={cn(miniaturaClass(on), "w-[124px] shrink-0")}>
+                      <img src={a.url} alt="" width={440} height={330} loading="lazy" decoding="async" className="aspect-[4/3] w-full bg-[var(--line)] object-cover" />
+                      <span className={cn("block truncate px-1.5 py-1 text-[11px] font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>Meu arquivo</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </details>
+      </Glass>
       {!emblema && (
       <Glass className="p-4 sm:p-5">
         <details>

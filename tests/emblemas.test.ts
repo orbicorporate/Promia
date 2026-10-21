@@ -75,3 +75,17 @@ describe("catálogo de emblemas", () => {
     expect(quandoFits(q, "2026-11-20")).toBe(false);
   });
 });
+
+describe("foto extra no campo emblema", () => {
+  it("grava e lê o nome do arquivo junto com as outras opções", async () => {
+    const { juntarEmblema, lerEmblema } = await import("@/lib/encarte/emblema-escala");
+    const txt = juntarEmblema("ofertas-da-semana", 1.2, {}, {}, "envio-abcd1234.jpg");
+    expect(txt).toContain("~fenvio-abcd1234.jpg");
+    const lido = lerEmblema(txt);
+    expect(lido.fotoExtra).toBe("envio-abcd1234.jpg");
+    expect(lido.escala).toBe(1.2);
+    expect(lido.slug).toBe("ofertas-da-semana");
+    expect(lerEmblema("ofertas-da-semana~f../../x.jpg").fotoExtra).toBeNull();
+    expect(juntarEmblema("ofertas-da-semana", 1, {}, {}, "arquivo-ruim.exe")).toBe("ofertas-da-semana");
+  });
+});

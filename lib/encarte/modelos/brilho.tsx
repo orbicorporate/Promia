@@ -660,7 +660,10 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const vh = alturaValidade(vEstilo, s);
   const validH = !vShow ? 0 : vPos === "abaixo" ? vh + r(26 * s) : vPos === "sobre" ? r(vh / 2) : 0;
   const baseExtra = vShow && vPos === "base" ? vh + r(10 * s) : 0;
-  const areaTop = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
+  const areaTopBase = heroH + validH + r(10 * s) - r((cfg.overlap ?? 0) * s);
+  // foto extra do mercado: faixa larga entre o título e os produtos
+  const fotoExtraH = data.fotoExtraImg && !arte ? r(Math.min(H * 0.16, W * 0.3)) : 0;
+  const areaTop = areaTopBase + (fotoExtraH ? fotoExtraH + r(14 * s) : 0);
   const areaH = H - areaTop - footerH - r(14 * s) - baseExtra - (cfg.rodape === "cerca" ? r(52 * s) : 0);
   const cellW = r((W - padX * 2 - gap * (cols - 1)) / cols);
   const nominalH = (areaH - gap * (capRows - 1)) / capRows;
@@ -748,6 +751,12 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
           }}
         >
           <ValidadeEl vp={vp} estilo={vEstilo} cor={val.cor} s={s} />
+        </div>
+      ) : null}
+
+      {fotoExtraH && data.fotoExtraImg ? (
+        <div style={{ display: "flex", position: "absolute", left: padX, top: areaTopBase + r(4 * s), width: W - padX * 2, height: fotoExtraH, borderRadius: r(28 * s), overflow: "hidden", border: `${Math.max(3, r(5 * s))}px solid rgba(255,255,255,0.92)`, boxShadow: "0 14px 28px rgba(0,0,0,0.28)" }}>
+          <Img src={data.fotoExtraImg} w={W - padX * 2} h={fotoExtraH} style={{ objectFit: "cover" }} />
         </div>
       ) : null}
 

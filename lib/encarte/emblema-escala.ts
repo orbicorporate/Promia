@@ -16,16 +16,20 @@ export function clampEscala(v: unknown): number {
   return Math.round(Math.min(EMBLEMA_ESCALA_MAX, Math.max(EMBLEMA_ESCALA_MIN, n)) * 100) / 100;
 }
 
-export type OpcoesEmblema = { slug: string | null; escala: number; validade: ValidadeOpcoes; rodape: RodapeOpcoes };
+// Foto extra do encarte: arquivo de "Meus arquivos" (só o nome do arquivo é gravado).
+export const FOTO_EXTRA_ARQUIVO = /^envio-[a-f0-9]{8}\.(png|jpe?g|gif)$/i;
+
+export type OpcoesEmblema = { slug: string | null; escala: number; validade: ValidadeOpcoes; rodape: RodapeOpcoes; fotoExtra: string | null };
 
 export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
-  const out: OpcoesEmblema = { slug: null, escala: 1, validade: { ...VALIDADE_PADRAO }, rodape: { ...RODAPE_PADRAO } };
+  const out: OpcoesEmblema = { slug: null, escala: 1, validade: { ...VALIDADE_PADRAO }, rodape: { ...RODAPE_PADRAO }, fotoExtra: null };
   if (!raw) return out;
   const [slug, ...resto] = raw.split("~");
   out.slug = slug || null;
   for (const t of resto) {
     const v = t.slice(1);
     if (/^\d+$/.test(t)) out.escala = clampEscala(Number(t) / 100);
+    else if (t[0] === "f" && FOTO_EXTRA_ARQUIVO.test(v)) out.fotoExtra = v;
     else if (t[0] === "v" && isValidadeEstilo(v)) out.validade.estilo = v;
     else if (t[0] === "p" && isValidadePosicao(v)) out.validade.posicao = v;
     else if (t[0] === "a" && isValidadeAlinhamento(v)) out.validade.alinhamento = v;
@@ -59,7 +63,7 @@ export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
 }
 
 // Sem slug (encarte só com título) as opções continuam valendo: o texto fica "~vcontorno...".
-export function juntarEmblema(slug: string | null, escala: number, validade: Partial<ValidadeOpcoes> = {}, rodape: Partial<RodapeOpcoes> = {}): string | null {
+export function juntarEmblema(slug: string | null, escala: number, validade: Partial<ValidadeOpcoes> = {}, rodape: Partial<RodapeOpcoes> = {}, fotoExtra: string | null = null): string | null {
   const e = slug ? clampEscala(escala) : 1;
   const val = { ...VALIDADE_PADRAO, ...validade };
   const rod = { ...RODAPE_PADRAO, ...rodape };
@@ -81,6 +85,7 @@ export function juntarEmblema(slug: string | null, escala: number, validade: Par
   }
   const ocultas = RODAPE_PARTES.filter((p) => rod.ocultar?.includes(p));
   if (ocultas.length) partes.push(`m${ocultas.map((p) => RODAPE_PARTE_LETRA[p]).join("")}`);
+  if (fotoExtra && FOTO_EXTRA_ARQUIVO.test(fotoExtra)) partes.push(`f${fotoExtra}`);
   if (!slug && partes.length === 0) return null;
   return [slug ?? "", ...partes].join("~");
 }

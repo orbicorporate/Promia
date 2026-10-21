@@ -111,6 +111,7 @@ export async function loadEncarte(admin: Admin, tabloidId: string): Promise<Load
       emblemaEscala: lerEmblema(tabloid.emblema).escala,
       validade: lerEmblema(tabloid.emblema).validade,
       rodape: lerEmblema(tabloid.emblema).rodape,
+      fotoExtra: lerEmblema(tabloid.emblema).fotoExtra ? `${tabloid.market_id}/arquivos/${lerEmblema(tabloid.emblema).fotoExtra}` : null,
       themeKey: isThemeKey(tabloid.theme_key) ? tabloid.theme_key : DEFAULT_THEME_KEY,
       validFrom: tabloid.valid_from,
       validUntil: tabloid.valid_until,

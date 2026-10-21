@@ -31,6 +31,9 @@ export const ehFundoProprio = (v: unknown): v is FundoProprio => typeof v === "s
 export const caminhoFundoProprio = (v: FundoProprio) => v.slice(4);
 export type EncarteFundo = FundoPronto | FundoProprio;
 
+// Foto extra do encarte: caminho de um arquivo do mercado ("<id do mercado>/arquivos/<arquivo>").
+export const ehFotoExtra = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f-]{36}\/arquivos\/[A-Za-z0-9._-]{1,80}$/.test(v);
+
 export function isEncarteFundo(value: unknown): value is EncarteFundo {
   return (typeof value === "string" && (ENCARTE_FUNDOS as readonly string[]).includes(value)) || ehFundoProprio(value);
 }
@@ -91,6 +94,8 @@ export type EncarteData = {
   validade?: Partial<ValidadeOpcoes>; // posição, alinhamento, estilo e cor da validade (lib/encarte/validade.ts)
   emblemaEscala?: number; // 0,6 a 1,6: aumenta ou diminui o logo mantendo a proporção (lib/encarte/emblema-escala.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
+  fotoExtra?: string | null; // caminho do arquivo do mercado usado como foto extra
+  fotoExtraImg?: string | null; // a mesma imagem já resolvida no servidor (data URI)
   fundoProprio?: string | null; // imagem enviada pelo mercado como fundo, resolvida no servidor (data URI)
   fundoArte?: EncarteFundoArte | null; // cabeçalho e rodapé do fundo de arte, resolvidos no servidor
   escalaPrevia?: number; // só no servidor: desenha a página em escala menor (0,3 a 1) para a prévia ser rápida
