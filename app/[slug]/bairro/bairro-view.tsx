@@ -91,7 +91,7 @@ export function BairroView({
 function Titulo({ id, Icone, cor, children, extra }: { id: string; Icone: LucideIcon; cor: number; children: React.ReactNode; extra?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h2 id={id} className="flex items-center gap-3 font-display text-2xl font-extrabold sm:text-[1.7rem]">
+      <h2 id={id} className="flex items-center gap-3 font-display text-xl font-extrabold sm:text-2xl">
         <span className={cn("grid size-10 shrink-0 place-items-center rounded-full", tom(cor).bola)}><Icone className="size-5" /></span>
         {children}
       </h2>
@@ -116,9 +116,9 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
           <Button size="sm" variant="fantasma" onClick={run} loading={running} icon={<RotateCw className="size-4" />}>Refazer análise</Button>
         }>Seu bairro em resumo</Titulo>
         <div>
-          <p className="max-w-3xl text-lg leading-relaxed text-[var(--ink)] sm:text-xl">{resumo}</p>
+          <p className="max-w-3xl text-base leading-relaxed text-[var(--ink)] sm:text-lg">{resumo}</p>
           {longo && (
-            <button onClick={() => setPerfilAberto((v) => !v)} className="mt-2 inline-flex items-center gap-1.5 text-base font-semibold text-[var(--folha)] hover:underline">
+            <button onClick={() => setPerfilAberto((v) => !v)} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--folha)] hover:underline">
               {perfilAberto ? "Mostrar menos" : "Ler análise completa"} <ChevronDown className={cn("size-4 transition", perfilAberto && "rotate-180")} />
             </button>
           )}
@@ -131,8 +131,8 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
                 <li key={e.key} title={e.examples.join(", ")} className="flex items-center gap-3.5 rounded-3xl bg-[var(--glass-strong)] p-3.5 ring-1 ring-[var(--line)]">
                   <span className={cn("grid size-10 shrink-0 place-items-center rounded-full", tom(i).bola)}><Icone className="size-5" /></span>
                   <span className="min-w-0">
-                    <span className="tabular block text-3xl font-extrabold leading-none">{e.count >= 10 ? "10+" : e.count}</span>
-                    <span className="mt-1 block truncate text-base font-semibold text-[var(--ink-2)]">{e.label}</span>
+                    <span className="tabular block text-2xl font-extrabold leading-none">{e.count >= 10 ? "10+" : e.count}</span>
+                    <span className="mt-1 block truncate text-sm font-semibold text-[var(--ink-2)]">{e.label}</span>
                   </span>
                 </li>
               );
@@ -150,31 +150,31 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
               <Glass as="article" key={p.nome} className="flex flex-col gap-4 p-6">
                 <div className="flex items-center gap-3.5">
                   <span className={cn("grid size-11 shrink-0 place-items-center rounded-full", tom(i).bola)}><Users className="size-5" /></span>
-                  <h3 className="font-display text-2xl font-extrabold leading-tight">{p.nome}</h3>
+                  <h3 className="font-display text-xl font-extrabold leading-tight">{p.nome}</h3>
                 </div>
-                <p className="line-clamp-3 text-lg leading-snug text-[var(--ink-2)]">{p.quem}</p>
+                <p className="line-clamp-3 text-base leading-snug text-[var(--ink-2)]">{p.quem}</p>
                 {p.compra.length > 0 && (
                   <div>
-                    <p className="mb-2 flex items-center gap-2 text-base font-bold"><span className={cn("grid size-7 place-items-center rounded-full", tom(i).suave)}><ShoppingBasket className="size-4" /></span> Eles compram</p>
+                    <p className="mb-2 flex items-center gap-2 text-sm font-bold"><span className={cn("grid size-7 place-items-center rounded-full", tom(i).suave)}><ShoppingBasket className="size-4" /></span> Eles compram</p>
                     <div className="flex flex-wrap gap-2">
                       {p.compra.slice(0, aberto ? 12 : 3).map((c) => (
-                        <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--glass-strong)] py-1 pl-1.5 pr-3 text-base font-semibold ring-1 ring-[var(--line)]">
+                        <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--glass-strong)] py-1 pl-1.5 pr-3 text-sm font-semibold ring-1 ring-[var(--line)]">
                           <span className="grid size-5 place-items-center rounded-full bg-[#138a4c] text-white"><Check className="size-3.5" strokeWidth={3} /></span>{c}
                         </span>
                       ))}
-                      {!aberto && p.compra.length > 3 && <span className="rounded-full bg-[var(--line)] px-3 py-1 text-base font-semibold text-[var(--ink-2)]">+{p.compra.length - 3}</span>}
+                      {!aberto && p.compra.length > 3 && <span className="rounded-full bg-[var(--line)] px-3 py-1 text-sm font-semibold text-[var(--ink-2)]">+{p.compra.length - 3}</span>}
                     </div>
                   </div>
                 )}
-                <button onClick={() => alternar(abertos, setAbertos, p.nome)} aria-expanded={aberto} className="mt-auto inline-flex h-12 items-center justify-between gap-2 rounded-full bg-[var(--glass-strong)] px-5 text-lg font-bold ring-1 ring-[var(--line-strong)] transition hover:bg-white">
+                <button onClick={() => alternar(abertos, setAbertos, p.nome)} aria-expanded={aberto} className="mt-auto inline-flex h-12 items-center justify-between gap-2 rounded-full bg-[var(--glass-strong)] px-5 text-base font-bold ring-1 ring-[var(--line-strong)] transition hover:bg-white">
                   Como chegar neles <ChevronDown className={cn("size-5 transition", aberto && "rotate-180")} />
                 </button>
                 {aberto && (
-                  <dl className="space-y-3.5 text-lg">
+                  <dl className="space-y-3.5 text-base">
                     {([[CalendarClock, "Quando", p.quando, 0], [Megaphone, "Canal", p.canal, 1], [MessageSquareQuote, "Mensagem", p.mensagem, 2]] as const).map(([Icone, rotulo, texto, t]) => (
                       <div key={rotulo} className="flex gap-3">
                         <span className={cn("grid size-8 shrink-0 place-items-center rounded-full", tom(t).suave)}><Icone className="size-5" /></span>
-                        <div><dt className="text-base font-bold text-[var(--ink-3)]">{rotulo}</dt><dd className="leading-snug">{texto}</dd></div>
+                        <div><dt className="text-sm font-bold text-[var(--ink-3)]">{rotulo}</dt><dd className="leading-snug">{texto}</dd></div>
                       </div>
                     ))}
                   </dl>
@@ -195,9 +195,9 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
                 <li key={s.nome} className="flex gap-4 rounded-3xl p-3 transition hover:bg-[var(--glass-strong)]">
                   <span className={cn("mt-0.5 grid size-10 shrink-0 place-items-center rounded-full", pr.bola)}><pr.Icone className="size-5" /></span>
                   <div className="min-w-0">
-                    <p className="text-xl font-extrabold leading-snug">{s.nome}</p>
+                    <p className="text-lg font-extrabold leading-snug">{s.nome}</p>
                     <span className={cn("mt-1 inline-block rounded-full px-2.5 py-0.5 text-sm font-bold", pr.etiqueta)}>{pr.texto}</span>
-                    <p className="mt-1.5 text-lg leading-snug text-[var(--ink-2)]">{s.porque}</p>
+                    <p className="mt-1.5 text-base leading-snug text-[var(--ink-2)]">{s.porque}</p>
                   </div>
                 </li>
               );
@@ -211,9 +211,9 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
               <li key={g.onde + g.oque} className="flex gap-4 rounded-3xl p-3 transition hover:bg-[var(--glass-strong)]">
                 <span className={cn("mt-0.5 grid size-10 shrink-0 place-items-center rounded-full", tom(i + 1).suave)}><MapPin className="size-5" /></span>
                 <div className="min-w-0">
-                  <p className="text-xl font-extrabold leading-snug">{g.onde}</p>
-                  <p className="mt-1 flex gap-2 text-lg leading-snug"><span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#138a4c] text-white"><Check className="size-3.5" strokeWidth={3} /></span> {g.oque}</p>
-                  <p className="mt-1 text-base leading-snug text-[var(--ink-3)]">{g.porque}</p>
+                  <p className="text-lg font-extrabold leading-snug">{g.onde}</p>
+                  <p className="mt-1 flex gap-2 text-base leading-snug"><span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#138a4c] text-white"><Check className="size-3.5" strokeWidth={3} /></span> {g.oque}</p>
+                  <p className="mt-1 text-sm leading-snug text-[var(--ink-3)]">{g.porque}</p>
                 </div>
               </li>
             ))}
@@ -222,14 +222,14 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
       </div>
 
       <Glass as="section" className="space-y-4 p-6 sm:p-8" aria-labelledby="oport">
-        <Titulo id="oport" Icone={Target} cor={3} extra={<span className="rounded-full bg-[var(--glass-strong)] px-4 py-1.5 text-base font-bold ring-1 ring-[var(--line)]">{feitas.size} de {insight.oportunidades.length} feitas</span>}>Próximas ações</Titulo>
-        <p className="text-lg text-[var(--ink-2)]">Toque na ação para marcar como feita.</p>
+        <Titulo id="oport" Icone={Target} cor={3} extra={<span className="rounded-full bg-[var(--glass-strong)] px-4 py-1.5 text-sm font-bold ring-1 ring-[var(--line)]">{feitas.size} de {insight.oportunidades.length} feitas</span>}>Próximas ações</Titulo>
+        <p className="text-base text-[var(--ink-2)]">Toque na ação para marcar como feita.</p>
         <ul className="grid gap-3 md:grid-cols-2">
           {insight.oportunidades.map((o) => {
             const feita = feitas.has(o);
             return (
               <li key={o}>
-                <button onClick={() => alternar(feitas, setFeitas, o)} aria-pressed={feita} className={cn("flex w-full items-start gap-3.5 rounded-3xl p-4 text-left text-lg leading-snug ring-1 transition", feita ? "bg-[var(--folha-soft)] text-[var(--ink-3)] ring-[#138a4c]/25" : "bg-[var(--glass-strong)] ring-[var(--line)] hover:-translate-y-px")}>
+                <button onClick={() => alternar(feitas, setFeitas, o)} aria-pressed={feita} className={cn("flex w-full items-start gap-3.5 rounded-3xl p-4 text-left text-base leading-snug ring-1 transition", feita ? "bg-[var(--folha-soft)] text-[var(--ink-3)] ring-[#138a4c]/25" : "bg-[var(--glass-strong)] ring-[var(--line)] hover:-translate-y-px")}>
                   <span className={cn("mt-0.5 grid size-8 shrink-0 place-items-center rounded-full transition", feita ? "bg-[#138a4c] text-white" : "ring-2 ring-[var(--line-strong)]")}>
                     {feita && <Check className="size-5" strokeWidth={3.5} />}
                   </span>
@@ -240,7 +240,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
           })}
         </ul>
         {insight.horarios && (
-          <p className="flex items-start gap-3 rounded-3xl bg-[var(--glass-strong)] p-4 text-lg ring-1 ring-[var(--line)]">
+          <p className="flex items-start gap-3 rounded-3xl bg-[var(--glass-strong)] p-4 text-base ring-1 ring-[var(--line)]">
             <span className={cn("grid size-9 shrink-0 place-items-center rounded-full", tom(2).suave)}><Clock className="size-5" /></span> {insight.horarios}
           </p>
         )}
