@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readJson, requireMarketAccess } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { geocodeAddress } from "@/lib/competition/places";
+import { geocodeAddress, localDoMercado } from "@/lib/competition/places";
 
 export const maxDuration = 15;
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (!access.ok) return access.response;
   const admin = createAdminClient();
   const { data: market } = await admin.from("markets").select("address, city").eq("id", body.marketId as string).single();
-  const location = [market?.address, market?.city].filter(Boolean).join(", ");
+  const location = localDoMercado(market?.address, market?.city);
   const origin = location ? await geocodeAddress(location) : null;
   return NextResponse.json({ origin });
 }
