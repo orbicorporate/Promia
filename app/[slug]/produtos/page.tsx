@@ -6,6 +6,7 @@ import { EmptyState, cn } from "@/components/ui";
 import { ProductList, type Row } from "./_ui/product-list";
 import { SearchBox, ImportButton } from "./_ui/toolbar";
 import { FindPhotos } from "./_ui/find-photos";
+import { BibliotecaAbas } from "@/components/shell/biblioteca-abas";
 
 export const metadata = { title: "Produtos" };
 
@@ -87,6 +88,7 @@ export default async function ProdutosPage({ params, searchParams }: PageProps<"
   if ((all.count ?? 0) === 0 && (inativos.count ?? 0) === 0) {
     return (
       <div className="space-y-6 pt-2">
+        <BibliotecaAbas slug={slug} ativa="produtos" />
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Produtos</h1>
         <div className="vidro rounded-[24px]">
           <EmptyState icon={<FileSpreadsheet className="size-6" />} title="Comece pela planilha do seu sistema" action={<ImportButton marketId={market.id} openInitially={sp.importar === "1"} primary />}>
@@ -99,6 +101,7 @@ export default async function ProdutosPage({ params, searchParams }: PageProps<"
 
   return (
     <div className="space-y-5 pt-2">
+      <BibliotecaAbas slug={slug} ativa="produtos" />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Produtos</h1>
