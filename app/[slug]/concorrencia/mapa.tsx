@@ -29,11 +29,20 @@ export function MapaConcorrentes({ origem, pins, raioKm, ativo, onPick }: { orig
       lib.current = L;
       const map = L.map(el.current, { zoomControl: false, scrollWheelZoom: false, attributionControl: true }).setView([origem.latitude, origem.longitude], 13);
       L.control.zoom({ position: "bottomright" }).addTo(map);
-      // OpenStreetMap direto: não pede chave de API (o CARTO passou a exigir).
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
+      // Com NEXT_PUBLIC_MAPTILER_KEY usa o MapTiler (visual mais limpo);
+      // sem a chave cai no OpenStreetMap, que não pede chave.
+      const chave = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+      if (chave) {
+        L.tileLayer(`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${chave}`, {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+      } else {
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+      }
       camada.current = L.layerGroup().addTo(map);
       mapRef.current = map;
       map.fire("moveend");
