@@ -6,23 +6,16 @@ import { MotionProvider } from "@/components/motion-provider";
 
 // Fontes empacotadas no repositório (assets/fonts): o build não depende
 // do Google Fonts e o encarte desenhado no servidor usa as mesmas.
-const titulo = localFont({
-  variable: "--font-titulo",
-  display: "swap",
-  src: [
-    { path: "../assets/fonts/bricolage-grotesque-latin-600-normal.woff2", weight: "600" },
-    { path: "../assets/fonts/bricolage-grotesque-latin-700-normal.woff2", weight: "700" },
-    { path: "../assets/fonts/bricolage-grotesque-latin-800-normal.woff2", weight: "800" },
-  ],
-});
-
-const texto = localFont({
+// Open Sans em todo o site (títulos e textos).
+const openSans = localFont({
   variable: "--font-texto",
   display: "swap",
   src: [
-    { path: "../assets/fonts/instrument-sans-latin-400-normal.woff2", weight: "400" },
-    { path: "../assets/fonts/instrument-sans-latin-500-normal.woff2", weight: "500" },
-    { path: "../assets/fonts/instrument-sans-latin-600-normal.woff2", weight: "600" },
+    { path: "../assets/fonts/open-sans-latin-400-normal.woff2", weight: "400" },
+    { path: "../assets/fonts/open-sans-latin-500-normal.woff2", weight: "500" },
+    { path: "../assets/fonts/open-sans-latin-600-normal.woff2", weight: "600" },
+    { path: "../assets/fonts/open-sans-latin-700-normal.woff2", weight: "700" },
+    { path: "../assets/fonts/open-sans-latin-800-normal.woff2", weight: "800" },
   ],
 });
 
@@ -50,7 +43,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${titulo.variable} ${texto.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${openSans.variable} h-full antialiased`}>
       <body className="min-h-full">
         <div className="ambiente" aria-hidden>
           <div className="mancha m1" />

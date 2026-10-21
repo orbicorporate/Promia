@@ -16,6 +16,15 @@ const CORES = [
   "[background-image:linear-gradient(145deg,#18b4c4_0%,#0a6377_100%)]",
   "[background-image:linear-gradient(145deg,#ee4f9a_0%,#a3125f_100%)]",
 ];
+// versões translúcidas das cores, para os blocos de vidro sobre o banner
+const VIDROS = [
+  "bg-[#22b866]/55",
+  "bg-[#f2584a]/55",
+  "bg-[#8a6bff]/55",
+  "bg-[#f08a00]/55",
+  "bg-[#18b4c4]/55",
+  "bg-[#ee4f9a]/55",
+];
 const PRIO = { alta: "bg-[#e8284f] text-white", media: "bg-[#f5a300] text-[#3a2600]", baixa: "bg-[#6b7280] text-white" } as const;
 
 export function BairroView({
@@ -94,14 +103,16 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] p-6 text-white shadow-[0_30px_60px_-30px_rgba(11,107,60,0.8)] [background-image:linear-gradient(135deg,#0f8a4b_0%,#0a5a37_55%,#06382a_100%)] sm:p-9">
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-80 rounded-full bg-white/10 blur-2xl" />
+      <section className="relative isolate overflow-hidden rounded-[32px] p-6 text-white shadow-[0_30px_60px_-30px_rgba(11,107,60,0.7),inset_0_1px_0_rgba(255,255,255,0.45)] ring-1 ring-white/40 backdrop-blur-2xl backdrop-saturate-150 [background-image:linear-gradient(135deg,rgba(24,160,90,0.78)_0%,rgba(10,90,55,0.72)_55%,rgba(6,56,42,0.8)_100%)] sm:p-9">
+        <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 -z-10 size-96 rounded-full bg-[#7dffb0]/30 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-28 left-1/4 -z-10 size-80 rounded-full bg-[#ffd24a]/25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent" />
         <div className="relative flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="font-display text-3xl font-extrabold sm:text-4xl">Seu bairro em resumo</h2>
             <p className="mt-1 text-lg text-white/80">O que existe em volta e quem compra de você.</p>
           </div>
-          <button onClick={run} disabled={running} className="inline-flex h-11 items-center gap-2 rounded-full bg-white/15 px-5 text-base font-semibold ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60">
+          <button onClick={run} disabled={running} className="inline-flex h-11 items-center gap-2 rounded-full bg-white/20 px-5 text-base font-semibold ring-1 ring-white/40 backdrop-blur-md transition hover:bg-white/30 disabled:opacity-60">
             <RotateCw className={cn("size-4", running && "animate-spin")} /> {running ? "Refazendo" : "Refazer análise"}
           </button>
         </div>
@@ -114,7 +125,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
         {entorno.length > 0 && (
           <ul className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {entorno.map((e, i) => (
-              <li key={e.key} title={e.examples.join(", ")} className={cn("rounded-3xl p-4 shadow-lg ring-1 ring-white/20", CORES[(i + 1) % CORES.length])}>
+              <li key={e.key} title={e.examples.join(", ")} className={cn("rounded-3xl p-4 shadow-lg ring-1 ring-white/35 backdrop-blur-md [box-shadow:inset_0_1px_0_rgba(255,255,255,0.4),0_14px_30px_-18px_rgba(0,0,0,0.6)]", VIDROS[(i + 1) % VIDROS.length])}>
                 <span className="tabular block text-4xl font-extrabold leading-none sm:text-5xl">{e.count >= 10 ? "10+" : e.count}</span>
                 <span className="mt-1.5 block text-base font-semibold sm:text-lg">{e.label}</span>
               </li>

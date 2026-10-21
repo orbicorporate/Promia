@@ -445,7 +445,7 @@ function ColorField({ label, hint, value, onChange, palette }: { label: string; 
         <label className="relative size-11 shrink-0 cursor-pointer overflow-hidden rounded-[14px] ring-1 ring-[var(--line-strong)]" style={{ background: valid ? value : "repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 0 0/12px 12px" }}>
           <input type="color" value={valid ? value : "#12201a"} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" aria-label={label} />
         </label>
-        <Input value={value} onChange={(e) => onChange(e.target.value.trim())} placeholder="#1a7f3c" maxLength={7} className="font-mono uppercase" />
+        <Input value={value} onChange={(e) => onChange(e.target.value.trim())} placeholder="#1a7f3c" maxLength={7} className="uppercase" />
       </div>
       {palette.length > 0 && (
         <div className="mt-2 flex gap-1.5">

@@ -72,7 +72,7 @@
   --color-uva: var(--uva);
   --color-perigo: var(--perigo);
   --font-sans: var(--font-texto);
-  --font-display: var(--font-titulo);
+  --font-display: var(--font-texto);
   --radius-panel: 24px;
   --radius-control: 14px;
   /* curva e duração padrão de toda transição do Tailwind */
@@ -91,12 +91,11 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-texto), system-ui, sans-serif;
-  font-feature-settings: "ss01", "cv11";
   overscroll-behavior-y: none;
 }
 
 h1, h2, h3, .font-display {
-  font-family: var(--font-titulo), var(--font-texto), system-ui, sans-serif;
+  font-family: var(--font-texto), system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
 
