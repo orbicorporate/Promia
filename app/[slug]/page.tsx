@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ArrowUpRight, Camera, Palette, Phone, FileSpreadsheet, Sparkles, CheckCircle2, Circle } from "lucide-react";
+import { ArrowUpRight, CalendarDays, LayoutGrid, ListChecks, Camera, Palette, Phone, FileSpreadsheet, Sparkles, CheckCircle2, Circle } from "lucide-react";
 import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { todayInSaoPaulo, formatBR, addDaysISO } from "@/lib/dates";
 import { upcomingOccasions, themeAccent } from "@/lib/occasions";
-import { Glass, ButtonLink } from "@/components/ui";
+import { Glass, ButtonLink, SecaoTitulo } from "@/components/ui";
 import { GerenteCard, type Rec } from "./_ui/gerente-card";
 import { EncarteThumb } from "./_ui/encarte-thumb";
 import { HojeList } from "./_ui/hoje-list";
@@ -183,9 +183,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
         {/* ocasiões */}
         <Glass as="section" className="p-5 sm:p-6 space-y-4" aria-labelledby="ocasioes">
           <div className="flex items-center justify-between gap-3">
-            <h2 id="ocasioes" className="text-lg font-bold">
-              Próximas ocasiões
-            </h2>
+            <SecaoTitulo id="ocasioes" Icone={CalendarDays} cor="tomate">Próximas ocasiões</SecaoTitulo>
             <Link href={`/${slug}/mercado#promocoes`} className="text-sm text-[var(--ink-2)] hover:text-[var(--ink)]">
               Promoções fixas
             </Link>
@@ -235,9 +233,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
       {stepsDone < steps.length && (
         <Glass as="section" className="p-5 sm:p-6" aria-labelledby="comeco">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="comeco" className="text-lg font-bold">
-              Deixe o mercado pronto
-            </h2>
+            <SecaoTitulo id="comeco" Icone={ListChecks} cor="verde">Deixe o mercado pronto</SecaoTitulo>
             <span className="text-sm text-[var(--ink-2)] tabular">
               {stepsDone} de {steps.length}
             </span>
@@ -263,9 +259,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
 
       <section className="space-y-4" aria-labelledby="recentes">
         <div className="flex items-end justify-between gap-3">
-          <h2 id="recentes" className="text-xl font-bold">
-            Encartes recentes
-          </h2>
+          <SecaoTitulo id="recentes" Icone={LayoutGrid} cor="banana">Encartes recentes</SecaoTitulo>
           {(encarteCount ?? 0) > 0 && (
             <Link href={`/${slug}/encartes`} className="text-sm text-[var(--ink-2)] hover:text-[var(--ink)]">
               Ver todos ({encarteCount})

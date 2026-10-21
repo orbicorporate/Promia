@@ -5,11 +5,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createPortal } from "react-dom";
-import { Maximize2, Minimize2, MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket, MessageCircle } from "lucide-react";
+import { Maximize2, Minimize2, MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket, MessageCircle, ListChecks, ArrowLeftRight, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { toJpeg } from "@/lib/client/image";
-import { Button, Field, Glass, Input, Segmented, Select, cn } from "@/components/ui";
+import { Button, Field, Glass, Input, Segmented, SecaoTitulo, Select, cn } from "@/components/ui";
 import type { CompareRow } from "@/lib/competition/compare";
 import { plural } from "@/lib/plural";
 import { distanceKm } from "@/lib/competition/places";
@@ -229,10 +229,7 @@ export function ConcorrenciaView({
     <div className="space-y-6">
       {comeco && (
         <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="comeco">
-          <div>
-            <h2 id="comeco" className="text-lg font-bold">Comece em 3 passos</h2>
-            <p className="text-sm text-[var(--ink-2)]">Quando houver dados, esta tela mostra o mapa dos concorrentes, quem está mais barato que você, o que mudou nos preços e a cesta que o cliente compara.</p>
-          </div>
+          <SecaoTitulo id="comeco" Icone={ListChecks} cor="verde" sub="Quando houver dados, esta tela mostra o mapa dos concorrentes, quem está mais barato que você, o que mudou nos preços e a cesta que o cliente compara.">Comece em 3 passos</SecaoTitulo>
           <ol className="grid gap-3 md:grid-cols-3">
             {passos.map((p, i) => (
               <li key={p.titulo} className="vidro flex gap-3 rounded-[20px] p-4">
@@ -297,12 +294,7 @@ export function ConcorrenciaView({
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
         <Glass as="section" className="space-y-4 p-5 sm:p-6 lg:col-start-1 lg:row-start-1" aria-labelledby="ler">
-          <div>
-            <h2 id="ler" className="flex items-center gap-2 text-lg font-bold">
-              <Camera className="size-5 text-[var(--uva)]" /> Encarte do concorrente
-            </h2>
-            <p className="text-sm text-[var(--ink-2)]">Foto do encarte impresso, print do Instagram ou do WhatsApp. A IA lê produtos e preços e compara com os seus.</p>
-          </div>
+          <SecaoTitulo id="ler" Icone={Camera} cor="uva" sub="Foto do encarte impresso, print do Instagram ou do WhatsApp. A IA lê produtos e preços e compara com os seus.">Encarte do concorrente</SecaoTitulo>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="De qual mercado" htmlFor="c-sel">
               <Select id="c-sel" value={competitorId} onChange={(e) => setCompetitorId(e.target.value)}>
@@ -353,12 +345,7 @@ export function ConcorrenciaView({
 
         <Glass as="section" className="space-y-4 p-5 sm:p-6 lg:col-start-2 lg:row-span-2 lg:row-start-1" aria-labelledby="perto">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 id="perto" className="flex items-center gap-2 text-lg font-bold">
-                <MapPin className="size-5 text-[var(--tomate)]" /> Mercados por perto
-              </h2>
-              <p className="text-sm text-[var(--ink-2)]">{hasAddress ? "Concorrentes em volta do endereço abaixo." : <>Falta o endereço do mercado. <Link href={`/${slug}/mercado`} className="font-medium text-[var(--folha)] underline underline-offset-2">Cadastrar agora</Link>.</>}</p>
-            </div>
+            <SecaoTitulo id="perto" Icone={MapPin} cor="tomate" sub={hasAddress ? "Concorrentes em volta do endereço abaixo." : <>Falta o endereço do mercado. <Link href={`/${slug}/mercado`} className="font-medium text-[var(--folha)] underline underline-offset-2">Cadastrar agora</Link>.</>}>Mercados por perto</SecaoTitulo>
             <Button size="sm" variant="vidro" onClick={findCompetitors} loading={searching} disabled={!hasAddress} icon={<Search className="size-4" />}>
               {competitors.length ? "Atualizar" : "Buscar"}
             </Button>
@@ -454,7 +441,7 @@ export function ConcorrenciaView({
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
           {placar.length > 0 && (
             <Glass as="section" className="space-y-3 p-5 sm:p-6" aria-labelledby="placar">
-              <h2 id="placar" className="flex items-center gap-2 text-lg font-bold"><Swords className="size-5 text-[var(--tomate)]" /> Você contra cada um</h2>
+              <SecaoTitulo id="placar" Icone={Swords} cor="tomate">Você contra cada um</SecaoTitulo>
               <ul className="space-y-3">
                 {placar.map((x) => {
                   const mais = x.indice > 0.01;
@@ -488,8 +475,7 @@ export function ConcorrenciaView({
           )}
           {movimentos.length > 0 && (
             <Glass as="section" className="space-y-3 p-5 sm:p-6" aria-labelledby="mudou">
-              <h2 id="mudou" className="text-lg font-bold">O que mudou nos concorrentes</h2>
-              <p className="text-sm text-[var(--ink-2)]">Mesmo produto, preço novo contra o anterior.</p>
+              <SecaoTitulo id="mudou" Icone={ArrowLeftRight} cor="azul" sub="Mesmo produto, preço novo contra o anterior.">O que mudou nos concorrentes</SecaoTitulo>
               <ul className="divide-y divide-[var(--line)]">
                 {movimentos.map((m, i) => (
                   <li key={i} className="flex items-center justify-between gap-3 py-2.5">
@@ -509,13 +495,7 @@ export function ConcorrenciaView({
       {compare.rows.length > 0 && (
         <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="precos">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 id="precos" className="text-lg font-bold">Preços comparados</h2>
-              <p className="text-sm text-[var(--ink-2)]">
-                Produtos que o cliente compara (arroz, óleo, carne, cerveja...) acompanham o concorrente. Os outros seguram a margem.
-                {unmatched > 0 && ` ${plural(unmatched, "preço lido não achou", "preços lidos não acharam")} produto igual no seu catálogo.`}
-              </p>
-            </div>
+            <SecaoTitulo id="precos" Icone={Tag} cor="banana" sub={<>Produtos que o cliente compara (arroz, óleo, carne, cerveja...) acompanham o concorrente. Os outros seguram a margem.{unmatched > 0 && ` ${plural(unmatched, "preço lido não achou", "preços lidos não acharam")} produto igual no seu catálogo.`}</>}>Preços comparados</SecaoTitulo>
             <Segmented
               label="Filtro"
               size="sm"

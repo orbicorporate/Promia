@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { CalendarHeart, Sparkles, Send, Camera, Tag, BrainCircuit, Repeat, FileSpreadsheet, ArrowRight, TrendingUp, TrendingDown, Scale, PackageX, BarChart3 } from "lucide-react";
-import { Glass, cn } from "@/components/ui";
+import { CalendarHeart, Sparkles, Send, Camera, Tag, BrainCircuit, Repeat, FileSpreadsheet, ArrowRight, TrendingUp, TrendingDown, Scale, PackageX, BarChart3, ListChecks } from "lucide-react";
+import { Glass, SecaoTitulo, cn } from "@/components/ui";
 import type { HojeAction } from "@/lib/hoje";
 
 const ICONS = {
@@ -39,9 +39,9 @@ export function HojeList({ actions }: { actions: HojeAction[] }) {
   }
   return (
     <Glass as="section" className="overflow-hidden" aria-labelledby="hoje">
-      <h2 id="hoje" className="px-5 pt-5 text-lg font-bold sm:px-6">
-        Para fazer hoje
-      </h2>
+      <div className="px-5 pt-5 sm:px-6">
+        <SecaoTitulo id="hoje" Icone={ListChecks} cor="azul">Para fazer hoje</SecaoTitulo>
+      </div>
       <ul className="mt-2 divide-y divide-[var(--line)]">
         {actions.map((a) => {
           const Icon = ICONS[a.icon];

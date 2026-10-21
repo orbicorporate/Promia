@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Sparkles, ChevronRight, RotateCw, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
-import { Glass, Button, ButtonLink, cn } from "@/components/ui";
+import { Glass, Button, ButtonLink, SecaoTitulo, cn } from "@/components/ui";
 
 export type Rec = {
   id: string;
@@ -77,10 +77,7 @@ export function GerenteCard({
   return (
     <Glass as="section" data-trabalhando={running} className={cn("borda-ia flex flex-col p-5 sm:p-6", running && "varredura")} aria-labelledby="gerente">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="gerente" className="flex items-center gap-2 text-lg font-bold">
-          <Sparkles className="size-5 text-[var(--uva)]" />
-          <span className="text-[var(--uva)]">Gerente</span>
-        </h2>
+        <SecaoTitulo id="gerente" Icone={Sparkles} cor="uva">Gerente</SecaoTitulo>
         {when && <span className="text-xs text-[var(--ink-3)]">Análise de {when}</span>}
       </div>
 
