@@ -208,7 +208,10 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
 
       {productCount > 0 && <HojeList actions={actions} />}
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-stretch">
+        {/* gerente */}
+        <GerenteCard marketId={market.id} slug={slug} recs={recs} generatedAt={lastRec?.generated_at ?? null} hasProducts={productCount > 0} />
+
         {/* ocasiões */}
         <Glass as="section" className="p-5 sm:p-6 space-y-4" aria-labelledby="ocasioes">
           <div className="flex items-center justify-between gap-3">
@@ -255,9 +258,6 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
             </ul>
           )}
         </Glass>
-
-        {/* gerente */}
-        <GerenteCard marketId={market.id} slug={slug} recs={recs} generatedAt={lastRec?.generated_at ?? null} hasProducts={productCount > 0} />
       </div>
 
       {stepsDone < steps.length && (
