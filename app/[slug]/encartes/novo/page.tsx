@@ -1,3 +1,4 @@
+import { listarArquivos } from "@/lib/server/arquivos";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireMarketPage } from "@/lib/market";
@@ -21,7 +22,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const { market } = await requireMarketPage(slug);
   const titulo = one(sp.titulo)?.slice(0, 80);
-  const [data, rodapePadrao] = await Promise.all([loadBuilderData(market.id, titulo ? [titulo] : []), lerRodapePadrao(createAdminClient(), market.id)]);
+  const [data, rodapePadrao, arquivos] = await Promise.all([loadBuilderData(market.id, titulo ? [titulo] : []), lerRodapePadrao(createAdminClient(), market.id), listarArquivos(market.id)]);
 
   const tema = one(sp.tema);
   const de = one(sp.de);
@@ -116,6 +117,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
           initial={initial}
           mercado={mercadoRodapeInfo(market)}
           rodapePadrao={rodapePadrao}
+          arquivos={arquivos.map((a) => ({ path: a.path, url: a.url }))}
           today={data.today}
         />
       )}

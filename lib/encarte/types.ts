@@ -22,10 +22,17 @@ export type EncarteModelo = (typeof ENCARTE_MODELOS)[number];
 
 // Fundo da arte (só nos modelos brilhantes; nulo = o fundo padrão do modelo).
 export const ENCARTE_FUNDOS = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira", ...CENARIO_IDS, ...ARTE_IDS] as const;
-export type EncarteFundo = (typeof ENCARTE_FUNDOS)[number];
+export type FundoPronto = (typeof ENCARTE_FUNDOS)[number];
+
+// Fundo do próprio mercado: "meu:<id do mercado>/arquivos/<arquivo>" (imagem enviada em Biblioteca, Meus arquivos).
+export type FundoProprio = `meu:${string}`;
+const FUNDO_PROPRIO = /^meu:[0-9a-f-]{36}\/arquivos\/[A-Za-z0-9._-]{1,80}$/;
+export const ehFundoProprio = (v: unknown): v is FundoProprio => typeof v === "string" && FUNDO_PROPRIO.test(v);
+export const caminhoFundoProprio = (v: FundoProprio) => v.slice(4);
+export type EncarteFundo = FundoPronto | FundoProprio;
 
 export function isEncarteFundo(value: unknown): value is EncarteFundo {
-  return typeof value === "string" && (ENCARTE_FUNDOS as readonly string[]).includes(value);
+  return (typeof value === "string" && (ENCARTE_FUNDOS as readonly string[]).includes(value)) || ehFundoProprio(value);
 }
 
 export function isEncarteModelo(value: unknown): value is EncarteModelo {
@@ -84,6 +91,7 @@ export type EncarteData = {
   validade?: Partial<ValidadeOpcoes>; // posição, alinhamento, estilo e cor da validade (lib/encarte/validade.ts)
   emblemaEscala?: number; // 0,6 a 1,6: aumenta ou diminui o logo mantendo a proporção (lib/encarte/emblema-escala.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
+  fundoProprio?: string | null; // imagem enviada pelo mercado como fundo, resolvida no servidor (data URI)
   fundoArte?: EncarteFundoArte | null; // cabeçalho e rodapé do fundo de arte, resolvidos no servidor
   escalaPrevia?: number; // só no servidor: desenha a página em escala menor (0,3 a 1) para a prévia ser rápida
   esqueleto?: boolean; // prévia só com fundo, logo e a marcação das 12 caixas (passos 1 e 2 do montador)
