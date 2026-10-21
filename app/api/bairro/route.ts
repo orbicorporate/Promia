@@ -21,8 +21,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Limite de análises de bairro de hoje atingido. Amanhã libera de novo." }, { status: 429 });
   }
   const admin = createAdminClient();
-  const { data: market } = await admin.from("markets").select("name, address, city, niche").eq("id", marketId).single();
-  const location = localDoMercado(market?.address, market?.city);
+  const { data: market } = await admin.from("markets").select("*").eq("id", marketId).single();
+  const location = localDoMercado(market?.address, market?.city, market?.state);
   if (!market || !location) return NextResponse.json({ error: "Coloque o endereço e a cidade do mercado em Mercado para analisar o bairro." }, { status: 400 });
 
   const [entorno, sales, { data: competitors }, { data: cats }] = await Promise.all([

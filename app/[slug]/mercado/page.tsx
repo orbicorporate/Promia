@@ -34,6 +34,7 @@ export default async function MercadoPage({ params }: PageProps<"/[slug]/mercado
           instagram: m.instagram ?? "",
           address: m.address ?? "",
           city: m.city ?? "",
+          state: m.state ?? "",
           openingHours: m.opening_hours ?? "",
           legalNote: m.legal_note ?? "",
         }}

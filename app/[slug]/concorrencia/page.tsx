@@ -31,7 +31,7 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
   const unmatched = (obs ?? []).filter((o) => !o.product_id).length;
 
   // pesquisa na internet (se a tabela ainda não existir, fica vazia)
-  const { data: pesq } = await admin.from("price_research").select("id, term, product_name, product_id, price, source_kind, source_name, source_url, scope, region, snippet, observed_on").eq("market_id", market.id).gte("observed_on", addDaysISO(todayInSaoPaulo(), -30)).order("observed_on", { ascending: false }).order("price", { ascending: true }).limit(200);
+  const { data: pesq } = await admin.from("price_research").select("id, term, product_name, product_id, price, source_kind, source_name, source_url, scope, region, snippet, observed_on").eq("market_id", market.id).gte("observed_on", addDaysISO(todayInSaoPaulo(), -7)).order("observed_on", { ascending: false }).order("price", { ascending: true }).limit(200);
   const pids = [...new Set((pesq ?? []).map((r) => r.product_id).filter((x): x is string => !!x))];
   const { data: proprios } = pids.length ? await admin.from("products").select("id, price").in("id", pids) : { data: [] };
   const meuPreco = new Map((proprios ?? []).map((p) => [p.id, p.price == null ? null : Number(p.price)]));
@@ -47,7 +47,7 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
         slug={slug}
         marketId={market.id}
         hasAddress={!!(market.address || market.city)}
-        origem={{ name: market.name, address: market.address, city: market.city }}
+        origem={{ name: market.name, address: market.address, city: market.city, state: market.state }}
         competitors={(competitors ?? []).map((c) => ({ ...c, rating: c.rating == null ? null : Number(c.rating), latitude: c.latitude == null ? null : Number(c.latitude), longitude: c.longitude == null ? null : Number(c.longitude) }))}
         flyers={(flyers ?? []).slice(0, 12)}
         whatsapp={whatsappConfigurado() && process.env.WHATSAPP_DISPLAY_NUMBER ? { numero: process.env.WHATSAPP_DISPLAY_NUMBER.replace(/\D/g, ""), cadastrado: !!market.whatsapp } : null}
@@ -58,7 +58,7 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
         compare={cmp}
         unmatched={unmatched}
       />
-      <PesquisaOnline marketId={market.id} cidade={market.city} ufInicial={ufDaCidade(market.city)} achados={achados} />
+      <PesquisaOnline marketId={market.id} cidade={market.city} ufInicial={market.state || ufDaCidade(market.city)} achados={achados} />
     </div>
   );
 }

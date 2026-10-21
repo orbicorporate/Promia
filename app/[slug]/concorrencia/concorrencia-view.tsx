@@ -50,7 +50,7 @@ export function ConcorrenciaView({
   slug: string;
   marketId: string;
   hasAddress: boolean;
-  origem: { name: string; address: string | null; city: string | null };
+  origem: { name: string; address: string | null; city: string | null; state: string | null };
   competitors: Competitor[];
   flyers: Flyer[];
   compare: { rows: CompareRow[]; index: number | null; cheaper: number; pricier: number };
@@ -160,7 +160,7 @@ export function ConcorrenciaView({
     </div>
   ) : null;
   const responder = compare.rows.filter((r) => r.role === "atracao" && r.advice.kind === "baixar");
-  const enderecoCompleto = localDoMercado(origem.address, origem.city);
+  const enderecoCompleto = localDoMercado(origem.address, origem.city, origem.state);
 
   async function findCompetitors() {
     setSearching(true);

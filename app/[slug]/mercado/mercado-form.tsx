@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ImagePlus, Trash2, Plus, X, Phone, MapPin, Clock, AtSign } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { UFS, nomeUf } from "@/lib/competition/pesquisa-online";
 import { Button, Field, Glass, Input, Select, Textarea, cn } from "@/components/ui";
 import { DEFAULT_LEGAL_NOTE } from "@/lib/encarte/text";
 
@@ -25,6 +26,7 @@ export type MarketForm = {
   instagram: string;
   address: string;
   city: string;
+  state: string;
   openingHours: string;
   legalNote: string;
 };
@@ -296,6 +298,14 @@ export function MercadoForm({ initial, promotions }: { initial: MarketForm; prom
             </Field>
             <Field label="Cidade" htmlFor="m-cid">
               <Input id="m-cid" value={f.city} onChange={set("city")} placeholder="Sorocaba" />
+            </Field>
+            <Field label="Estado" htmlFor="m-uf">
+              <Select id="m-uf" value={f.state} onChange={(e) => setF((x) => ({ ...x, state: e.target.value }))}>
+                <option value="">Escolha</option>
+                {UFS.map((u) => (
+                  <option key={u} value={u}>{u} - {nomeUf(u)}</option>
+                ))}
+              </Select>
             </Field>
           </div>
         </Glass>
