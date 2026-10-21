@@ -70,6 +70,12 @@ export function GerenteCard({
     }
   }
 
+  const [agora] = useState(() => Date.now());
+  const dias = generatedAt ? Math.floor((agora - new Date(generatedAt).getTime()) / 86400000) : 0;
+  const velha = dias >= 7;
+  // análise antiga fala em "hoje" e dia da semana de quando foi feita: tira essas frases
+  const limpa = (t: string) => (velha ? t.replace(/\s*Hoje é [^.]*\.\s*/gi, " ").trim() : t);
+
   const when = generatedAt
     ? new Date(generatedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
     : null;
@@ -102,6 +108,14 @@ export function GerenteCard({
         </div>
       ) : (
         <>
+          {velha && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl bg-[color-mix(in_srgb,var(--banana)_22%,transparent)] px-4 py-3 text-sm text-[var(--ink)]" role="status">
+              <span className="flex-1">Esta análise tem {dias} dias e pode estar desatualizada.</span>
+              <Button size="sm" variant="ia" onClick={run} loading={running} icon={<RotateCw className="size-4" />}>
+                Atualizar análise
+              </Button>
+            </div>
+          )}
           <div className="relative mt-4 flex-1">
             <AnimatePresence mode="wait">
               <motion.div
@@ -118,7 +132,7 @@ export function GerenteCard({
                   {rec.priority === "alta" && <span className="text-[var(--ink-3)] font-normal">· prioridade alta</span>}
                 </p>
                 <p className="font-display text-2xl font-extrabold leading-tight">{rec.target}</p>
-                <p className="text-[15px] leading-relaxed text-[var(--ink-2)]">{rec.reason}</p>
+                <p className="text-[15px] leading-relaxed text-[var(--ink-2)]">{limpa(rec.reason)}</p>
               </motion.div>
             </AnimatePresence>
           </div>

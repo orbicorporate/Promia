@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, LayoutGrid, ListChecks, Camera, Palette, Phone, FileSpreadsheet, Sparkles, CheckCircle2, Circle } from "lucide-react";
+import { ArrowUpRight, CalendarDays, LayoutGrid, TrendingUp, ListChecks, Camera, Palette, Phone, FileSpreadsheet, Sparkles, CheckCircle2, Circle } from "lucide-react";
 import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { todayInSaoPaulo, formatBR, addDaysISO } from "@/lib/dates";
 import { upcomingOccasions, themeAccent } from "@/lib/occasions";
-import { Glass, ButtonLink, SecaoTitulo } from "@/components/ui";
+import { Glass, ButtonLink, SecaoTitulo, Bola } from "@/components/ui";
 import { GerenteCard, type Rec } from "./_ui/gerente-card";
 import { EncarteThumb } from "./_ui/encarte-thumb";
 import { HojeList } from "./_ui/hoje-list";
@@ -148,6 +148,14 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
     { done: productCount > 0 && (pendente.count ?? 0) === 0, label: "Fotos dos produtos", href: `/${slug}/produtos?fotos=1`, icon: Camera },
     { done: (encarteCount ?? 0) > 0, label: "Primeiro encarte", href: `/${slug}/encartes/novo`, icon: Sparkles },
   ];
+  const brl0 = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const valendo = (vigentes ?? []).filter((e) => (!e.valid_from || e.valid_from <= today) && (!e.valid_until || e.valid_until >= today)).length;
+  const semFoto = (pendente.count ?? 0) + (revisar.count ?? 0);
+  const kpis = [
+    { rotulo: "Vendas do último relatório", valor: sa && sa.kpis.revenue > 0 ? brl0(sa.kpis.revenue) : "Sem relatório", Icone: TrendingUp, cor: "verde" as const },
+    { rotulo: "Encartes valendo hoje", valor: String(valendo), Icone: LayoutGrid, cor: "uva" as const },
+    { rotulo: "Fotos pendentes", valor: String(semFoto), Icone: Camera, cor: semFoto > 0 ? ("banana" as const) : ("verde" as const) },
+  ];
   const stepsDone = steps.filter((s) => s.done).length;
 
   return (
@@ -167,6 +175,13 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
             <>O que vai pro encarte esta semana?</>
           )}
         </h1>
+        {productCount > 0 && next && (
+          <div className="pt-3">
+            <ButtonLink href={`/${slug}/encartes/novo?tema=${next.themeKey}&titulo=${encodeURIComponent(next.headline)}&de=${next.kind === "semana" ? next.date : addDaysISO(next.date, -5)}&ate=${next.date}`} size="lg">
+              Montar encarte de {next.title}
+            </ButtonLink>
+          </div>
+        )}
         {productCount === 0 && (
           <div className="flex flex-wrap items-center gap-3 pt-3">
             <ButtonLink href={`/${slug}/produtos?importar=1`} size="lg">
@@ -176,6 +191,20 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
           </div>
         )}
       </header>
+
+      {productCount > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {kpis.map((k) => (
+            <Glass key={k.rotulo} className="flex items-center gap-3 p-4">
+              <Bola Icone={k.Icone} cor={k.cor} />
+              <div className="min-w-0">
+                <p className="truncate text-sm text-[var(--ink-2)]">{k.rotulo}</p>
+                <p className="tabular font-display text-xl font-extrabold leading-tight">{k.valor}</p>
+              </div>
+            </Glass>
+          ))}
+        </div>
+      )}
 
       {productCount > 0 && <HojeList actions={actions} />}
 
@@ -194,7 +223,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
               para elas aparecerem aqui.
             </p>
           ) : (
-            <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(210px,1fr))]">
+            <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(210px,1fr))]">
               {occasions.map((o) => {
                 const c = themeAccent(o.themeKey);
                 const href = `/${slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${o.date}&ate=${o.date}`;
@@ -212,6 +241,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
                       />
                       <span className="relative text-sm opacity-90">
                         {o.date === today ? "Hoje" : `${WEEKDAY[new Date(`${o.date}T12:00:00Z`).getUTCDay()]}, ${formatBR(o.date)}`}
+                        {o.date !== today && ` · em ${Math.round((Date.parse(`${o.date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000)} dias`}
                         {o.kind === "semana" ? " · promoção fixa" : ""}
                       </span>
                       <span className="relative flex items-end justify-between gap-2">
