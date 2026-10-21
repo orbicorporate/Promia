@@ -29,10 +29,10 @@ export function MapaConcorrentes({ origem, pins, raioKm, ativo, onPick }: { orig
       lib.current = L;
       const map = L.map(el.current, { zoomControl: false, scrollWheelZoom: false, attributionControl: true }).setView([origem.latitude, origem.longitude], 13);
       L.control.zoom({ position: "bottomright" }).addTo(map);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      // OpenStreetMap direto: não pede chave de API (o CARTO passou a exigir).
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        subdomains: "abcd",
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
       camada.current = L.layerGroup().addTo(map);
       mapRef.current = map;
