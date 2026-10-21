@@ -58,6 +58,12 @@ export type Database = {
         Update: { competitor_id?: string | null; competitor_name?: string; created_at?: string; created_by?: string | null; id?: string; items?: number; market_id?: string; observed_on?: string; valid_until?: string | null };
         Relationships: [];
       };
+      price_research: {
+        Row: { id: string; market_id: string; term: string; product_name: string; product_id: string | null; price: number; source_kind: string; source_name: string; source_url: string | null; scope: string; region: string | null; snippet: string | null; observed_on: string; created_at: string };
+        Insert: { market_id: string; term: string; product_name: string; product_id?: string | null; price: number; source_kind: string; source_name: string; source_url?: string | null; scope: string; region?: string | null; snippet?: string | null; observed_on?: string; id?: string; created_at?: string };
+        Update: { market_id?: string; term?: string; product_name?: string; product_id?: string | null; price?: number; source_kind?: string; source_name?: string; source_url?: string | null; scope?: string; region?: string | null; snippet?: string | null; observed_on?: string; id?: string; created_at?: string };
+        Relationships: [];
+      };
       competitor_prices: {
         Row: { competitor_id: string | null; competitor_name: string; created_at: string; flyer_id: string | null; id: string; market_id: string; match_score: number | null; observed_on: string; old_price: number | null; price: number; product_id: string | null; product_name: string };
         Insert: { competitor_id?: string | null; competitor_name: string; created_at?: string; flyer_id?: string | null; id?: string; market_id: string; match_score?: number | null; observed_on?: string; old_price?: number | null; price: number; product_id?: string | null; product_name: string };

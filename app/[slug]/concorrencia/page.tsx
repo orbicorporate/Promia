@@ -5,6 +5,8 @@ import { compareprices } from "@/lib/competition/compare";
 import { whatsappConfigurado } from "@/lib/whatsapp";
 import { cadencia, cesta, movimentos, placar } from "@/lib/competition/insights";
 import { ConcorrenciaView } from "./concorrencia-view";
+import { PesquisaOnline } from "./pesquisa-online";
+import { ufDaCidade } from "@/lib/competition/pesquisa-online";
 
 export const metadata = { title: "Concorrência" };
 
@@ -28,6 +30,13 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
   const prodNum = (products ?? []).map((p) => ({ ...p, price: p.price == null ? null : Number(p.price) }));
   const unmatched = (obs ?? []).filter((o) => !o.product_id).length;
 
+  // pesquisa na internet (se a tabela ainda não existir, fica vazia)
+  const { data: pesq } = await admin.from("price_research").select("id, term, product_name, product_id, price, source_kind, source_name, source_url, scope, region, snippet, observed_on").eq("market_id", market.id).gte("observed_on", addDaysISO(todayInSaoPaulo(), -30)).order("observed_on", { ascending: false }).order("price", { ascending: true }).limit(200);
+  const pids = [...new Set((pesq ?? []).map((r) => r.product_id).filter((x): x is string => !!x))];
+  const { data: proprios } = pids.length ? await admin.from("products").select("id, price").in("id", pids) : { data: [] };
+  const meuPreco = new Map((proprios ?? []).map((p) => [p.id, p.price == null ? null : Number(p.price)]));
+  const achados = (pesq ?? []).map((r) => ({ id: r.id, term: r.term, product_name: r.product_name, price: Number(r.price), own_price: r.product_id ? (meuPreco.get(r.product_id) ?? null) : null, source_kind: r.source_kind, source_name: r.source_name, source_url: r.source_url, scope: r.scope, region: r.region, snippet: r.snippet, observed_on: r.observed_on }));
+
   return (
     <div className="space-y-6 pt-2">
       <header>
@@ -49,6 +58,7 @@ export default async function ConcorrenciaPage({ params }: PageProps<"/[slug]/co
         compare={cmp}
         unmatched={unmatched}
       />
+      <PesquisaOnline marketId={market.id} cidade={market.city} ufInicial={ufDaCidade(market.city)} achados={achados} />
     </div>
   );
 }
