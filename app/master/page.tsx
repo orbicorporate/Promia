@@ -38,7 +38,7 @@ export default async function MasterPage() {
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-5 py-8 sm:px-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <PromiaLogo className="h-9" />
+        <PromiaLogo className="h-12" />
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-[var(--ink-3)] sm:inline">{who.viewer.email}</span>
           <form action="/sair" method="post">

@@ -5,7 +5,7 @@ export function StatusScreen({ title, children, action }: { title: string; child
   return (
     <main className="grid min-h-dvh place-items-center px-5">
       <div className="vidro w-full max-w-sm space-y-4 rounded-[26px] p-7">
-        <PromiaLogo className="h-8" />
+        <PromiaLogo className="h-11" />
         <h1 className="font-display text-2xl font-extrabold">{title}</h1>
         <div className="text-[var(--ink-2)]">{children}</div>
         {action}
