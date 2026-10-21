@@ -177,7 +177,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
         </h1>
         {productCount > 0 && next && (
           <div className="pt-3">
-            <ButtonLink href={`/${slug}/encartes/novo?tema=${next.themeKey}&titulo=${encodeURIComponent(next.headline)}&de=${next.kind === "semana" ? next.date : addDaysISO(next.date, -5)}&ate=${next.date}`} size="lg">
+            <ButtonLink href={`/${slug}/encartes/novo?tema=${next.themeKey}&titulo=${encodeURIComponent(next.headline)}&de=${next.kind === "semana" ? next.date : addDaysISO(next.date, -5)}&ate=${next.date}&ocasiao=${encodeURIComponent(next.title)}`} size="lg">
               Montar encarte de {next.title}
             </ButtonLink>
           </div>
@@ -229,7 +229,7 @@ export default async function InicioPage({ params }: PageProps<"/[slug]">) {
             <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(210px,1fr))]">
               {occasions.map((o) => {
                 const c = themeAccent(o.themeKey);
-                const href = `/${slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${o.date}&ate=${o.date}`;
+                const href = `/${slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${o.date}&ate=${o.date}&ocasiao=${encodeURIComponent(o.title)}`;
                 return (
                   <li key={`${o.date}-${o.title}`}>
                     <Link

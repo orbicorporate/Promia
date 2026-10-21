@@ -79,7 +79,7 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
       title: `${o.title} ${quando}: monte o encarte`,
       detail: o.kind === "semana" ? "Promoção fixa da semana. O tema já vem escolhido." : "Data do varejo com tema pronto. Comece com uns dias de antecedência.",
       cta: `Montar ${o.title}`,
-      href: `/${i.slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${de}&ate=${o.date}`,
+      href: `/${i.slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${de}&ate=${o.date}&ocasiao=${encodeURIComponent(o.title)}`,
     });
     if (out.length >= 6) break;
   }

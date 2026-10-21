@@ -32,6 +32,8 @@ export const TEMAS_PRONTOS: Tema[] = [
   { id: "pascoa", nome: "Páscoa", themeKey: "pascoa", busca: "pascoa ovo chocolate coelho", emblemas: ["pascoa-de-ofertas", "ovos-de-pascoa", "pascoa-de-ofertas", "ovos-de-pascoa", "pascoa-de-ofertas", "ovos-de-pascoa"], fundos: ["ar14", "fs39", "pp03", "pa11", "pa17", "cs38"], caixas: ["cx22", "cx16", "cx13", "cx14", "cx15", "cx08"] },
   { id: "maes", nome: "Mães, namorados e mulher", themeKey: "dia-das-maes", busca: "mae maes namorados mulher flores dia das maes", emblemas: ["dia-das-maes", "dia-dos-namorados", "dia-da-mulher", "dia-das-maes", "dia-dos-namorados", "dia-da-mulher"], fundos: ["ar08", "ar17", "fs29", "pp20", "pa17", "cs38"], caixas: ["cx22", "cx16", "cx13", "cx19", "cx14", "cx08"] },
   { id: "pais-criancas", nome: "Pais e crianças", themeKey: "dia-dos-pais", busca: "pai pais crianca criancas infantil brinquedo dia dos pais", emblemas: ["dia-dos-pais", "dia-das-criancas", "dia-dos-pais", "dia-das-criancas", "dia-dos-pais", "dia-das-criancas"], fundos: ["ar07", "ar15", "pa21", "fs35", "fs32", "pa03"], caixas: ["cx05", "cx11", "cx18", "cx06", "cx03", "cx12"] },
+  { id: "halloween", nome: "Halloween", themeKey: "halloween", busca: "halloween bruxa abobora doce travessura noite 31 de outubro terror", emblemas: ["halloween", "halloween", "halloween", "halloween", "halloween", "halloween"], fundos: ["ar80", "cs31", "cs41", "cs29", "fs36", "pa16"], caixas: ["cx04", "cx17", "cx11", "cx03", "cx12", "cx16"] },
+  { id: "carnaval", nome: "Carnaval", themeKey: "carnaval", busca: "carnaval folia bloco fantasia cerveja bebida", emblemas: ["carnaval-de-ofertas", "carnaval-de-ofertas", "carnaval-de-ofertas", "carnaval-de-ofertas", "carnaval-de-ofertas", "carnaval-de-ofertas"], fundos: ["ar12", "fs27", "cs44", "pa14", "fs35", "cs34"], caixas: ["cx05", "cx11", "cx18", "cx03", "cx12", "cx06"] },
   { id: "junina", nome: "Festa junina", themeKey: "festa-junina", busca: "junina sao joao milho quermesse caipira", emblemas: ["festa-junina", "festa-junina", "festa-junina", "festa-junina", "festa-junina", "festa-junina"], fundos: ["ar13", "fs32", "pa12", "pp12", "pa15", "pa04"], caixas: ["cx06", "cx21", "cx13", "cx10", "cx19", "cx01"] },
   { id: "aniversario", nome: "Aniversário e inauguração", themeKey: "aniversario", busca: "aniversario inauguracao reinauguracao festa loja nova", emblemas: ["aniversario-da-loja", "inauguracao", "reinauguracao", "aniversario-da-loja", "inauguracao", "reinauguracao"], fundos: ["ar19", "fs28", "fs34", "cs33", "fs32", "pa14"], caixas: ["cx03", "cx01", "cx18", "cx05", "cx17", "cx11"] },
   { id: "condicoes", nome: "Condições e liquidação", themeKey: "ofertas", busca: "leve 3 pague 2 liquidacao queima estoque pix frete gratis fabrica exclusivo lancamento novidade", emblemas: ["leve-3-pague-2", "liquidacao", "queima-de-estoque", "pague-com-pix", "preco-de-fabrica", "novidade"], fundos: ["cs41", "cs33", "cs44", "pp12", "cs47", "pa14"], caixas: ["cx06", "cx03", "cx04", "cx18", "cx01", "cx11"] },
@@ -78,5 +80,33 @@ export const VISUAIS_PRONTOS: VisualPronto[] = TEMAS_PRONTOS.flatMap((t) =>
     };
   })
 );
+
+// Cada data do calendário aponta para o grupo de combinações que combina com
+// ela e para o logo que abre selecionado.
+const OCASIOES: { quando: RegExp; tema: string; emblema: string }[] = [
+  { quando: /halloween|bruxas/, tema: "halloween", emblema: "halloween" },
+  { quando: /carnaval/, tema: "carnaval", emblema: "carnaval-de-ofertas" },
+  { quando: /pascoa/, tema: "pascoa", emblema: "pascoa-de-ofertas" },
+  { quando: /consumidor/, tema: "clientes-e-liquidacao", emblema: "dia-do-consumidor" },
+  { quando: /dia dos? clientes?/, tema: "clientes-e-liquidacao", emblema: "dia-do-cliente" },
+  { quando: /maes/, tema: "maes", emblema: "dia-das-maes" },
+  { quando: /namorados/, tema: "maes", emblema: "dia-dos-namorados" },
+  { quando: /junina|sao joao/, tema: "junina", emblema: "festa-junina" },
+  { quando: /dia dos pais/, tema: "pais-criancas", emblema: "dia-dos-pais" },
+  { quando: /criancas/, tema: "pais-criancas", emblema: "dia-das-criancas" },
+  { quando: /black friday/, tema: "black-friday", emblema: "black-friday" },
+  { quando: /reveillon|ano novo/, tema: "natal", emblema: "ofertas-de-ano-novo" },
+  { quando: /natal/, tema: "natal", emblema: "natal-de-ofertas" },
+  { quando: /aniversario/, tema: "aniversario", emblema: "aniversario-da-loja" },
+];
+
+// Combinação com que o montador abre quando o dono chega por uma data
+// ("Halloween", "Dia das Mães"...). null quando a data não tem grupo próprio.
+export function prontoDaOcasiao(titulo: string | null | undefined): VisualPronto | null {
+  const t = semAcento(titulo ?? "");
+  const o = OCASIOES.find((x) => x.quando.test(t));
+  if (!o) return null;
+  return VISUAIS_PRONTOS.find((v) => v.tema === o.tema && v.emblema === o.emblema) ?? VISUAIS_PRONTOS.find((v) => v.tema === o.tema) ?? null;
+}
 
 export { semAcento as normalizarBusca };
