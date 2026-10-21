@@ -131,8 +131,8 @@ export function GerenteCard({
                   {TYPE[rec.type]?.label ?? rec.type}
                   {rec.priority === "alta" && <span className="text-[var(--ink-3)] font-normal">· prioridade alta</span>}
                 </p>
-                <p className="font-display text-2xl font-extrabold leading-tight">{rec.target}</p>
-                <p className="text-[15px] leading-relaxed text-[var(--ink-2)]">{limpa(rec.reason)}</p>
+                <p className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">{rec.target}</p>
+                <p className="text-base leading-relaxed text-[var(--ink-2)] sm:text-lg">{limpa(rec.reason)}</p>
               </motion.div>
             </AnimatePresence>
           </div>
