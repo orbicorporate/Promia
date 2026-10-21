@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Sparkles, RotateCw, Users, Store, LayoutPanelTop, Clock, Lightbulb, MapPin, Network } from "lucide-react";
+import { Sparkles, RotateCw, Users, Store, LayoutPanelTop, Clock, Lightbulb, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Glass, cn } from "@/components/ui";
 import type { BairroInsight } from "@/lib/ai/bairro";
@@ -14,15 +14,11 @@ export function BairroView({
   slug,
   hasAddress,
   initial,
-  rede,
-  minMarkets,
 }: {
   marketId: string;
   slug: string;
   hasAddress: boolean;
   initial: BairroInsight | null;
-  rede: { markets: number; items: { name: string; markets: number }[] };
-  minMarkets: number;
 }) {
   const [insight, setInsight] = useState(initial);
   const [running, setRunning] = useState(false);
@@ -41,32 +37,6 @@ export function BairroView({
       setRunning(false);
     }
   }
-
-  const redeBox = (
-    <Glass as="section" className="space-y-3 p-5 sm:p-6" aria-labelledby="rede">
-      <h2 id="rede" className="flex items-center gap-2 text-lg font-bold">
-        <Network className="size-5 text-[var(--uva)]" /> Na sua região
-      </h2>
-      {rede.items.length === 0 ? (
-        <p className="text-sm text-[var(--ink-2)]">
-          Quando houver pelo menos {minMarkets} outros mercados da sua cidade no Promia, aparece aqui o que eles mais estão colocando em oferta, sempre de forma anônima.
-          {rede.markets > 0 && ` Hoje são ${rede.markets}.`}
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-[var(--ink-2)]">Produtos mais colocados em encarte nos últimos 30 dias por mercados da sua cidade.</p>
-          <ul className="divide-y divide-[var(--line)]">
-            {rede.items.map((i) => (
-              <li key={i.name} className="flex justify-between gap-3 py-2 text-sm">
-                <span className="truncate">{i.name}</span>
-                <span className="shrink-0 tabular text-[var(--ink-3)]">{i.markets} mercados</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </Glass>
-  );
 
   if (!insight) {
     return (
@@ -97,7 +67,6 @@ export function BairroView({
             {running ? "Analisando" : "Analisar"}
           </Button>
         </Glass>
-        {redeBox}
       </div>
     );
   }
@@ -200,7 +169,6 @@ export function BairroView({
             </p>
           )}
         </Glass>
-        {redeBox}
       </div>
     </div>
   );
