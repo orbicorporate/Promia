@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { Package, Award, Palette } from "lucide-react";
+import { Package, Award, Palette, ImageIcon } from "lucide-react";
 import { cn } from "@/components/ui";
 
 const ABAS = [
   { key: "produtos", label: "Produtos e fotos", Icone: Package, href: (s: string) => `/${s}/produtos` },
   { key: "emblemas", label: "Emblemas", Icone: Award, href: (s: string) => `/${s}/emblemas` },
+  { key: "arquivos", label: "Meus arquivos", Icone: ImageIcon, href: (s: string) => `/${s}/arquivos` },
   { key: "marca", label: "Marca e logo", Icone: Palette, href: (s: string) => `/${s}/mercado` },
 ] as const;
 
 // Abas da Biblioteca: tudo que o mercado usa para montar o encarte.
-export function BibliotecaAbas({ slug, ativa }: { slug: string; ativa: "produtos" | "emblemas" }) {
+export function BibliotecaAbas({ slug, ativa }: { slug: string; ativa: "produtos" | "emblemas" | "arquivos" }) {
   return (
     <nav aria-label="Biblioteca" className="flex flex-wrap gap-2">
       {ABAS.map(({ key, label, Icone, href }) => {

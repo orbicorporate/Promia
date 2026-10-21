@@ -28,7 +28,7 @@ const GROUP_START: Record<string, string> = { vendas: "Inteligência", bibliotec
 
 function activeKey(pathname: string, slug: string) {
   const rest = pathname.slice(slug.length + 1);
-  if (rest.startsWith("/produtos") || rest.startsWith("/emblemas")) return "biblioteca";
+  if (rest.startsWith("/produtos") || rest.startsWith("/emblemas") || rest.startsWith("/arquivos")) return "biblioteca";
   const hit = NAV.find((n) => n.key !== "inicio" && rest.startsWith(`/${n.key}`));
   return hit?.key ?? "inicio";
 }

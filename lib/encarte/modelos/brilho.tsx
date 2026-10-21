@@ -11,7 +11,7 @@ import { discountPercent, effectiveOldPrice, formatBRL, priceParts, unitSuffix }
 import { marketInitials } from "../render";
 import { getTheme } from "../themes";
 import { measureText, validityParts, wrapMeasured } from "../text";
-import type { EncarteData, EncarteFundo, EncarteItem, EncarteMarket } from "../types";
+import { ehFundoProprio, type EncarteData, type EncarteFundo, type EncarteItem, type EncarteMarket } from "../types";
 import type { CoresEmblema } from "./emblema";
 import { Selo, fitFont } from "./formas";
 import { tokensFor, type Tokens } from "./paleta";
@@ -720,8 +720,15 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
           )}
         </>
       ) : (
-        <Img src={fundoBrilho(W, H, t, data.fundo ?? cfg.estilo, cx, cy, tk)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
+        <Img src={fundoBrilho(W, H, t, data.fundo && !ehFundoProprio(data.fundo) ? data.fundo : cfg.estilo, cx, cy, tk)} w={W} h={H} style={{ position: "absolute", left: 0, top: 0 }} />
       )}
+      {/* fundo próprio: a imagem do mercado cobre a tela inteira, com um véu leve para os preços continuarem legíveis */}
+      {!arte && data.fundoProprio ? (
+        <>
+          <Img src={data.fundoProprio} w={W} h={H} style={{ position: "absolute", left: 0, top: 0, objectFit: "cover" }} />
+          <div style={{ display: "flex", position: "absolute", left: 0, top: 0, width: W, height: H, backgroundColor: "rgba(0,0,0,0.12)" }} />
+        </>
+      ) : null}
 
       {/* título: emblema da campanha ou texto em 3D */}
       <div style={{ ...row, position: "absolute", left: 0, top: fino ? cutPx - cropTop - r(embH * 0.5) : spec.safeTop + r(6 * s), width: W, height: fino ? embH : heroH - spec.safeTop, alignItems: "center", justifyContent: "center" }}>

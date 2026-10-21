@@ -1,3 +1,4 @@
+import { listarArquivos } from "@/lib/server/arquivos";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -27,7 +28,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     .maybeSingle();
   if (!t) notFound();
 
-  const [data, rodapePadrao] = await Promise.all([loadBuilderData(market.id), lerRodapePadrao(admin, market.id)]);
+  const [data, rodapePadrao, arquivos] = await Promise.all([loadBuilderData(market.id), lerRodapePadrao(admin, market.id), listarArquivos(market.id)]);
   const known = new Set(data.catalog.map((p) => p.id));
   const initial: BuilderInitial = {
     id: t.id,
@@ -75,6 +76,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
         initial={initial}
         mercado={mercadoRodapeInfo(market)}
         rodapePadrao={rodapePadrao}
+          arquivos={arquivos.map((a) => ({ path: a.path, url: a.url }))}
         today={data.today}
       />
     </div>

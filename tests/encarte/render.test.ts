@@ -90,3 +90,12 @@ describe("renderEncartePng", () => {
     }, 90_000);
   });
 });
+
+describe("fundo próprio do mercado", () => {
+  it("desenha a imagem enviada como fundo nos modelos brilhantes", async () => {
+    const d: EncarteData = { ...data("feed", "grade"), modelo: "vitrine", fundo: "meu:11111111-1111-1111-1111-111111111111/arquivos/envio-abcd1234.jpg", fundoProprio: PIXEL };
+    const out = await renderEncartePng(d, 0);
+    expect(out).not.toBeNull();
+    expect(out!.png.byteLength).toBeGreaterThan(10_000);
+  }, 30_000);
+});

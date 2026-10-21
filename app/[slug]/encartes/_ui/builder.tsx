@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, Reorder, useReducedMotion } from "motion/react";
 import {
@@ -29,6 +30,7 @@ import {
   Undo2,
   Crown,
   Redo2,
+  ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
@@ -44,7 +46,7 @@ import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/p
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
 import { FUNDOS_ARTE, GRUPOS_FUNDO_ARTE } from "@/lib/encarte/modelos/fundos-arte";
-import type { EncarteFormat, EncarteFundo, EncarteLayout, EncarteModelo } from "@/lib/encarte/types";
+import { ehFundoProprio, type EncarteFormat, type EncarteFundo, type EncarteLayout, type EncarteModelo } from "@/lib/encarte/types";
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
 import { corDoGrupo, corDoTema } from "./cores-tema";
@@ -146,7 +148,9 @@ export function EncarteBuilder({
   today,
   mercado,
   rodapePadrao,
+  arquivos = [],
 }: {
+  arquivos?: { path: string; url: string }[];
   marketId: string;
   slug: string;
   catalog: CatalogProduct[];
@@ -1149,8 +1153,30 @@ export function EncarteBuilder({
       <p className="text-sm text-[var(--ink-2)]">A prévia mostra onde cada uma das 12 caixas vai ficar. Os produtos entram nos próximos passos.</p>
         <Glass className="p-4 sm:p-5">
           <details open>
-          <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "") : "segue as cores do logo"})</span></summary>
+          <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? (ehFundoProprio(fundo) ? "imagem sua" : FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "")) : "segue as cores do logo"})</span></summary>
           <div className="mt-5 space-y-6">
+            <div className="space-y-3">
+              <p className="flex items-center gap-2 text-sm font-semibold text-[var(--ink-2)]"><ImageIcon className="size-4" aria-hidden /> Meus arquivos</p>
+              {arquivos.length === 0 ? (
+                <p className="text-sm text-[var(--ink-3)]">
+                  Você ainda não enviou imagens. <Link href={`/${slug}/arquivos`} className="font-semibold text-[var(--folha)] underline underline-offset-2">Enviar uma imagem</Link> para usar de fundo.
+                </p>
+              ) : (
+                <div className="rolagem -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+                  {arquivos.map((a) => {
+                    const valor = `meu:${a.path}`;
+                    const on = fundo === valor;
+                    return (
+                      <button key={a.path} type="button" aria-pressed={on} onClick={() => ehFundoProprio(valor) && setFundo(valor)} className={cn(miniaturaClass(on), "w-[124px] shrink-0")}>
+                        <img src={a.url} alt="" width={440} height={330} loading="lazy" decoding="async" className="aspect-[4/3] w-full bg-[var(--line)] object-cover" />
+                        <span className={cn("block truncate px-1.5 py-1 text-[11px] font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>Meu arquivo</span>
+                      </button>
+                    );
+                  })}
+                  <Link href={`/${slug}/arquivos`} className="grid w-[124px] shrink-0 place-items-center rounded-2xl border border-dashed border-[var(--line-strong)] p-2 text-center text-xs font-semibold text-[var(--ink-2)] hover:bg-[var(--glass-strong)]">Enviar mais</Link>
+                </div>
+              )}
+            </div>
             <div className="flex flex-wrap gap-x-3 gap-y-3" role="group" aria-label="Filtrar fundos por tag">
               <Chip on={filtroFundo === "Todos"} cor="#b3122f" onClick={() => setFiltroFundo("Todos")}>
                 Todos
