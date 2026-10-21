@@ -6,7 +6,7 @@ import { carregarEmblema } from "./modelos/emblema";
 import { carregarFundoArte } from "./modelos/fundo-arte";
 import { fundoArtePorId } from "./modelos/fundos-arte";
 import { getPage } from "./paginate";
-import { caminhoFundoProprio, ehFundoProprio, type EncarteData, type EncarteItem } from "./types";
+import { caminhoFundoProprio, ehFotoExtra, ehFundoProprio, type EncarteData, type EncarteItem } from "./types";
 
 // Antes de desenhar, logo e fotos viram data URI (base64): o renderizador
 // do next/og só busca imagem sozinho por URL sem nenhuma proteção, então
@@ -211,12 +211,13 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
     wanted = new Set(page ? [...(page.featured ? [page.featured] : []), ...page.items] : []);
   }
 
-  const [logoUrl, emblemaImg, fundoArte, fundoProprio, ...images] = await Promise.all([
+  const [logoUrl, emblemaImg, fundoArte, fundoProprio, fotoExtraImg, ...images] = await Promise.all([
     load(data.market.logoUrl),
     data.emblema ? carregarEmblema(data.emblema, { rapido: opts.emblemaRapido }) : Promise.resolve(null),
     data.fundo && fundoArtePorId(data.fundo) ? carregarFundoArte(data.fundo) : Promise.resolve(null),
     // imagem enviada pelo mercado (Biblioteca, Meus arquivos)
     ehFundoProprio(data.fundo) ? load(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/midia/${caminhoFundoProprio(data.fundo)}`) : Promise.resolve(null),
+    data.fotoExtra && ehFotoExtra(data.fotoExtra) ? load(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/midia/${data.fotoExtra}`) : Promise.resolve(null),
     ...data.items.map((item) => (wanted && !wanted.has(item) ? Promise.resolve(null) : load(item.imageUrl, true))),
   ]);
 
@@ -236,6 +237,7 @@ export async function resolveEncarteImages(data: EncarteData, opts: ResolveImage
     emblemaImg,
     fundoArte,
     fundoProprio,
+    fotoExtraImg,
     items: data.items.map((item, i) => ({ ...item, imageUrl: finais[i] })),
   };
 }

@@ -5,7 +5,7 @@ import { clampEscala } from "./emblema-escala";
 import { limparRodape } from "./rodape";
 import { limparValidade } from "./validade";
 import { isThemeKey } from "./themes";
-import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteData, type EncarteItem } from "./types";
+import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, ehFotoExtra, type EncarteData, type EncarteItem } from "./types";
 
 // Validação do encarte que chega do navegador (rota de prévia). Nada do
 // que vem de fora é confiável: textos cortados, preços numéricos e não
@@ -86,6 +86,7 @@ export function sanitizePreviewInput(raw: unknown): SanitizeResult {
       layout: isEncarteModelo(r.modelo) ? "grade" : r.layout,
       modelo: isEncarteModelo(r.modelo) ? r.modelo : null,
       fundo: isEncarteFundo(r.fundo) ? r.fundo : null,
+      fotoExtra: ehFotoExtra(r.fotoExtra) ? r.fotoExtra : null,
       emblema: typeof r.emblema === "string" && emblemaPorSlug(r.emblema) ? r.emblema : null,
       emblemaEscala: clampEscala(r.emblemaEscala),
       validade: limparValidade(r.validade),

@@ -5,7 +5,7 @@ import { clampEscala, juntarEmblema } from "@/lib/encarte/emblema-escala";
 import { limparRodape } from "@/lib/encarte/rodape";
 import { limparValidade } from "@/lib/encarte/validade";
 import { isThemeKey } from "@/lib/encarte/themes";
-import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteFormat, type EncarteFundo, type EncarteLayout, type EncarteModelo } from "@/lib/encarte/types";
+import { ehFotoExtra, isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo, type EncarteFormat, type EncarteFundo, type EncarteLayout, type EncarteModelo } from "@/lib/encarte/types";
 
 // Validação do encarte salvo (criar ou editar). Os itens apontam para
 // produtos do catálogo; a rota confere depois que são deste mercado.
@@ -90,7 +90,7 @@ export function parseEncarteInput(raw: Record<string, unknown>): { ok: true; dat
       layout: isEncarteModelo(raw.modelo) ? "grade" : raw.layout,
       modelo: isEncarteModelo(raw.modelo) ? raw.modelo : null,
       fundo: isEncarteFundo(raw.fundo) ? raw.fundo : null,
-      emblema: juntarEmblema(typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? raw.emblema : null, clampEscala(raw.emblemaEscala), limparValidade(raw.validade), limparRodape(raw.rodape)),
+      emblema: juntarEmblema(typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? raw.emblema : null, clampEscala(raw.emblemaEscala), limparValidade(raw.validade), limparRodape(raw.rodape), ehFotoExtra(raw.fotoExtra) && typeof raw.marketId === "string" && raw.fotoExtra.startsWith(`${raw.marketId}/arquivos/`) ? raw.fotoExtra.split("/").pop()! : null),
       themeKey: raw.themeKey,
       validFrom,
       validUntil,

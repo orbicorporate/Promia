@@ -78,6 +78,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
         emblemaEscala: lerEmblema(src.emblema).escala,
         validade: lerEmblema(src.emblema).validade,
         rodape: lerEmblema(src.emblema).rodape,
+        fotoExtra: lerEmblema(src.emblema).fotoExtra ? `${market.id}/arquivos/${lerEmblema(src.emblema).fotoExtra}` : null,
         fundo: isEncarteFundo(src.fundo) ? src.fundo : null,
         themeKey: isThemeKey(src.theme_key) ? src.theme_key : initial.themeKey,
         items: [...(src.tabloid_products ?? [])]

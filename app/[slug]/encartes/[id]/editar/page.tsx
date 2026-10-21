@@ -42,6 +42,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     emblemaEscala: lerEmblema(t.emblema).escala,
     validade: lerEmblema(t.emblema).validade,
     rodape: lerEmblema(t.emblema).rodape,
+    fotoExtra: lerEmblema(t.emblema).fotoExtra ? `${market.id}/arquivos/${lerEmblema(t.emblema).fotoExtra}` : null,
     fundo: isEncarteFundo(t.fundo) ? t.fundo : null,
     themeKey: isThemeKey(t.theme_key) ? t.theme_key : DEFAULT_THEME_KEY,
     validFrom: t.valid_from ?? "",
