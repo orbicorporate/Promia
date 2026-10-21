@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Home, LayoutGrid, Package, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned, Award } from "lucide-react";
+import { Home, LayoutGrid, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned, Library } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { MarketMark } from "./market-mark";
 import { PromiaLogo } from "./logo";
@@ -20,15 +20,15 @@ const NAV = [
   { key: "vendas", label: "Vendas", icon: ChartColumn, href: (s: string) => `/${s}/vendas`, mobile: false, hint: "Curva ABC, alta e queda, resultado dos encartes" },
   { key: "concorrencia", label: "Concorrência", icon: Crosshair, href: (s: string) => `/${s}/concorrencia`, mobile: false, hint: "Preços dos concorrentes e mercados por perto" },
   { key: "bairro", label: "Bairro e público", icon: MapPinned, href: (s: string) => `/${s}/bairro`, mobile: false, hint: "Públicos, setores para implantar e gôndolas" },
-  { key: "emblemas", label: "Emblemas", icon: Award, href: (s: string) => `/${s}/emblemas`, mobile: false, hint: "Logos de campanha por tipo de oferta, data e feriado" },
-  { key: "produtos", label: "Produtos", icon: Package, href: (s: string) => `/${s}/produtos`, mobile: true, hint: "" },
+  { key: "biblioteca", label: "Biblioteca", icon: Library, href: (s: string) => `/${s}/produtos`, mobile: true, hint: "" },
   { key: "mercado", label: "Mercado", icon: Store, href: (s: string) => `/${s}/mercado`, mobile: false, hint: "Logo, cores, contatos e promoções fixas" },
 ] as const;
 
-const GROUP_START: Record<string, string> = { vendas: "Inteligência", emblemas: "Biblioteca", produtos: "Cadastro" };
+const GROUP_START: Record<string, string> = { vendas: "Inteligência", biblioteca: "Biblioteca", mercado: "Cadastro" };
 
 function activeKey(pathname: string, slug: string) {
   const rest = pathname.slice(slug.length + 1);
+  if (rest.startsWith("/produtos") || rest.startsWith("/emblemas")) return "biblioteca";
   const hit = NAV.find((n) => n.key !== "inicio" && rest.startsWith(`/${n.key}`));
   return hit?.key ?? "inicio";
 }

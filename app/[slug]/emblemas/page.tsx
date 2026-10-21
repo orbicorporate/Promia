@@ -4,6 +4,7 @@ import { EMBLEMAS } from "@/lib/emblemas/catalog";
 import { PLANEJADOS } from "@/lib/emblemas/planejados";
 import { THEMES } from "@/lib/encarte/themes";
 import { EmblemasGallery } from "./gallery";
+import { BibliotecaAbas } from "@/components/shell/biblioteca-abas";
 
 export const metadata = { title: "Emblemas" };
 
@@ -15,10 +16,11 @@ export default async function EmblemasPage({ params }: PageProps<"/[slug]/emblem
 
   return (
     <div className="space-y-6 pt-2">
+      <BibliotecaAbas slug={slug} ativa="emblemas" />
       <header>
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Emblemas</h1>
         <p className="mt-1 max-w-2xl text-[var(--ink-2)]">
-          Logos de campanha prontos para o topo do encarte. Filtre por tipo de oferta, tema, data ou feriado, e veja o que ainda falta criar.
+          Logos de campanha prontos para o topo do encarte. Filtre por tipo de oferta, tema, data ou feriado.
         </p>
       </header>
       <EmblemasGallery
