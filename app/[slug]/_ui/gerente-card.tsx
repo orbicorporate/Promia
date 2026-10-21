@@ -70,7 +70,8 @@ export function GerenteCard({
     }
   }
 
-  const dias = generatedAt ? Math.floor((Date.now() - new Date(generatedAt).getTime()) / 86400000) : 0;
+  const [agora] = useState(() => Date.now());
+  const dias = generatedAt ? Math.floor((agora - new Date(generatedAt).getTime()) / 86400000) : 0;
   const velha = dias >= 7;
   // análise antiga fala em "hoje" e dia da semana de quando foi feita: tira essas frases
   const limpa = (t: string) => (velha ? t.replace(/\s*Hoje é [^.]*\.\s*/gi, " ").trim() : t);
