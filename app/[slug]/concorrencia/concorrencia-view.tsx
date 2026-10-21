@@ -138,9 +138,9 @@ export function ConcorrenciaView({
       });
   }, [perto.dentro, placar]);
   const caixaMapa = coords && pins.length > 0 ? (
-    <div className={cn(mapaCheio ? "fixed inset-0 z-[60] flex flex-col gap-3 bg-[color-mix(in_srgb,var(--bg,#f4f1ec)_94%,transparent)] p-3 backdrop-blur-md sm:p-6" : "space-y-2")}>
-      <div className={cn("relative", mapaCheio && "min-h-0 flex-1")}>
-        <MapaConcorrentes altura={mapaCheio ? "h-full" : "h-[460px] sm:h-[560px] lg:h-[620px]"} origem={{ name: origem.name, latitude: coords.latitude, longitude: coords.longitude }} pins={pins} raioKm={radiusKm} ativo={ativo} onPick={setAtivo} />
+    <div className={cn(mapaCheio ? "fixed inset-0 z-[60] flex flex-col gap-3 bg-[color-mix(in_srgb,var(--bg,#f4f1ec)_94%,transparent)] p-3 backdrop-blur-md sm:p-6" : "flex h-full flex-col gap-2")}>
+      <div className={cn("relative", mapaCheio ? "min-h-0 flex-1" : "lg:min-h-[560px] lg:flex-1")}>
+        <MapaConcorrentes altura={mapaCheio ? "h-full" : "h-[460px] sm:h-[560px] lg:h-full"} origem={{ name: origem.name, latitude: coords.latitude, longitude: coords.longitude }} pins={pins} raioKm={radiusKm} ativo={ativo} onPick={setAtivo} />
         <button
           type="button"
           onClick={() => setMapaCheio((v) => !v)}
@@ -295,8 +295,8 @@ export function ConcorrenciaView({
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="ler">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+        <Glass as="section" className="space-y-4 p-5 sm:p-6 lg:col-start-1 lg:row-start-1" aria-labelledby="ler">
           <div>
             <h2 id="ler" className="flex items-center gap-2 text-lg font-bold">
               <Camera className="size-5 text-[var(--uva)]" /> Encarte do concorrente
@@ -351,7 +351,7 @@ export function ConcorrenciaView({
           )}
         </Glass>
 
-        <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="perto">
+        <Glass as="section" className="space-y-4 p-5 sm:p-6 lg:col-start-2 lg:row-span-2 lg:row-start-1" aria-labelledby="perto">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 id="perto" className="flex items-center gap-2 text-lg font-bold">
@@ -393,7 +393,6 @@ export function ConcorrenciaView({
               </div>
             </div>
           )}
-          {caixaMapa && (mapaCheio ? createPortal(caixaMapa, document.body) : caixaMapa)}
           {perto.dentro.length === 0 ? (
             <p className="text-sm text-[var(--ink-3)]">{competitors.length ? `Nenhum concorrente em até ${radiusKm} km. Aumente o raio.` : "Nenhum concorrente ainda."}</p>
           ) : (
@@ -425,6 +424,8 @@ export function ConcorrenciaView({
             </ul>
           )}
         </Glass>
+
+        {caixaMapa && <div className="lg:col-start-1 lg:row-start-2">{mapaCheio ? createPortal(caixaMapa, document.body) : caixaMapa}</div>}
       </div>
 
       {(placar.length > 0 || movimentos.length > 0) && (
