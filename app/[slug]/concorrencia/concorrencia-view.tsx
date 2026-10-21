@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket, MessageCircle } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Maximize2, Minimize2, MapPin, Star, Search, Camera, ArrowRight, ExternalLink, TrendingDown, TrendingUp, Check, Megaphone, AtSign, Swords, CalendarClock, ShoppingBasket, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { toJpeg } from "@/lib/client/image";
@@ -76,6 +77,17 @@ export function ConcorrenciaView({
   const fileRef = useRef<HTMLInputElement>(null);
   const [radiusKm, setRadiusKm] = useState(3);
   const [ativo, setAtivo] = useState<string | null>(null);
+  const [mapaCheio, setMapaCheio] = useState(false);
+  useEffect(() => {
+    if (!mapaCheio) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setMapaCheio(false);
+    window.addEventListener("keydown", esc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", esc);
+      document.body.style.overflow = "";
+    };
+  }, [mapaCheio]);
   const [coords, setCoords] = useState<Coords | null>(null);
   const radiusKey = `promia:raio:${marketId}`;
 
@@ -125,6 +137,28 @@ export function ConcorrenciaView({
         return { id: c.id, name: c.name, latitude: c.latitude!, longitude: c.longitude!, dist: c.dist, rating: c.rating, reviews: c.reviews, address: c.address, cor, nota };
       });
   }, [perto.dentro, placar]);
+  const caixaMapa = coords && pins.length > 0 ? (
+    <div className={cn(mapaCheio ? "fixed inset-0 z-[60] flex flex-col gap-3 bg-[color-mix(in_srgb,var(--bg,#f4f1ec)_94%,transparent)] p-3 backdrop-blur-md sm:p-6" : "space-y-2")}>
+      <div className={cn("relative", mapaCheio && "min-h-0 flex-1")}>
+        <MapaConcorrentes altura={mapaCheio ? "h-full" : "h-[460px] sm:h-[560px] lg:h-[620px]"} origem={{ name: origem.name, latitude: coords.latitude, longitude: coords.longitude }} pins={pins} raioKm={radiusKm} ativo={ativo} onPick={setAtivo} />
+        <button
+          type="button"
+          onClick={() => setMapaCheio((v) => !v)}
+          aria-label={mapaCheio ? "Fechar mapa grande" : "Ampliar mapa"}
+          className="absolute left-3 top-3 z-[5] inline-flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_20px_-8px_rgba(0,0,0,.4)] ring-1 ring-black/5 transition hover:-translate-y-px active:scale-[0.97]"
+        >
+          {mapaCheio ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          {mapaCheio ? "Fechar" : "Ampliar"}
+        </button>
+      </div>
+      <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--ink-2)]">
+        <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#d6213c]" /> mais barato que você</span>
+        <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#1f8a4c]" /> mais caro que você</span>
+        <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#f0a30a]" /> parecido</span>
+        <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#8a948f]" /> sem encarte lido</span>
+      </p>
+    </div>
+  ) : null;
   const responder = compare.rows.filter((r) => r.role === "atracao" && r.advice.kind === "baixar");
   const enderecoCompleto = [origem.address, origem.city].filter(Boolean).join(", ");
 
@@ -359,17 +393,7 @@ export function ConcorrenciaView({
               </div>
             </div>
           )}
-          {coords && pins.length > 0 && (
-            <div className="space-y-2">
-              <MapaConcorrentes origem={{ name: origem.name, latitude: coords.latitude, longitude: coords.longitude }} pins={pins} raioKm={radiusKm} ativo={ativo} onPick={setAtivo} />
-              <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--ink-2)]">
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#d6213c]" /> mais barato que você</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#1f8a4c]" /> mais caro que você</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#f0a30a]" /> parecido</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[#8a948f]" /> sem encarte lido</span>
-              </p>
-            </div>
-          )}
+          {caixaMapa && (mapaCheio ? createPortal(caixaMapa, document.body) : caixaMapa)}
           {perto.dentro.length === 0 ? (
             <p className="text-sm text-[var(--ink-3)]">{competitors.length ? `Nenhum concorrente em até ${radiusKm} km. Aumente o raio.` : "Nenhum concorrente ainda."}</p>
           ) : (
