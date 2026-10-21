@@ -50,9 +50,10 @@ export async function geocodeAddress(location: string): Promise<Origin | null> {
   }
 }
 
-export async function searchNearbyMarkets(location: string, opts: { origin?: Origin | null; radiusKm?: number } = {}): Promise<Place[] | null> {
-  const key = process.env.SERPER_API_KEY?.trim();
-  if (!key || !location.trim()) return null;
+type Bruto = { title?: string; address?: string; latitude?: number; longitude?: number; rating?: number; ratingCount?: number; phoneNumber?: string; website?: string; category?: string };
+const CATEGORIA_OK = /mercado|supermercado|atacad|hortifr|mercearia|açougue|acougue|minimercado|empório|emporio|sacolão|sacolao|varejão|varejao|armazém|armazem/i;
+
+async function buscaLugares(key: string, q: string, ll: string | null): Promise<Bruto[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
@@ -60,36 +61,69 @@ export async function searchNearbyMarkets(location: string, opts: { origin?: Ori
       method: "POST",
       signal: controller.signal,
       headers: { "X-API-KEY": key, "content-type": "application/json" },
-      body: JSON.stringify({
-        q: `supermercado perto de ${location}`,
-        gl: "br",
-        hl: "pt-br",
-        ...(opts.origin ? { ll: `@${opts.origin.latitude},${opts.origin.longitude},${ZOOM_DO_RAIO[opts.radiusKm ?? 3] ?? 14}z` } : {}),
-      }),
+      body: JSON.stringify({ q, gl: "br", hl: "pt-br", ...(ll ? { ll } : {}) }),
     });
     if (!res.ok) {
       console.error("[serper places]", res.status);
-      return null;
+      return [];
     }
-    const json = (await res.json()) as { places?: { title?: string; address?: string; latitude?: number; longitude?: number; rating?: number; ratingCount?: number; phoneNumber?: string; website?: string; category?: string }[] };
-    return (json.places ?? [])
-      .filter((p) => p.title)
-      .filter((p) => !p.category || /mercado|supermercado|atacad|hortifr|mercearia|açougue|acougue|minimercado|empório|emporio/i.test(p.category))
-      .map((p) => ({
-        name: p.title!.slice(0, 120),
-        address: p.address?.slice(0, 200) ?? null,
-        latitude: p.latitude ?? null,
-        longitude: p.longitude ?? null,
-        rating: p.rating ?? null,
-        reviews: p.ratingCount ?? null,
-        phone: p.phoneNumber ?? null,
-        website: p.website ?? null,
-        category: p.category ?? null,
-      }));
+    return ((await res.json()) as { places?: Bruto[] }).places ?? [];
   } catch (err) {
     console.error("[serper places] falhou", err);
-    return null;
+    return [];
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Pontos ao redor do endereço (norte, sul, leste, oeste) para a busca enxergar mais que o centro.
+function pontosAoRedor(o: Origin, km: number): Origin[] {
+  const dLat = km / 111;
+  const dLng = km / (111 * Math.cos((o.latitude * Math.PI) / 180));
+  return [
+    { latitude: o.latitude + dLat, longitude: o.longitude },
+    { latitude: o.latitude - dLat, longitude: o.longitude },
+    { latitude: o.latitude, longitude: o.longitude + dLng },
+    { latitude: o.latitude, longitude: o.longitude - dLng },
+  ];
+}
+
+// Várias consultas (tipos de comércio e pontos ao redor) juntadas sem repetir. Cada
+// consulta gasta um crédito do Serper, por isso o total é limitado.
+export async function searchNearbyMarkets(location: string, opts: { origin?: Origin | null; radiusKm?: number } = {}): Promise<Place[] | null> {
+  const key = process.env.SERPER_API_KEY?.trim();
+  if (!key || !location.trim()) return null;
+  const raio = opts.radiusKm ?? 3;
+  const zoom = ZOOM_DO_RAIO[raio] ?? 14;
+  const ll = (o: Origin, z = zoom) => `@${o.latitude},${o.longitude},${z}z`;
+  const jobs: Promise<Bruto[]>[] = [];
+  const tipos = ["supermercado", "mercado", "atacadista atacarejo", "hortifruti sacolão", "mercearia minimercado", "açougue"];
+  for (const t of tipos) jobs.push(buscaLugares(key, `${t} perto de ${location}`, opts.origin ? ll(opts.origin) : null));
+  if (opts.origin && raio >= 2) {
+    const zl = Math.min(zoom + 1, 15);
+    for (const pt of pontosAoRedor(opts.origin, raio * 0.6)) jobs.push(buscaLugares(key, "supermercado", ll(pt, zl)));
+  }
+  const todos = (await Promise.all(jobs)).flat();
+  if (todos.length === 0) return null;
+  const vistos = new Set<string>();
+  const out: Place[] = [];
+  for (const p of todos) {
+    if (!p.title) continue;
+    if (p.category && !CATEGORIA_OK.test(p.category)) continue;
+    const id = `${p.title.toLowerCase().trim()}|${(p.address ?? "").toLowerCase().slice(0, 30)}`;
+    if (vistos.has(id)) continue;
+    vistos.add(id);
+    out.push({
+      name: p.title.slice(0, 120),
+      address: p.address?.slice(0, 200) ?? null,
+      latitude: p.latitude ?? null,
+      longitude: p.longitude ?? null,
+      rating: p.rating ?? null,
+      reviews: p.ratingCount ?? null,
+      phone: p.phoneNumber ?? null,
+      website: p.website ?? null,
+      category: p.category ?? null,
+    });
+  }
+  return out;
 }

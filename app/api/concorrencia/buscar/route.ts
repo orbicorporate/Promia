@@ -26,7 +26,8 @@ export async function POST(req: Request) {
   const others = places
     .filter((p) => similarity(p.name, market?.name ?? "") < 0.8)
     .filter((p) => !origin || p.latitude == null || p.longitude == null || distanceKm(origin, { latitude: p.latitude, longitude: p.longitude }) <= radiusKm)
-    .slice(0, 15);
+    .sort((a, b) => (origin && a.latitude != null && a.longitude != null ? distanceKm(origin, { latitude: a.latitude, longitude: a.longitude }) : 99) - (origin && b.latitude != null && b.longitude != null ? distanceKm(origin, { latitude: b.latitude, longitude: b.longitude }) : 99))
+    .slice(0, 40);
   if (others.length === 0) return NextResponse.json({ found: 0, origin, radiusKm });
   const { error } = await admin
     .from("competitors")
