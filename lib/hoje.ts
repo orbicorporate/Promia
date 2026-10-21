@@ -78,7 +78,7 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
       icon: o.kind === "semana" ? "fixa" : "calendario",
       title: `${o.title} ${quando}: monte o encarte`,
       detail: o.kind === "semana" ? "Promoção fixa da semana. O tema já vem escolhido." : "Data do varejo com tema pronto. Comece com uns dias de antecedência.",
-      cta: "Montar encarte",
+      cta: `Montar ${o.title}`,
       href: `/${i.slug}/encartes/novo?tema=${o.themeKey}&titulo=${encodeURIComponent(o.headline)}&de=${de}&ate=${o.date}`,
     });
     if (out.length >= 6) break;
@@ -91,9 +91,7 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
     out.push({ id: `campanha-${e.id}`, tone: "oportunidade", icon: "campanha", title: `Crie a campanha de ${e.name}`, detail: "Posts, WhatsApp, vídeo, carro de som e cartazes em um clique.", cta: "Criar campanha", href: `/${i.slug}/encartes/${e.id}#campanha` });
   }
 
-  if (i.topRec && i.topRec.productIds.length) {
-    out.push({ id: "gerente", tone: "oportunidade", icon: "gerente", title: `Vale promover ${i.topRec.target}`, detail: i.topRec.reason, cta: "Montar encarte", href: `/${i.slug}/encartes/novo?produtos=${i.topRec.productIds.join(",")}` });
-  }
+  // a recomendação do gerente (topRec) aparece só no card do Gerente, para não repetir aqui
 
   // concorrência: mais caro em produto que o cliente compara
   if (i.pricier && i.pricier.length > 0) {
@@ -133,7 +131,7 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
         icon: "alta",
         title: `${joinNames(up.map((t) => t.name))} ${up.length === 1 ? "está vendendo" : "estão vendendo"} mais`,
         detail: `${up.map((t) => `+${pctAbs(t.change)}`).join(", ")} no último relatório. Garanta estoque e destaque no próximo encarte.`,
-        cta: "Montar encarte",
+        cta: "Destacar no encarte",
         href: `/${i.slug}/encartes/novo?produtos=${up.map((t) => t.productId).join(",")}&titulo=${encodeURIComponent("Os mais pedidos")}`,
       });
     }
@@ -141,7 +139,7 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
     if (down) {
       out.push({
         id: "queda",
-        tone: "oportunidade",
+        tone: "urgente",
         icon: "queda",
         title: `${down.name} caiu ${pctAbs(down.change)} nas vendas`,
         detail: "Confira preço, exposição e se algum concorrente baixou o preço.",

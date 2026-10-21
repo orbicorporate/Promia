@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { CalendarHeart, Sparkles, Send, Camera, Tag, BrainCircuit, Repeat, FileSpreadsheet, ArrowRight, TrendingUp, TrendingDown, Scale, PackageX, BarChart3, ListChecks } from "lucide-react";
 import { Glass, SecaoTitulo, cn } from "@/components/ui";
@@ -21,12 +24,15 @@ const ICONS = {
 
 const TONE = {
   urgente: "bg-[var(--tomate)] text-white",
-  oportunidade: "bg-[color-mix(in_srgb,var(--uva)_14%,transparent)] text-[var(--uva)]",
+  oportunidade: "bg-[var(--folha-soft)] text-[var(--folha)]",
   rotina: "bg-[var(--line)] text-[var(--ink-2)]",
 } as const;
 
 // Lista de ações do dia: cada linha é um atalho para resolver a coisa.
 export function HojeList({ actions }: { actions: HojeAction[] }) {
+  const [tudo, setTudo] = useState(false);
+  const visiveis = tudo ? actions : actions.slice(0, 3);
+  const resto = actions.length - 3;
   if (actions.length === 0) {
     return (
       <Glass className="flex items-center gap-4 p-5">
@@ -43,7 +49,7 @@ export function HojeList({ actions }: { actions: HojeAction[] }) {
         <SecaoTitulo id="hoje" Icone={ListChecks} cor="azul">Para fazer hoje</SecaoTitulo>
       </div>
       <ul className="mt-2 divide-y divide-[var(--line)]">
-        {actions.map((a) => {
+        {visiveis.map((a) => {
           const Icon = ICONS[a.icon];
           return (
             <li key={a.id}>
@@ -64,6 +70,11 @@ export function HojeList({ actions }: { actions: HojeAction[] }) {
           );
         })}
       </ul>
+      {resto > 0 && (
+        <button type="button" onClick={() => setTudo((v) => !v)} className="flex h-12 w-full items-center justify-center border-t border-[var(--line)] text-sm font-medium text-[var(--ink-2)] transition hover:bg-[var(--glass-strong)] hover:text-[var(--ink)]">
+          {tudo ? "Mostrar menos" : `Ver mais ${resto}`}
+        </button>
+      )}
     </Glass>
   );
 }
