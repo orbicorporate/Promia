@@ -6,3 +6,4 @@ export { PriceTag } from "./price-tag";
 export { Skeleton, Badge, EmptyState, SectionTitle } from "./misc";
 export { Sheet } from "./sheet";
 export { Segmented } from "./segmented";
+export { SecaoTitulo, Bola, BOLA, type CorBola } from "./secao-titulo";

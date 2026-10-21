@@ -17,7 +17,7 @@ export default async function VendasPage({ params }: PageProps<"/[slug]/vendas">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Vendas</h1>
-          <p className="mt-1 max-w-2xl text-[var(--ink-2)]">O que mais vende, o que está subindo ou caindo, o que está parado e quanto cada encarte fez vender.</p>
+          <p className="mt-1 max-w-2xl text-[var(--ink-2)]">O que mais vende, o que está subindo, caindo ou parado, e como cada encarte mexeu nas vendas dos produtos dele.</p>
         </div>
         {analysis && <VendasImport marketId={market.id} today={todayInSaoPaulo()} compact />}
       </header>

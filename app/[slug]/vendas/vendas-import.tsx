@@ -163,7 +163,7 @@ export function VendasImport({ marketId, today, compact }: { marketId: string; t
     return (
       <Glass className="p-5 sm:p-8">
         <h2 className="text-xl font-bold">Envie o primeiro relatório de vendas</h2>
-        <p className="mt-1 max-w-2xl text-[var(--ink-2)]">Toda semana, exporte as vendas por produto do seu sistema de caixa e envie aqui. Com duas semanas o Promia já mostra o que está subindo e caindo, e quanto cada encarte vendeu a mais.</p>
+        <p className="mt-1 max-w-2xl text-[var(--ink-2)]">Toda semana, exporte as vendas por produto do seu sistema de caixa e envie aqui. Com duas semanas o Promia já mostra o que está subindo e caindo, e como cada encarte mexeu nas vendas.</p>
         <div className="mt-6">
           <ImportForm marketId={marketId} today={today} onDone={() => {}} />
         </div>

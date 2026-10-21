@@ -165,7 +165,7 @@ export function buildHojeActions(i: HojeInput): HojeAction[] {
       out.push({ id: "vendas", tone: "rotina", icon: "vendas", title: "Envie o relatório de vendas da semana", detail: `O último vai até ${i.sales.periodEnd.slice(8, 10)}/${i.sales.periodEnd.slice(5, 7)}. Com ele em dia, o Promia mostra o que sobe e o que cai.`, cta: "Enviar relatório", href: `/${i.slug}/vendas` });
     }
   } else if (i.sales === null) {
-    out.push({ id: "vendas", tone: "rotina", icon: "vendas", title: "Envie o relatório de vendas do caixa", detail: "Com ele o Promia mostra o que mais vende, o que está caindo e quanto cada encarte vendeu a mais.", cta: "Enviar relatório", href: `/${i.slug}/vendas` });
+    out.push({ id: "vendas", tone: "rotina", icon: "vendas", title: "Envie o relatório de vendas do caixa", detail: "Com ele o Promia mostra o que mais vende, o que está caindo e como cada encarte mexeu nas vendas.", cta: "Enviar relatório", href: `/${i.slug}/vendas` });
   }
 
   if (i.photosToReview > 0) {
