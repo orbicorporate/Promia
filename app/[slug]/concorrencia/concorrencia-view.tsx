@@ -12,7 +12,7 @@ import { toJpeg } from "@/lib/client/image";
 import { Button, Field, Glass, Input, Segmented, SecaoTitulo, Select, cn } from "@/components/ui";
 import type { CompareRow } from "@/lib/competition/compare";
 import { plural } from "@/lib/plural";
-import { distanceKm } from "@/lib/competition/places";
+import { distanceKm, localDoMercado } from "@/lib/competition/places";
 import type { Cadencia, Movimento, Placar } from "@/lib/competition/insights";
 import type { PinConcorrente } from "./mapa";
 
@@ -160,7 +160,7 @@ export function ConcorrenciaView({
     </div>
   ) : null;
   const responder = compare.rows.filter((r) => r.role === "atracao" && r.advice.kind === "baixar");
-  const enderecoCompleto = [origem.address, origem.city].filter(Boolean).join(", ");
+  const enderecoCompleto = localDoMercado(origem.address, origem.city);
 
   async function findCompetitors() {
     setSearching(true);

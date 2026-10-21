@@ -14,6 +14,15 @@ export function distanceKm(a: Origin, b: Origin): number {
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
+// Endereço do mercado para as buscas: sempre termina em "Brasil", senão o
+// Google pode achar uma cidade ou rua homônima no exterior (Nápoles, Itália).
+export function localDoMercado(address: string | null | undefined, city: string | null | undefined): string {
+  const partes = [address, city].map((x) => (x ?? "").trim()).filter(Boolean);
+  if (partes.length === 0) return "";
+  const texto = partes.join(", ");
+  return /\bbrasil\b|\bbrazil\b/i.test(texto) ? texto : `${texto}, Brasil`;
+}
+
 // zoom do mapa que cobre o raio pedido (viés da busca de lugares)
 export const RAIOS_KM = [1, 2, 3, 5, 10] as const;
 const ZOOM_DO_RAIO: Record<number, number> = { 1: 15, 2: 14, 3: 14, 5: 13, 10: 12 };

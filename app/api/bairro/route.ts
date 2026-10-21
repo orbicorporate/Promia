@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readJson, requireMarketAccess } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { localDoMercado } from "@/lib/competition/places";
 import { scanSurroundings } from "@/lib/competition/surroundings";
 import { generateBairro } from "@/lib/ai/bairro";
 import { loadSalesAnalysis } from "@/lib/sales/load";
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   }
   const admin = createAdminClient();
   const { data: market } = await admin.from("markets").select("name, address, city, niche").eq("id", marketId).single();
-  const location = [market?.address, market?.city].filter(Boolean).join(", ");
+  const location = localDoMercado(market?.address, market?.city);
   if (!market || !location) return NextResponse.json({ error: "Coloque o endereço e a cidade do mercado em Mercado para analisar o bairro." }, { status: 400 });
 
   const [entorno, sales, { data: competitors }, { data: cats }] = await Promise.all([
