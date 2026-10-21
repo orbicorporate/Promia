@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Globe, Search, ExternalLink, AtSign, ShoppingCart, Info } from "lucide-react";
 import { toast } from "sonner";
-import { Button, Field, Glass, Input, Select, cn } from "@/components/ui";
+import { Button, Field, Glass, Input, SecaoTitulo, Select, cn } from "@/components/ui";
 import { UFS, nomeUf } from "@/lib/competition/pesquisa-online";
 
 export type Achado = { id: string; term: string; product_name: string; price: number; own_price: number | null; source_kind: string; source_name: string; source_url: string | null; scope: string; region: string | null; snippet: string | null; observed_on: string };
@@ -48,14 +48,7 @@ export function PesquisaOnline({ marketId, cidade, ufInicial, achados }: { marke
 
   return (
     <Glass as="section" className="space-y-4 p-5 sm:p-6" aria-labelledby="pesquisa">
-      <div>
-        <h2 id="pesquisa" className="flex items-center gap-2 text-lg font-bold">
-          <Globe className="size-5 text-[var(--uva)]" /> Pesquisa de preços na internet
-        </h2>
-        <p className="mt-1 max-w-3xl text-sm text-[var(--ink-2)]">
-          Você escolhe o produto e o alcance, e o Promia procura preços em sites, redes sociais e lojas online. É uma pesquisa de campo para você se basear, não substitui o preço de gôndola de ninguém.
-        </p>
-      </div>
+      <SecaoTitulo id="pesquisa" Icone={Globe} cor="uva" sub="Você escolhe o produto e o alcance, e o Promia procura preços em sites, redes sociais e lojas online. É uma pesquisa de campo para você se basear, não substitui o preço de gôndola de ninguém.">Pesquisa de preços na internet</SecaoTitulo>
 
       <div className="flex gap-2.5 rounded-2xl bg-[var(--line)]/50 p-3.5 text-sm text-[var(--ink-2)]">
         <Info className="mt-0.5 size-4 shrink-0" />
