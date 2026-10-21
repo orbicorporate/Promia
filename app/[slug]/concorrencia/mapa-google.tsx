@@ -25,7 +25,7 @@ function carregarGoogle(chave: string): Promise<void> {
 }
 
 // Mesmo mapa da Concorrência, desenhado com o Google Maps.
-export function MapaGoogle({ chave, origem, pins, raioKm, ativo, onPick, onFalha }: { chave: string; origem: { name: string; latitude: number; longitude: number }; pins: PinConcorrente[]; raioKm: number; ativo: string | null; onPick: (id: string) => void; onFalha: () => void }) {
+export function MapaGoogle({ chave, origem, pins, raioKm, ativo, onPick, onFalha, altura }: { altura: string; chave: string; origem: { name: string; latitude: number; longitude: number }; pins: PinConcorrente[]; raioKm: number; ativo: string | null; onPick: (id: string) => void; onFalha: () => void }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const info = useRef<google.maps.InfoWindow | null>(null);
@@ -117,5 +117,5 @@ export function MapaGoogle({ chave, origem, pins, raioKm, ativo, onPick, onFalha
     abrirRef.current?.(p);
   }, [ativo, pronto, pins]);
 
-  return <div ref={el} className="h-[360px] w-full overflow-hidden rounded-[20px] ring-1 ring-[var(--line)] sm:h-[420px]" role="region" aria-label="Mapa dos concorrentes" />;
+  return <div ref={el} className={`w-full overflow-hidden rounded-[20px] ring-1 ring-[var(--line)] ${altura}`} role="region" aria-label="Mapa dos concorrentes" />;
 }
