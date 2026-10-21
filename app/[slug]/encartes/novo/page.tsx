@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isUuid } from "@/lib/auth";
 import { isISODate, addDaysISO } from "@/lib/dates";
 import { isThemeKey, getTheme } from "@/lib/encarte/themes";
+import { prontoDaOcasiao } from "@/lib/encarte/prontos";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } from "@/lib/encarte/types";
 import { EncarteBuilder, type BuilderInitial, type BuilderItem } from "../_ui/builder";
 import { loadBuilderData } from "../_ui/builder-data";
@@ -29,7 +30,9 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
   const ate = one(sp.ate);
   const copiar = one(sp.copiar);
   const produtos = (one(sp.produtos) ?? "").split(",").filter(isUuid).slice(0, 200);
-  const themeKey = isThemeKey(tema) ? tema : isThemeKey("ofertas") ? "ofertas" : data.suggested[0];
+  // chegou por uma data (Halloween, Dia das Mães...): abre com o logo, o fundo e as caixas dela
+  const pronto = prontoDaOcasiao(one(sp.ocasiao)?.slice(0, 80));
+  const themeKey = pronto && isThemeKey(pronto.themeKey) ? pronto.themeKey : isThemeKey(tema) ? tema : isThemeKey("ofertas") ? "ofertas" : data.suggested[0];
   const validFrom = isISODate(de) ? de : data.today;
   const validUntil = isISODate(ate) && ate >= validFrom ? ate : addDaysISO(validFrom, 6);
 
@@ -39,11 +42,12 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     subheadline: "",
     format: "feed",
     layout: "grade",
-    modelo: "cx01",
-    emblema: "ofertas-da-semana",
+    modelo: pronto ? pronto.modelo : "cx01",
+    emblema: pronto ? pronto.emblema : "ofertas-da-semana",
     emblemaEscala: 1,
     rodape: rodapePadrao ?? undefined,
-    fundo: null,
+    fundo: pronto ? pronto.fundo : null,
+    temaPronto: pronto?.tema,
     themeKey,
     validFrom,
     validUntil,

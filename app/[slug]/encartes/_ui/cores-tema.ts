@@ -18,6 +18,8 @@ const POR_TEMA: Record<string, string> = {
   maes: "#db2777",
   "pais-criancas": "#2563eb",
   junina: "#d97706",
+  halloween: "#ea580c",
+  carnaval: "#c026d3",
   aniversario: "#e11d74",
 };
 const RESERVA = ["#0f766e", "#9333ea", "#be123c", "#1d4ed8", "#a16207", "#047857"];

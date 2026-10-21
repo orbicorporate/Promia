@@ -96,6 +96,7 @@ export type BuilderInitial = {
   validade?: Partial<ValidadeOpcoes>;
   rodape?: Partial<RodapeOpcoes>;
   fundo: EncarteFundo | null;
+  temaPronto?: string; // grupo de combinações que abre filtrado (vindo de uma data)
   themeKey: string;
   validFrom: string;
   validUntil: string;
@@ -169,13 +170,13 @@ export function EncarteBuilder({
   const [grupoEmblema, setGrupoEmblema] = useState("Para agora");
   const [filtroFundo, setFiltroFundo] = useState("Todos");
   const [buscaFundo, setBuscaFundo] = useState("");
-  const [temaPronto, setTemaPronto] = useState<string | null>(null);
+  const [temaPronto, setTemaPronto] = useState<string | null>(initial.temaPronto ?? null);
   const [avisoPronto, setAvisoPronto] = useState<string | null>(null); // nome da combinação recém-escolhida
   const [destacarLogo, setDestacarLogo] = useState(false);
   const secaoLogoRef = useRef<HTMLDivElement | null>(null);
   const [buscaPronto, setBuscaPronto] = useState("");
   const [limitePronto, setLimitePronto] = useState(6);
-  const [verTodosTemas, setVerTodosTemas] = useState(false);
+  const [verTodosTemas, setVerTodosTemas] = useState(() => !!initial.temaPronto && TEMAS_PRONTOS.findIndex((x) => x.id === initial.temaPronto) >= 8);
   const [name, setName] = useState(initial.name);
   const [headline, setHeadline] = useState(initial.headline);
   const [subheadline, setSubheadline] = useState(initial.subheadline);
@@ -700,6 +701,7 @@ export function EncarteBuilder({
                       className={cn("grid size-11 place-items-center rounded-xl transition", it.highlight ? "text-[#e0a500]" : "text-[var(--ink-3)] hover:bg-[var(--line)]")}
                       aria-pressed={it.highlight}
                       aria-label={it.highlight ? "Tirar destaque" : "Destacar"}
+                      title={it.highlight ? "Tirar o contorno de destaque" : "Destacar: põe um contorno no produto no encarte"}
                     >
                       <Star className="size-5" fill={it.highlight ? "currentColor" : "none"} />
                     </button>

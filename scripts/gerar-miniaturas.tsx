@@ -83,10 +83,12 @@ async function pagina(d: EncarteData, fonts: Fonts) {
 
 (async () => {
   // "prontos" gera só as combinações prontas e deixa o resto como está
-  const soProntos = process.argv.includes("prontos");
+  // "temas=halloween,carnaval" gera só as combinações desses temas e não apaga as outras
+  const temasArg = process.argv.find((a) => a.startsWith("temas="))?.slice(6).split(",").filter(Boolean) ?? [];
+  const soProntos = process.argv.includes("prontos") || temasArg.length > 0;
   if (soProntos) {
     mkdirSync(OUT, { recursive: true });
-    for (const f of readdirSync(OUT)) if (f.startsWith("pronto-")) rmSync(path.join(OUT, f));
+    for (const f of readdirSync(OUT)) if (f.startsWith("pronto-") && (temasArg.length === 0 || temasArg.some((t) => f.startsWith(`pronto-${t}-`)))) rmSync(path.join(OUT, f));
   } else {
     rmSync(OUT, { recursive: true, force: true });
     mkdirSync(OUT, { recursive: true });
@@ -133,14 +135,14 @@ async function pagina(d: EncarteData, fonts: Fonts) {
   }
 
   // fundos de arte: o cabeçalho sobre a cor do corpo
-  for (const a of FUNDOS_ARTE) {
+  for (const a of temasArg.length ? [] : FUNDOS_ARTE) {
     const topo = await sharp(path.join(process.cwd(), "public", "fundos", "arte", `${a.slug}-topo.webp`)).resize({ width: 440 }).png().toBuffer();
     const img = await sharp({ create: { width: 440, height: 330, channels: 3, background: a.meio } }).composite([{ input: topo, top: 0, left: 0 }]).webp({ quality: 82 }).toBuffer();
     writeFileSync(path.join(OUT, `fundo-${a.id}.webp`), img);
   }
 
   // visuais prontos: a arte completa
-  for (const v of VISUAIS_PRONTOS) {
+  for (const v of VISUAIS_PRONTOS.filter((x) => temasArg.length === 0 || temasArg.includes(x.tema))) {
     await salvar(`pronto-${v.slug}.webp`, await pagina(await dados(v.modelo, v.fundo, v.emblema, v.themeKey, "feed", 12), fonts), 480);
   }
 })().catch((e) => {
