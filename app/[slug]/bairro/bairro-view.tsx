@@ -91,8 +91,8 @@ export function BairroView({
 function Titulo({ id, Icone, cor, children, extra }: { id: string; Icone: LucideIcon; cor: number; children: React.ReactNode; extra?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h2 id={id} className="flex items-center gap-3.5 font-display text-2xl font-extrabold sm:text-[1.7rem]">
-        <span className={cn("grid size-12 shrink-0 place-items-center rounded-full", tom(cor).bola)}><Icone className="size-6" /></span>
+      <h2 id={id} className="flex items-center gap-3 font-display text-2xl font-extrabold sm:text-[1.7rem]">
+        <span className={cn("grid size-10 shrink-0 place-items-center rounded-full", tom(cor).bola)}><Icone className="size-5" /></span>
         {children}
       </h2>
       {extra}
@@ -129,7 +129,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
               const Icone = ICONE_ENTORNO[e.key] ?? Building;
               return (
                 <li key={e.key} title={e.examples.join(", ")} className="flex items-center gap-3.5 rounded-3xl bg-[var(--glass-strong)] p-3.5 ring-1 ring-[var(--line)]">
-                  <span className={cn("grid size-12 shrink-0 place-items-center rounded-full", tom(i).bola)}><Icone className="size-6" /></span>
+                  <span className={cn("grid size-10 shrink-0 place-items-center rounded-full", tom(i).bola)}><Icone className="size-5" /></span>
                   <span className="min-w-0">
                     <span className="tabular block text-3xl font-extrabold leading-none">{e.count >= 10 ? "10+" : e.count}</span>
                     <span className="mt-1 block truncate text-base font-semibold text-[var(--ink-2)]">{e.label}</span>
@@ -149,7 +149,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
             return (
               <Glass as="article" key={p.nome} className="flex flex-col gap-4 p-6">
                 <div className="flex items-center gap-3.5">
-                  <span className={cn("grid size-14 shrink-0 place-items-center rounded-full", tom(i).bola)}><Users className="size-7" /></span>
+                  <span className={cn("grid size-11 shrink-0 place-items-center rounded-full", tom(i).bola)}><Users className="size-5" /></span>
                   <h3 className="font-display text-2xl font-extrabold leading-tight">{p.nome}</h3>
                 </div>
                 <p className="line-clamp-3 text-lg leading-snug text-[var(--ink-2)]">{p.quem}</p>
@@ -173,7 +173,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
                   <dl className="space-y-3.5 text-lg">
                     {([[CalendarClock, "Quando", p.quando, 0], [Megaphone, "Canal", p.canal, 1], [MessageSquareQuote, "Mensagem", p.mensagem, 2]] as const).map(([Icone, rotulo, texto, t]) => (
                       <div key={rotulo} className="flex gap-3">
-                        <span className={cn("grid size-9 shrink-0 place-items-center rounded-full", tom(t).suave)}><Icone className="size-5" /></span>
+                        <span className={cn("grid size-8 shrink-0 place-items-center rounded-full", tom(t).suave)}><Icone className="size-5" /></span>
                         <div><dt className="text-base font-bold text-[var(--ink-3)]">{rotulo}</dt><dd className="leading-snug">{texto}</dd></div>
                       </div>
                     ))}
@@ -193,7 +193,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
               const pr = PRIO[s.prioridade];
               return (
                 <li key={s.nome} className="flex gap-4 rounded-3xl p-3 transition hover:bg-[var(--glass-strong)]">
-                  <span className={cn("mt-0.5 grid size-12 shrink-0 place-items-center rounded-full", pr.bola)}><pr.Icone className="size-6" /></span>
+                  <span className={cn("mt-0.5 grid size-10 shrink-0 place-items-center rounded-full", pr.bola)}><pr.Icone className="size-5" /></span>
                   <div className="min-w-0">
                     <p className="text-xl font-extrabold leading-snug">{s.nome}</p>
                     <span className={cn("mt-1 inline-block rounded-full px-2.5 py-0.5 text-sm font-bold", pr.etiqueta)}>{pr.texto}</span>
@@ -209,7 +209,7 @@ function Resultado({ insight, running, run }: { insight: BairroInsight; running:
           <ul className="space-y-1">
             {insight.gondolas.map((g, i) => (
               <li key={g.onde + g.oque} className="flex gap-4 rounded-3xl p-3 transition hover:bg-[var(--glass-strong)]">
-                <span className={cn("mt-0.5 grid size-12 shrink-0 place-items-center rounded-full", tom(i + 1).suave)}><MapPin className="size-6" /></span>
+                <span className={cn("mt-0.5 grid size-10 shrink-0 place-items-center rounded-full", tom(i + 1).suave)}><MapPin className="size-5" /></span>
                 <div className="min-w-0">
                   <p className="text-xl font-extrabold leading-snug">{g.onde}</p>
                   <p className="mt-1 flex gap-2 text-lg leading-snug"><span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#138a4c] text-white"><Check className="size-3.5" strokeWidth={3} /></span> {g.oque}</p>
