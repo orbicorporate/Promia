@@ -1,7 +1,8 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { MapaGoogle } from "./mapa-google";
 import type * as Leaflet from "leaflet";
 
 export type PinConcorrente = { id: string; name: string; latitude: number; longitude: number; dist: number | null; rating: number | null; reviews: number | null; address: string | null; cor: string; nota: string };
@@ -10,7 +11,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 
 // Mapa com o mercado analisado, o raio escolhido e cada concorrente como um pino
 // colorido pelo preço (vermelho: mais barato que você, verde: mais caro, cinza: sem dado).
-export function MapaConcorrentes({ origem, pins, raioKm, ativo, onPick }: { origem: { name: string; latitude: number; longitude: number }; pins: PinConcorrente[]; raioKm: number; ativo: string | null; onPick: (id: string) => void }) {
+function MapaLeaflet({ origem, pins, raioKm, ativo, onPick }: { origem: { name: string; latitude: number; longitude: number }; pins: PinConcorrente[]; raioKm: number; ativo: string | null; onPick: (id: string) => void }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const camada = useRef<Leaflet.LayerGroup | null>(null);
@@ -103,4 +104,13 @@ export function MapaConcorrentes({ origem, pins, raioKm, ativo, onPick }: { orig
   }, [ativo]);
 
   return <div ref={el} className="h-[360px] w-full overflow-hidden rounded-[20px] ring-1 ring-[var(--line)] sm:h-[420px]" role="region" aria-label="Mapa dos concorrentes" />;
+}
+
+// Usa o Google Maps quando NEXT_PUBLIC_GOOGLE_MAPS_KEY existe; se a chave falhar
+// (inválida, API desativada ou bloqueio de domínio) volta sozinho para o OpenStreetMap.
+export function MapaConcorrentes(props: { origem: { name: string; latitude: number; longitude: number }; pins: PinConcorrente[]; raioKm: number; ativo: string | null; onPick: (id: string) => void }) {
+  const chave = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
+  const [falhou, setFalhou] = useState(false);
+  if (chave && !falhou) return <MapaGoogle chave={chave} {...props} onFalha={() => setFalhou(true)} />;
+  return <MapaLeaflet {...props} />;
 }
