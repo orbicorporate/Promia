@@ -42,7 +42,7 @@ import { ValidadePicker } from "./validade-picker";
 import { RodapePicker, type MercadoRodapeInfo } from "./rodape-picker";
 import { resolverRodape, type RodapeOpcoes } from "@/lib/encarte/rodape";
 import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
-import { normalizarBusca, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
+import { normalizarBusca, prontoDaOcasiao, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
 import { FUNDOS_ARTE, GRUPOS_FUNDO_ARTE } from "@/lib/encarte/modelos/fundos-arte";
@@ -98,6 +98,8 @@ export type BuilderInitial = {
   rodape?: Partial<RodapeOpcoes>;
   fundo: EncarteFundo | null;
   temaPronto?: string; // grupo de combinações que abre filtrado (vindo de uma data)
+  autoProdutos?: string[]; // produtos sugeridos (mais vendidos) para a prévia e o "Montar automático"
+  ocasiaoTitulo?: string; // próxima data do calendário, para as combinações sugeridas
   themeKey: string;
   validFrom: string;
   validUntil: string;
@@ -105,18 +107,16 @@ export type BuilderInitial = {
 };
 
 const PASSOS = [
-  { key: "objetivo", nome: "Objetivo", curto: "Objetivo", pergunta: "Escolha o ponto de partida", agora: "Escolha uma combinação pronta ou só o logo da campanha, e diga onde vai usar. Tudo pode ser trocado depois." },
-  { key: "fundo", nome: "Fundo", curto: "Fundo", pergunta: "Escolha o fundo", agora: "Toque no fundo que combina com a campanha. A prévia muda na hora." },
-  { key: "caixas", nome: "Caixas", curto: "Caixas", pergunta: "Escolha as caixas dos produtos", agora: "Escolha o desenho das caixas onde cada produto vai aparecer. Cada página leva 12." },
-  { key: "produtos", nome: "Produtos", curto: "Produtos", pergunta: "Escolha os produtos", agora: "Adicione os produtos da oferta e confira os preços. Precisa de pelo menos 1 para continuar." },
+  { key: "objetivo", nome: "Objetivo", curto: "Objetivo", pergunta: "Escolha o ponto de partida", agora: "Uma combinação pronta ou só o logo da campanha. Tudo pode ser trocado depois." },
+  { key: "visual", nome: "Visual", curto: "Visual", pergunta: "Escolha o visual", agora: "O fundo e as caixas onde os produtos vão aparecer. A prévia muda na hora." },
+  { key: "produtos", nome: "Produtos", curto: "Produtos", pergunta: "Escolha os produtos", agora: "Adicione os produtos da oferta e confira os preços. Precisa de pelo menos 1." },
   { key: "textos", nome: "Título e datas", curto: "Textos", pergunta: "Título e validade", agora: "Escreva o título (se quiser, o logo já serve) e a validade da oferta." },
   { key: "revisar", nome: "Revisar", curto: "Revisar", pergunta: "Confira e salve", agora: "Veja a arte final. Se estiver certa, salve: depois você baixa em PNG ou PDF." },
 ] as const;
 // uma cor para cada passo (esfera da trilha)
 const PASSO_CORES: [string, string][] = [
   ["#8b5cf6", "#4f46e5"], // objetivo
-  ["#38bdf8", "#2563eb"], // fundo
-  ["#2dd4bf", "#0d9488"], // caixas
+  ["#38bdf8", "#2563eb"], // visual (fundo e caixas)
   ["#fbbf24", "#f97316"], // produtos
   ["#f472b6", "#db2777"], // textos
   ["#fb7185", "#be123c"], // revisar
@@ -124,8 +124,8 @@ const PASSO_CORES: [string, string][] = [
 // Todas as datas e feriados ficam juntas numa aba só, em vez de espalhadas pelas pastas.
 const GRUPO_DATAS = "Datas e celebrações";
 const grupoDoEmblema = (e: { tipo: string; grupo: string }) => (e.tipo === "data" ? GRUPO_DATAS : e.grupo);
-const P_PRODUTOS = 3;
-const P_TEXTOS = 4;
+const P_PRODUTOS = 2;
+const P_TEXTOS = 3;
 
 const FORMATO_NOME: Record<EncarteFormat, string> = { feed: "Feed", story: "Story", quadrado: "Quadrado", a4: "A4" };
 const FORMATO_PROP: Record<EncarteFormat, [number, number]> = { feed: [32, 40], story: [24, 42], quadrado: [36, 36], a4: [30, 42] };
@@ -386,6 +386,12 @@ export function EncarteBuilder({
   const abortRef = useRef<AbortController | null>(null);
   const lastUrl = useRef<string | null>(null);
 
+  // Prévia: usa os produtos escolhidos; se ainda não há nenhum, os mais vendidos do mercado.
+  const usandoSugestao = items.length === 0 && (initial.autoProdutos?.length ?? 0) > 0;
+  const itensPrevia = useMemo<BuilderItem[]>(
+    () => (items.length ? items : (initial.autoProdutos ?? []).map((productId) => ({ productId, promoPrice: null, oldPrice: null, highlight: false, limitQty: null, label: null }))),
+    [items, initial.autoProdutos]
+  );
   const previewData = useMemo(
     () => ({
       name: name || "Encarte",
@@ -403,9 +409,9 @@ export function EncarteBuilder({
       themeKey,
       validFrom: validFrom || null,
       validUntil: validUntil || null,
-      // nos dois primeiros passos a prévia é só o esqueleto das 12 caixas
-      esqueleto: step <= 1,
-      items: (step <= 1 ? [] : items)
+      // sem produtos escolhidos nem sugeridos, o passo 1 mostra só o esqueleto das 12 caixas
+      esqueleto: step <= 0 && itensPrevia.length === 0,
+      items: itensPrevia
         .map((i) => {
           const p = byId.get(i.productId);
           const price = i.promoPrice ?? p?.price ?? null;
@@ -426,7 +432,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, itensPrevia, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -552,6 +558,9 @@ export function EncarteBuilder({
         toast.error(data.error || "Não consegui salvar o encarte.");
         return;
       }
+      try {
+        localStorage.removeItem(chaveRascunho);
+      } catch {}
       toast.success(initial.id ? "Encarte atualizado." : "Encarte criado.");
       router.push(`/${slug}/encartes/${data.id}?novo=1`);
       router.refresh();
@@ -866,6 +875,74 @@ export function EncarteBuilder({
     }
   }
 
+  // Combinações sugeridas: as da próxima data do calendário, ou as de ofertas quando não há data perto.
+  const sugeridas = useMemo(() => {
+    const daData = prontoDaOcasiao(initial.ocasiaoTitulo);
+    const tema = daData?.tema ?? "ofertas";
+    return { tema: TEMAS_PRONTOS.find((t) => t.id === tema), lista: VISUAIS_PRONTOS.filter((v) => v.tema === tema).slice(0, 3), data: daData ? initial.ocasiaoTitulo : null };
+  }, [initial.ocasiaoTitulo]);
+
+  // Monta tudo de uma vez: combinação da data, produtos mais vendidos e vai direto para a revisão.
+  function montarAutomatico() {
+    const ids = initial.autoProdutos ?? [];
+    if (ids.length === 0) return;
+    const v = sugeridas.lista[0] ?? VISUAIS_PRONTOS[0];
+    if (v) aplicarPronto(v);
+    setItems(ids.map((productId) => ({ productId, promoPrice: null, oldPrice: null, highlight: false, limitQty: null, label: null })));
+    setStep(PASSOS.length - 1);
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    toast.success(`Encarte montado com ${plural(ids.length, "produto", "produtos")}. Confira e ajuste o que quiser.`);
+  }
+
+  // ---------------------------- rascunho automático ----------------------------
+  const chaveRascunho = `promia:rascunho:${marketId}`;
+  const chaveInicial = useRef<string | null>(null);
+  const [rascunho, setRascunho] = useState<{ at: string; step: number; inst: Instantaneo } | null>(null);
+  const [rascunhoSalvoEm, setRascunhoSalvoEm] = useState<string | null>(null);
+  useEffect(() => {
+    if (initial.id) return;
+    try {
+      const raw = localStorage.getItem(chaveRascunho);
+      if (!raw) return;
+      const d = JSON.parse(raw) as { at?: string; step?: number; inst?: Instantaneo };
+      if (!d.at || !d.inst || Date.now() - Date.parse(d.at) > 7 * 86400000) return localStorage.removeItem(chaveRascunho);
+      const achado = { at: d.at, step: d.step ?? 0, inst: d.inst };
+      if (Array.isArray(d.inst.items) && d.inst.items.length > 0) {
+        const t = setTimeout(() => setRascunho(achado), 0);
+        return () => clearTimeout(t);
+      }
+    } catch {}
+  }, [chaveRascunho, initial.id]);
+  useEffect(() => {
+    if (initial.id) return;
+    if (chaveInicial.current === null) {
+      chaveInicial.current = chaveInst;
+      return;
+    }
+    if (chaveInst === chaveInicial.current) return;
+    const t = setTimeout(() => {
+      try {
+        const at = new Date().toISOString();
+        localStorage.setItem(chaveRascunho, JSON.stringify({ at, step, inst: JSON.parse(chaveInst) }));
+        setRascunhoSalvoEm(at);
+      } catch {}
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [chaveInst, step, chaveRascunho, initial.id]);
+  function descartarRascunho() {
+    try {
+      localStorage.removeItem(chaveRascunho);
+    } catch {}
+    setRascunho(null);
+  }
+  function retomarRascunho() {
+    if (!rascunho) return;
+    aplicarInst(rascunho.inst);
+    setStep(Math.min(rascunho.step, PASSOS.length - 1));
+    setRascunho(null);
+    toast.success("Rascunho retomado.");
+  }
+
   const podeAvancar = step !== P_PRODUTOS || items.length > 0;
   function avancar() {
     if (step === P_PRODUTOS && items.length === 0) {
@@ -972,9 +1049,27 @@ export function EncarteBuilder({
         </span>
         <div className="min-w-0 space-y-1">
           <h3 className="text-lg font-bold leading-tight">Combinações prontas</h3>
-          <p className="text-sm leading-relaxed text-[var(--ink-2)]">Tema, logo, fundo e caixas já combinados, com 12 produtos de exemplo. Escolha uma e troque o que quiser depois.</p>
+          <p className="text-sm leading-relaxed text-[var(--ink-2)]">Tema, logo, fundo e caixas já combinados. Escolha uma e troque o que quiser depois.</p>
         </div>
       </div>
+
+      {sugeridas.lista.length > 0 && !buscaPronto && !temaPronto && (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold">{sugeridas.data ? `Sugeridas para você agora: ${sugeridas.data}` : "Sugeridas para você agora"}</p>
+          <div className="grid grid-cols-3 gap-3">
+            {sugeridas.lista.map((v) => {
+              const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
+              return (
+                <button key={v.slug} type="button" aria-pressed={on} onClick={() => aplicarPronto(v)} className={miniaturaClass(on)}>
+                  <img src={`/miniaturas/pronto-${v.slug}.webp`} alt="" width={480} height={600} loading="lazy" decoding="async" className="aspect-[4/5] w-full bg-[var(--line)] object-cover" />
+                  <span className={cn("block truncate px-2.5 py-2 text-left text-[12px] font-semibold", on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--glass-strong)]")}>{v.nome} · {v.fundoNome}</span>
+                  {on && <span className="absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-[var(--ink)] text-[var(--bg)]"><Check className="size-4" strokeWidth={3} /></span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="relative">
@@ -1099,6 +1194,34 @@ export function EncarteBuilder({
 
   const objetivoPanel = (
     <div className="space-y-5">
+      {rascunho && (
+        <Glass className="flex flex-wrap items-center gap-3 p-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--folha-soft)] text-[var(--folha)]" aria-hidden>
+            <Undo2 className="size-5" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm">
+            <span className="font-semibold">Você tem um rascunho não salvo</span> de {new Date(rascunho.at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}, com {plural(rascunho.inst.items.length, "produto", "produtos")}.
+          </p>
+          <Button size="sm" onClick={retomarRascunho}>Retomar</Button>
+          <Button size="sm" variant="vidro" onClick={descartarRascunho}>Descartar</Button>
+        </Glass>
+      )}
+      {items.length === 0 && (initial.autoProdutos?.length ?? 0) > 0 && (
+        <Glass className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--uva)] text-white" aria-hidden>
+            <Sparkles className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold leading-tight">Sem tempo? Monte o encarte sozinho</p>
+            <p className="text-sm text-[var(--ink-2)]">
+              {sugeridas.data ? `Combinação de ${sugeridas.data}` : "Combinação de ofertas"} com os {plural(initial.autoProdutos?.length ?? 0, "produto mais vendido", "produtos mais vendidos")} do seu mercado. Você confere e ajusta no fim.
+            </p>
+          </div>
+          <Button variant="ia" size="lg" onClick={montarAutomatico} icon={<Sparkles className="size-5" />}>
+            Montar automático
+          </Button>
+        </Glass>
+      )}
       {prontosPanel}
       <div ref={secaoLogoRef} className="scroll-mt-28">
       <Glass className={cn("space-y-5 p-5 sm:p-6 transition-shadow duration-500", destacarLogo && "ring-2 ring-[var(--folha)] shadow-[0_0_0_6px_var(--folha-soft)]")}>
@@ -1384,7 +1507,7 @@ export function EncarteBuilder({
   const resumo: [string, string, number][] = [
     ["Produtos", plural(items.length, "produto", "produtos"), P_PRODUTOS],
     ["Formato", `${FORMATO_NOME[format]}, ${plural(previewPages, "página", "páginas")}`, 0],
-    ["Estilo das caixas", estiloNome, 2],
+    ["Estilo das caixas", estiloNome, 1],
     ["Título", headline.trim() || (emblema ? "Do emblema" : "Sem título"), P_TEXTOS],
     ["Validade", validFrom && validUntil ? `${validFrom.split("-").reverse().join("/")} a ${validUntil.split("-").reverse().join("/")}` : "Sem data", P_TEXTOS],
   ];
@@ -1421,11 +1544,17 @@ export function EncarteBuilder({
     </div>
   );
 
-  const passoPanels = [objetivoPanel, fundoPanel, caixasPanel, productsPanel, textosPanel, revisarPanel];
+  const visualPanel = (
+    <div className="space-y-5">
+      {fundoPanel}
+      {caixasPanel}
+    </div>
+  );
+  const passoPanels = [objetivoPanel, visualPanel, productsPanel, textosPanel, revisarPanel];
 
-  // tamanho do logo: fica ao lado da prévia, ajustável do passo 1 ao 3 (objetivo, fundo e caixas)
+  // tamanho do logo: fica ao lado da prévia, ajustável nos dois primeiros passos (objetivo e visual)
   const tamanhoLogo =
-    emblema && step <= 2 ? (
+    emblema && step <= 1 ? (
       <div className="flex items-center gap-1.5 rounded-xl bg-[var(--glass-strong)] px-2.5 py-1.5 ring-1 ring-[var(--line)]">
         <span className="shrink-0 text-xs font-semibold">Logo</span>
         <button type="button" aria-label="Diminuir o logo" onClick={() => setEmblemaEscala((v) => clampEscala(v - EMBLEMA_ESCALA_PASSO))} disabled={emblemaEscala <= EMBLEMA_ESCALA_MIN} className="grid size-9 shrink-0 place-items-center rounded-lg transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
@@ -1496,7 +1625,11 @@ export function EncarteBuilder({
       </div>
       {previewUrl && !previewError && (step <= 1 || (step === 2 && items.length === 0)) && (
         <p className="text-center text-xs text-[var(--ink-3)]">
-          {step <= 1 ? "As 12 caixas tracejadas são onde os produtos vão ficar." : "Exemplo com produtos de mentira. Você escolhe os seus no próximo passo."}
+          {usandoSugestao
+            ? "Prévia com os produtos mais vendidos do seu mercado. Você escolhe os da oferta no passo Produtos."
+            : step === 0
+              ? "As 12 caixas tracejadas são onde os produtos vão ficar."
+              : "Exemplo com produtos de mentira. Você escolhe os seus no passo Produtos."}
         </p>
       )}
       <div className="flex items-center justify-center gap-3">
@@ -1606,6 +1739,9 @@ export function EncarteBuilder({
             );
           })}
         </ol>
+        {rascunhoSalvoEm && !initial.id && (
+          <p className="mt-2 text-right text-xs text-[var(--ink-3)]" role="status">Rascunho salvo neste aparelho às {new Date(rascunhoSalvoEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+        )}
         {(podeDesfazer || podeRefazer) && (
           <div className="mt-2 flex justify-end gap-2">
             <button type="button" onClick={desfazer} disabled={!podeDesfazer} className="vidro-forte inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-[#b3122f] ring-1 ring-[#b3122f]/40 transition hover:bg-[#b3122f]/10 active:scale-95 disabled:opacity-40">
@@ -1623,10 +1759,7 @@ export function EncarteBuilder({
           <header key={`h${step}`} className="surgir space-y-1.5">
             <p className="text-sm font-semibold text-[var(--folha)]">Passo {step + 1} de {PASSOS.length}</p>
             <h2 className="font-display text-2xl font-extrabold leading-tight">{PASSOS[step].pergunta}</h2>
-            <p className="max-w-prose text-[15px] text-[var(--ink-2)]">
-              <span className="font-semibold text-[var(--ink)]">Agora:</span> {PASSOS[step].agora}
-            </p>
-            {step < PASSOS.length - 1 && <p className="text-sm text-[var(--ink-3)]">Depois: {PASSOS[step + 1].nome.toLowerCase()}.</p>}
+            <p className="max-w-prose text-[15px] text-[var(--ink-2)]">{PASSOS[step].agora}</p>
           </header>
           <div key={step} className="surgir space-y-5">
             {passoPanels[step]}
