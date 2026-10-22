@@ -31,6 +31,7 @@ import {
   Crown,
   Redo2,
   ImageIcon,
+  CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoEditor } from "@/app/[slug]/produtos/_ui/photo-editor";
@@ -100,6 +101,7 @@ export type BuilderInitial = {
   fundo: EncarteFundo | null;
   temaPronto?: string; // grupo de combinações que abre filtrado (vindo de uma data)
   autoProdutos?: string[]; // produtos sugeridos (mais vendidos) para a prévia e o "Montar automático"
+  ocasiaoDias?: number; // dias até a data (0 = hoje)
   ocasiaoTitulo?: string; // próxima data do calendário, para as combinações sugeridas
   themeKey: string;
   validFrom: string;
@@ -1059,7 +1061,18 @@ export function EncarteBuilder({
 
       {sugeridas.lista.length > 0 && !buscaPronto && !temaPronto && (
         <div className="space-y-3">
-          <p className="text-sm font-semibold">{sugeridas.data ? `Sugeridas para você agora: ${sugeridas.data}` : "Sugeridas para você agora"}</p>
+          {sugeridas.data ? (
+            <div className="flex items-center gap-3 rounded-2xl bg-[var(--folha-soft)] px-4 py-3 ring-1 ring-[var(--folha)]/30">
+              <CalendarDays className="size-5 shrink-0 text-[var(--folha)]" aria-hidden />
+              <p className="min-w-0 text-sm leading-snug">
+                <span className="font-bold">Próxima data comemorativa: {sugeridas.data}</span>
+                {initial.ocasiaoDias !== undefined && <span className="text-[var(--ink-2)]"> ({initial.ocasiaoDias === 0 ? "é hoje" : initial.ocasiaoDias === 1 ? "amanhã" : `em ${initial.ocasiaoDias} dias`})</span>}
+                <span className="block text-[var(--ink-2)]">Estas combinações foram escolhidas para essa data.</span>
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm font-semibold">Sugeridas para você agora</p>
+          )}
           <div className="grid grid-cols-3 gap-3">
             {sugeridas.lista.map((v) => {
               const on = modelo === v.modelo && fundo === v.fundo && emblema === v.emblema;
