@@ -65,7 +65,7 @@ export function ValidadePicker({
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-xs font-semibold">Validade</h4>
         <button type="button" onClick={() => onChange({ ...VALIDADE_PADRAO })} disabled={padrao} className="text-[11px] text-[var(--ink-3)] underline-offset-2 enabled:hover:text-[var(--ink)] enabled:hover:underline disabled:opacity-40">
-          Padrão
+          Voltar ao estilo original
         </button>
       </div>
 
