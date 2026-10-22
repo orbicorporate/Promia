@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Home, LayoutGrid, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned, Library } from "lucide-react";
+import { Home, LayoutGrid, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned, Library, Sparkles } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { MarketMark } from "./market-mark";
 import { PromiaLogo } from "./logo";
@@ -17,6 +17,7 @@ const NAV = [
   { key: "inicio", label: "Início", icon: Home, href: (s: string) => `/${s}`, mobile: true, hint: "" },
   { key: "encartes", label: "Encartes", icon: LayoutGrid, href: (s: string) => `/${s}/encartes`, mobile: true, hint: "" },
   { key: "pautas", label: "Pautas", icon: CalendarDays, href: (s: string) => `/${s}/pautas`, mobile: false, hint: "O que postar em cada dia" },
+  { key: "gerente", label: "Gerente", icon: Sparkles, href: (s: string) => `/${s}/gerente`, mobile: false, hint: "Converse e receba ideias com os seus dados" },
   { key: "vendas", label: "Vendas", icon: ChartColumn, href: (s: string) => `/${s}/vendas`, mobile: false, hint: "Curva ABC, alta e queda, efeito dos encartes" },
   { key: "concorrencia", label: "Concorrência", icon: Crosshair, href: (s: string) => `/${s}/concorrencia`, mobile: false, hint: "Preços dos concorrentes e mercados por perto" },
   { key: "bairro", label: "Bairro e público", icon: MapPinned, href: (s: string) => `/${s}/bairro`, mobile: false, hint: "Públicos, setores para implantar e gôndolas" },
@@ -24,7 +25,7 @@ const NAV = [
   { key: "mercado", label: "Mercado", icon: Store, href: (s: string) => `/${s}/mercado`, mobile: false, hint: "Logo, cores, contatos e promoções fixas" },
 ] as const;
 
-const GROUP_START: Record<string, string> = { vendas: "Inteligência", biblioteca: "Biblioteca", mercado: "Cadastro" };
+const GROUP_START: Record<string, string> = { gerente: "Inteligência", biblioteca: "Biblioteca", mercado: "Cadastro" };
 
 function activeKey(pathname: string, slug: string) {
   const rest = pathname.slice(slug.length + 1);
