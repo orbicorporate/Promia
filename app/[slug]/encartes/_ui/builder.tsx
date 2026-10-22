@@ -41,7 +41,7 @@ import { resolverValidade, VALIDADE_PADRAO, type ValidadeOpcoes } from "@/lib/en
 import { ValidadePicker } from "./validade-picker";
 import { RodapePicker, type MercadoRodapeInfo } from "./rodape-picker";
 import { resolverRodape, type RodapeOpcoes } from "@/lib/encarte/rodape";
-import { clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
+import { CAIXAS_ESCALA_MAX, CAIXAS_ESCALA_MIN, CAIXAS_ESCALA_PASSO, clampCaixas, clampEscala, EMBLEMA_ESCALA_MAX, EMBLEMA_ESCALA_MIN, EMBLEMA_ESCALA_PASSO } from "@/lib/encarte/emblema-escala";
 import { normalizarBusca, prontoDaOcasiao, TEMAS_PRONTOS, VISUAIS_PRONTOS } from "@/lib/encarte/prontos";
 import { CENARIOS, type CenarioGrupo } from "@/lib/encarte/modelos/cenarios";
 import { FORMAT_HINT, ITEM_LABELS, LAYOUT_HINT, LAYOUT_SHORT, MODELO_LABELS, FUNDO_LABELS } from "@/lib/encarte/labels";
@@ -93,6 +93,7 @@ export type BuilderInitial = {
   modelo: EncarteModelo | null;
   emblema: string | null;
   emblemaEscala?: number;
+  caixasEscala?: number;
   fotoExtra?: string | null;
   validade?: Partial<ValidadeOpcoes>;
   rodape?: Partial<RodapeOpcoes>;
@@ -189,6 +190,7 @@ export function EncarteBuilder({
   const [modelo, setModelo] = useState<EncarteModelo | null>(initial.modelo);
   const [emblema, setEmblema] = useState<string | null>(initial.emblema);
   const [emblemaEscala, setEmblemaEscala] = useState<number>(clampEscala(initial.emblemaEscala));
+  const [caixasEscala, setCaixasEscala] = useState<number>(clampCaixas(initial.caixasEscala));
   const [validade, setValidade] = useState<ValidadeOpcoes>(resolverValidade(initial.validade));
   const [rodape, setRodape] = useState<RodapeOpcoes>(resolverRodape(initial.rodape));
   const [padraoSalvo, setPadraoSalvo] = useState<Partial<RodapeOpcoes> | null>(rodapePadrao);
@@ -205,7 +207,7 @@ export function EncarteBuilder({
 
   // histórico para desfazer e refazer: guarda o estado das escolhas do encarte
   const instantaneo = {
-    name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items, temaPronto,
+    name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, caixasEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items, temaPronto,
   };
   type Instantaneo = typeof instantaneo;
   const instRef = useRef(instantaneo);
@@ -252,6 +254,7 @@ export function EncarteBuilder({
     setModelo(v.modelo);
     setEmblema(v.emblema);
     setEmblemaEscala(v.emblemaEscala);
+    setCaixasEscala(clampCaixas(v.caixasEscala));
     setValidade(v.validade);
     setRodape(v.rodape);
     setFundo(v.fundo);
@@ -402,6 +405,7 @@ export function EncarteBuilder({
       modelo,
       emblema,
       emblemaEscala,
+      caixasEscala,
       validade,
       rodape,
       fundo,
@@ -432,7 +436,7 @@ export function EncarteBuilder({
         })
         .filter(Boolean),
     }),
-    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, itensPrevia, byId, step]
+    [name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, caixasEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, itensPrevia, byId, step]
   );
   const previewKey = JSON.stringify(previewData);
 
@@ -551,7 +555,7 @@ export function EncarteBuilder({
       const res = await fetch(initial.id ? `/api/encartes/${initial.id}` : "/api/encartes", {
         method: initial.id ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items }),
+        body: JSON.stringify({ marketId, name, headline, subheadline, format, layout, modelo, emblema, emblemaEscala, caixasEscala, validade, rodape, fundo, fotoExtra, themeKey, validFrom, validUntil, items }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1443,6 +1447,27 @@ export function EncarteBuilder({
           {caixaIds.map((k) => miniEstilo(k, MODELO_LABELS[k].label.slice(3)))}
         </div>
         {modelo ? <p className="text-sm text-[var(--ink-3)]">{capacityLabel}</p> : null}
+        {modelo ? (
+          <div className="space-y-2 rounded-2xl bg-[var(--glass-strong)] p-3.5 ring-1 ring-[var(--line)]">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold">Tamanho das caixas</span>
+              <button type="button" onClick={() => setCaixasEscala(1)} disabled={caixasEscala === 1} className="text-xs font-semibold text-[var(--folha)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline">
+                Voltar ao padrão
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label="Diminuir as caixas" onClick={() => setCaixasEscala((v) => clampCaixas(v - CAIXAS_ESCALA_PASSO))} disabled={caixasEscala <= CAIXAS_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+                <Minus className="size-4" aria-hidden />
+              </button>
+              <input type="range" aria-label="Tamanho das caixas" min={CAIXAS_ESCALA_MIN} max={CAIXAS_ESCALA_MAX} step={CAIXAS_ESCALA_PASSO} value={caixasEscala} onChange={(e) => setCaixasEscala(clampCaixas(Number(e.target.value)))} aria-valuetext={`${Math.round(caixasEscala * 100)}%`} className="h-11 min-w-0 flex-1 accent-[var(--ink)]" />
+              <button type="button" aria-label="Aumentar as caixas" onClick={() => setCaixasEscala((v) => clampCaixas(v + CAIXAS_ESCALA_PASSO))} disabled={caixasEscala >= CAIXAS_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+                <Plus className="size-4" aria-hidden />
+              </button>
+              <span className="w-12 shrink-0 text-right text-sm font-semibold tabular-nums">{Math.round(caixasEscala * 100)}%</span>
+            </div>
+            <p className="text-xs text-[var(--ink-3)]">Aumenta até o limite em que as caixas ainda cabem na página. Com muitos produtos, quase não muda; com poucos, as caixas crescem.</p>
+          </div>
+        ) : null}
         <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
           <Segmented
             label="Layout"

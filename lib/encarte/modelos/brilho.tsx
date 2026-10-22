@@ -2,7 +2,7 @@ import { cenarioSvg } from "./cenarios";
 import { fundoArtePorId, type FundoArteMeta } from "./fundos-arte";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { capacidadeGrade, specEscalada } from "../formats";
-import { clampEscala } from "../emblema-escala";
+import { clampCaixas, clampEscala } from "../emblema-escala";
 import { resolverRodape, rodapeDados, RODAPE_COR_HEX, type RodapeDados, type RodapeOpcoes } from "../rodape";
 import { resolverValidade } from "../validade";
 import { alturaValidade, ValidadeEl } from "./validade-el";
@@ -667,8 +667,16 @@ export function compor(data: EncarteData, pageIndex: number, cfg: ConfigModelo):
   const areaH = H - areaTop - footerH - r(14 * s) - baseExtra - (cfg.rodape === "cerca" ? r(52 * s) : 0);
   const cellW = r((W - padX * 2 - gap * (cols - 1)) / cols);
   const nominalH = (areaH - gap * (capRows - 1)) / capRows;
-  const cardH = tight ? r(Math.min(nominalH, cellW / cfg.aspect!)) : r(Math.min(nominalH * (cfg.cardMaxRatio ?? 1.2), (areaH - gap * (rows - 1)) / rows));
-  const cardW = tight ? r(cardH * cfg.aspect!) : cellW;
+  const cardH0 = tight ? r(Math.min(nominalH, cellW / cfg.aspect!)) : r(Math.min(nominalH * (cfg.cardMaxRatio ?? 1.2), (areaH - gap * (rows - 1)) / rows));
+  const cardW0 = tight ? r(cardH0 * cfg.aspect!) : cellW;
+  // Tamanho das caixas escolhido pelo dono. O aumento para sempre que a linha encosta nas laterais
+  // ou que as linhas deixam de caber na área dos produtos, então nunca estoura a página.
+  const porLinha = Math.max(1, Math.min(cols, items.length));
+  const limiteLargura = (W - padX * 2 - gap * (porLinha - 1)) / (porLinha * cardW0);
+  const limiteAltura = (areaH - gap * (rows - 1)) / (rows * cardH0);
+  const kCaixas = Math.max(0.5, Math.min(clampCaixas(data.caixasEscala), limiteLargura, limiteAltura));
+  const cardH = kCaixas === 1 ? cardH0 : r(cardH0 * kCaixas);
+  const cardW = kCaixas === 1 ? cardW0 : r(cardW0 * kCaixas);
   const wide = cardW / cardH > 1.15;
 
   // emblema: escolhe a versão que fica maior na área do cabeçalho

@@ -1,7 +1,7 @@
 import { isUuid } from "@/lib/auth";
 import { isISODate } from "@/lib/dates";
 import { emblemaPorSlug } from "@/lib/emblemas/catalog";
-import { clampEscala, juntarEmblema } from "@/lib/encarte/emblema-escala";
+import { clampCaixas, clampEscala, juntarEmblema } from "@/lib/encarte/emblema-escala";
 import { limparRodape } from "@/lib/encarte/rodape";
 import { limparValidade } from "@/lib/encarte/validade";
 import { isThemeKey } from "@/lib/encarte/themes";
@@ -90,7 +90,7 @@ export function parseEncarteInput(raw: Record<string, unknown>): { ok: true; dat
       layout: isEncarteModelo(raw.modelo) ? "grade" : raw.layout,
       modelo: isEncarteModelo(raw.modelo) ? raw.modelo : null,
       fundo: isEncarteFundo(raw.fundo) ? raw.fundo : null,
-      emblema: juntarEmblema(typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? raw.emblema : null, clampEscala(raw.emblemaEscala), limparValidade(raw.validade), limparRodape(raw.rodape), ehFotoExtra(raw.fotoExtra) && typeof raw.marketId === "string" && raw.fotoExtra.startsWith(`${raw.marketId}/arquivos/`) ? raw.fotoExtra.split("/").pop()! : null),
+      emblema: juntarEmblema(typeof raw.emblema === "string" && emblemaPorSlug(raw.emblema) ? raw.emblema : null, clampEscala(raw.emblemaEscala), limparValidade(raw.validade), limparRodape(raw.rodape), ehFotoExtra(raw.fotoExtra) && typeof raw.marketId === "string" && raw.fotoExtra.startsWith(`${raw.marketId}/arquivos/`) ? raw.fotoExtra.split("/").pop()! : null, clampCaixas(raw.caixasEscala)),
       themeKey: raw.themeKey,
       validFrom,
       validUntil,

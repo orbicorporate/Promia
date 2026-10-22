@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampEscala, juntarEmblema, lerEmblema } from "@/lib/encarte/emblema-escala";
+import { CAIXAS_ESCALA_MAX, CAIXAS_ESCALA_MIN, clampCaixas, clampEscala, juntarEmblema, lerEmblema } from "@/lib/encarte/emblema-escala";
 import { limparRodape, rodapeDados, RODAPE_PADRAO } from "@/lib/encarte/rodape";
 import { limparValidade } from "@/lib/encarte/validade";
 
@@ -76,5 +76,22 @@ describe("rodapé junto do emblema", () => {
   });
   it("ignora valores inválidos", () => {
     expect(limparRodape({ estilo: "x", cor: "verde", texto: 5 })).toEqual({ cor: "verde" });
+  });
+});
+
+describe("tamanho das caixas", () => {
+  it("guarda e lê o tamanho junto do emblema", () => {
+    const raw = juntarEmblema("a", 1, {}, {}, undefined, 1.25);
+    expect(raw).toBe("a~b125");
+    expect(lerEmblema(raw).caixas).toBeCloseTo(1.25);
+  });
+  it("tamanho padrão não grava nada", () => {
+    expect(juntarEmblema("a", 1, {}, {}, undefined, 1)).toBe("a");
+    expect(lerEmblema("a").caixas ?? 1).toBe(1);
+  });
+  it("limita ao intervalo seguro", () => {
+    expect(clampCaixas(5)).toBe(CAIXAS_ESCALA_MAX);
+    expect(clampCaixas(0.1)).toBe(CAIXAS_ESCALA_MIN);
+    expect(clampCaixas(undefined)).toBe(1);
   });
 });

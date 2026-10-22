@@ -97,6 +97,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
         modelo: isEncarteModelo(src.modelo) ? src.modelo : null,
         emblema: lerEmblema(src.emblema).slug,
         emblemaEscala: lerEmblema(src.emblema).escala,
+        caixasEscala: lerEmblema(src.emblema).caixas,
         validade: lerEmblema(src.emblema).validade,
         rodape: lerEmblema(src.emblema).rodape,
         fotoExtra: lerEmblema(src.emblema).fotoExtra ? `${market.id}/arquivos/${lerEmblema(src.emblema).fotoExtra}` : null,
