@@ -4,9 +4,11 @@ import { ArrowLeft } from "lucide-react";
 import { requireMarketPage } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isUuid } from "@/lib/auth";
-import { isISODate, addDaysISO } from "@/lib/dates";
+import { isISODate, addDaysISO, todayInSaoPaulo } from "@/lib/dates";
 import { isThemeKey, getTheme } from "@/lib/encarte/themes";
 import { prontoDaOcasiao } from "@/lib/encarte/prontos";
+import { loadSalesAnalysis } from "@/lib/sales/load";
+import { upcomingOccasions } from "@/lib/occasions";
 import { isEncarteFormat, isEncarteLayout, isEncarteFundo, isEncarteModelo } from "@/lib/encarte/types";
 import { EncarteBuilder, type BuilderInitial, type BuilderItem } from "../_ui/builder";
 import { loadBuilderData } from "../_ui/builder-data";
@@ -36,6 +38,19 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
   const validFrom = isISODate(de) ? de : data.today;
   const validUntil = isISODate(ate) && ate >= validFrom ? ate : addDaysISO(validFrom, 6);
 
+  // Produtos sugeridos: os mais vendidos do último relatório; se faltar, completa com os que já têm foto e preço.
+  const comPreco = new Map(data.catalog.filter((p) => p.price != null && p.price > 0).map((p) => [p.id, p]));
+  const sugeridos: string[] = [];
+  try {
+    const vendas = await loadSalesAnalysis(createAdminClient(), market.id);
+    for (const t of vendas.analysis?.top ?? []) if (t.productId && comPreco.has(t.productId) && !sugeridos.includes(t.productId)) sugeridos.push(t.productId);
+  } catch {}
+  for (const p of data.catalog) {
+    if (sugeridos.length >= 12) break;
+    if (comPreco.has(p.id) && (p.image_url || p.image_candidates?.length) && !sugeridos.includes(p.id)) sugeridos.push(p.id);
+  }
+  const proximaData = upcomingOccasions(todayInSaoPaulo(), [], 21).find((o) => o.kind === "data" && prontoDaOcasiao(o.title));
+
   let initial: BuilderInitial = {
     name: titulo ? `${titulo}` : `Ofertas ${validFrom.slice(8, 10)}/${validFrom.slice(5, 7)}`,
     headline: titulo ? getTheme(themeKey).headline : getTheme(themeKey).headline,
@@ -48,6 +63,8 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     rodape: rodapePadrao ?? undefined,
     fundo: pronto ? pronto.fundo : null,
     temaPronto: pronto?.tema,
+    autoProdutos: sugeridos.slice(0, 12),
+    ocasiaoTitulo: pronto ? (one(sp.ocasiao)?.slice(0, 80) ?? undefined) : proximaData?.title,
     themeKey,
     validFrom,
     validUntil,
