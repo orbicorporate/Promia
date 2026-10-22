@@ -11,6 +11,7 @@ export const DAILY_LIMITS = {
   concorrencia: 40, // encartes de concorrente lidos por dia
   bairro: 5, // análises de bairro por dia
   vendas: 20, // análises de vendas por dia
+  plano: 5, // planos de marketing por dia
   chat: 80, // mensagens para o gerente por dia
 } as const;
 
