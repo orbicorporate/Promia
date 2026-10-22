@@ -50,7 +50,8 @@ import { ehFundoProprio, type EncarteFormat, type EncarteFundo, type EncarteLayo
 import { plural } from "@/lib/plural";
 import { EMBLEMAS } from "@/lib/emblemas/catalog";
 import { corDoGrupo, corDoTema } from "./cores-tema";
-import { quandoFitsRange } from "@/lib/emblemas/quando";
+import { quandoFits, quandoFitsRange } from "@/lib/emblemas/quando";
+import { addDaysISO } from "@/lib/dates";
 
 const FUNDOS_BASE = ["raios", "bokeh", "diagonal", "aros", "kraft", "madeira", "estudio", "vinheta", "xadrez", "feira"] as EncarteFundo[];
 // fundos de arte completa: ganham destaque dourado no seletor
@@ -120,6 +121,9 @@ const PASSO_CORES: [string, string][] = [
   ["#f472b6", "#db2777"], // textos
   ["#fb7185", "#be123c"], // revisar
 ];
+// Todas as datas e feriados ficam juntas numa aba só, em vez de espalhadas pelas pastas.
+const GRUPO_DATAS = "Datas e celebrações";
+const grupoDoEmblema = (e: { tipo: string; grupo: string }) => (e.tipo === "data" ? GRUPO_DATAS : e.grupo);
 const P_PRODUTOS = 3;
 const P_TEXTOS = 4;
 
@@ -803,13 +807,26 @@ export function EncarteBuilder({
   // Logos agrupados: "Para agora" traz os do período do encarte; depois as pastas do catálogo.
   const gruposEmblema = useMemo(() => {
     const nomes: string[] = [];
-    for (const e of EMBLEMAS) if (!e.alternativa && !nomes.includes(e.grupo)) nomes.push(e.grupo);
+    for (const e of EMBLEMAS) if (!e.alternativa && !nomes.includes(grupoDoEmblema(e))) nomes.push(grupoDoEmblema(e));
     return ["Para agora", ...nomes];
   }, []);
+  // todas as datas do ano, da mais próxima para a mais distante
+  const datasOrdenadas = useMemo(() => {
+    const hoje = validFrom || new Date().toISOString().slice(0, 10);
+    const proxima = (e: (typeof EMBLEMAS)[number]) => {
+      for (let i = 0; i <= 366; i++) if (quandoFits(e.quando, addDaysISO(hoje, i))) return i;
+      return 999;
+    };
+    return EMBLEMAS.filter((e) => !e.alternativa && e.tipo === "data")
+      .map((e) => ({ e, d: proxima(e) }))
+      .sort((a, b) => a.d - b.d || a.e.nome.localeCompare(b.e.nome, "pt-BR"))
+      .map((x) => x.e);
+  }, [validFrom]);
   const emblemasDoGrupo = useMemo(() => {
     if (grupoEmblema === "Para agora") return [...emblemasOrdenados.hit, ...emblemasOrdenados.rest.filter((e) => e.grupo === "Campanhas recorrentes")];
-    return EMBLEMAS.filter((e) => !e.alternativa && e.grupo === grupoEmblema);
-  }, [grupoEmblema, emblemasOrdenados]);
+    if (grupoEmblema === GRUPO_DATAS) return datasOrdenadas;
+    return EMBLEMAS.filter((e) => !e.alternativa && grupoDoEmblema(e) === grupoEmblema);
+  }, [grupoEmblema, emblemasOrdenados, datasOrdenadas]);
 
   function escolherEmblema(slug: string) {
     setAvisoPronto(null);
