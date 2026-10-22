@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Sparkles, Copy, Check, MessageCircle, Printer, RotateCw, Clapperboard, Megaphone, CalendarDays, Store, Download } from "lucide-react";
+import { Sparkles, Copy, Check, MessageCircle, Printer, RotateCw, Clapperboard, Megaphone, CalendarDays, Store, Download, Target, Accessibility } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Glass, Segmented, cn } from "@/components/ui";
 import type { CampaignContent } from "@/lib/ai/campaign";
 
-type Tab = "posts" | "whatsapp" | "video" | "loja";
+type Tab = "posts" | "whatsapp" | "anuncio" | "video" | "loja";
 
 const FORMAT_LABEL = { feed: "Feed", story: "Story", reels: "Reels" } as const;
 
@@ -108,6 +108,7 @@ export function CampaignPanel({ encarteId, imageHref, initial }: { encarteId: st
           options={[
             { value: "posts", label: "Posts", icon: <Megaphone className="size-4" /> },
             { value: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="size-4" /> },
+            { value: "anuncio", label: "Anúncio", icon: <Target className="size-4" /> },
             { value: "video", label: "Vídeo e áudio", icon: <Clapperboard className="size-4" /> },
             { value: "loja", label: "Loja", icon: <Store className="size-4" /> },
           ]}
@@ -141,6 +142,64 @@ export function CampaignPanel({ encarteId, imageHref, initial }: { encarteId: st
                   </div>
                 </article>
               ))}
+              {campaign.acessibilidade && (
+                <article className="flex flex-col gap-3 rounded-2xl bg-[var(--glass-strong)] p-4 ring-1 ring-[var(--line)] lg:col-span-3">
+                  <h3 className="flex items-center gap-2 font-semibold">
+                    <Accessibility className="size-5 text-[var(--ink-3)]" /> Texto para quem não enxerga a arte
+                  </h3>
+                  <p className="text-sm text-[var(--ink-3)]">Cole junto da postagem. Quem usa leitor de tela fica sabendo das ofertas também.</p>
+                  <p className="whitespace-pre-line text-[15px] leading-relaxed text-[var(--ink-2)]">{campaign.acessibilidade}</p>
+                  <div>
+                    <CopyButton text={campaign.acessibilidade} label="Copiar texto" />
+                  </div>
+                </article>
+              )}
+            </div>
+          )}
+
+          {tab === "anuncio" && (
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
+              {campaign.anuncio ? (
+                <div className="space-y-3">
+                  <h3 className="flex items-center gap-2 font-semibold">
+                    <Target className="size-5 text-[var(--ink-3)]" /> Anúncio pago no Instagram e Facebook
+                  </h3>
+                  <dl className="space-y-2 text-sm">
+                    {[
+                      ["Objetivo", campaign.anuncio.objetivo],
+                      ["Quem atingir", campaign.anuncio.publico],
+                      ["Distância da loja", `${campaign.anuncio.raioKm} km`],
+                      ["Quanto investir", `${campaign.anuncio.orcamentoDia} por dia, por ${campaign.anuncio.dias} dias`],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex gap-3 rounded-2xl bg-[var(--glass-strong)] p-3 ring-1 ring-[var(--line)]">
+                        <dt className="w-32 shrink-0 font-semibold">{k}</dt>
+                        <dd className="text-[var(--ink-2)]">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="space-y-1 rounded-2xl bg-[var(--glass-strong)] p-4 ring-1 ring-[var(--line)]">
+                    <p className="font-semibold">{campaign.anuncio.titulo}</p>
+                    <p className="text-[15px] leading-relaxed text-[var(--ink-2)]">{campaign.anuncio.texto}</p>
+                    {campaign.anuncio.botao && <p className="text-sm text-[var(--ink-3)]">Botão: {campaign.anuncio.botao}</p>}
+                  </div>
+                  <CopyButton text={`${campaign.anuncio.titulo}\n${campaign.anuncio.texto}`} label="Copiar texto do anúncio" />
+                  <p className="text-xs text-[var(--ink-3)]">Valores são sugestão de partida. Comece baixo e aumente se der resultado.</p>
+                </div>
+              ) : (
+                <p className="text-[var(--ink-2)]">Esta campanha foi criada antes do anúncio existir. Toque em Refazer para gerar.</p>
+              )}
+              {campaign.extras.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold">Mais ideias para divulgar</h3>
+                  <ul className="space-y-2">
+                    {campaign.extras.map((d, i) => (
+                      <li key={i} className="rounded-2xl bg-[var(--glass-strong)] p-3 text-sm ring-1 ring-[var(--line)]">
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
