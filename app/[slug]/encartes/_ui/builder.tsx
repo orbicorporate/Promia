@@ -391,7 +391,6 @@ export function EncarteBuilder({
   const abortRef = useRef<AbortController | null>(null);
   const lastUrl = useRef<string | null>(null);
 
-  // Prévia: usa os produtos escolhidos; se ainda não há nenhum, os mais vendidos do mercado.
   const usandoSugestao = items.length === 0 && (initial.autoProdutos?.length ?? 0) > 0;
   const itensPrevia = useMemo<BuilderItem[]>(
     () => (items.length ? items : (initial.autoProdutos ?? []).map((productId) => ({ productId, promoPrice: null, oldPrice: null, highlight: false, limitQty: null, label: null }))),
@@ -1659,38 +1658,19 @@ export function EncarteBuilder({
           )}
         </AnimatePresence>
       </div>
-      {previewUrl && !previewError && (step <= 1 || (step === 2 && items.length === 0)) && (
-        <p className="text-center text-xs text-[var(--ink-3)]">
-          {usandoSugestao
-            ? "Prévia com os produtos mais vendidos do seu mercado. Você escolhe os da oferta no passo Produtos."
-            : step === 0 && sugeridas.data && !avisoPronto
-              ? `Esta é a prévia padrão. Escolha um modelo de ${sugeridas.data} ao lado para ver como fica.`
-            : step === 0
-              ? "Os 12 quadros tracejados são onde os produtos vão ficar."
-              : "Exemplo com produtos de mentira. Você escolhe os seus no passo Produtos."}
-        </p>
+      {previewPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={() => setPreviewPage((p) => Math.max(1, p - 1))} disabled={previewPage <= 1} className="vidro grid size-8 place-items-center rounded-full disabled:opacity-40" aria-label="Página anterior">
+            <ChevronLeft className="size-4" />
+          </button>
+          <span className="text-xs tabular text-[var(--ink-2)]">
+            Página {Math.min(previewPage, previewPages)} de {previewPages}
+          </span>
+          <button onClick={() => setPreviewPage((p) => Math.min(previewPages, p + 1))} disabled={previewPage >= previewPages} className="vidro grid size-8 place-items-center rounded-full disabled:opacity-40" aria-label="Próxima página">
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
       )}
-      <div className="flex items-center justify-center gap-3">
-        <button
-          onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
-          disabled={previewPage <= 1}
-          className="vidro grid size-11 place-items-center rounded-full disabled:opacity-40"
-          aria-label="Página anterior"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
-        <span className="text-sm tabular text-[var(--ink-2)]">
-          Página {Math.min(previewPage, previewPages)} de {previewPages}
-        </span>
-        <button
-          onClick={() => setPreviewPage((p) => Math.min(previewPages, p + 1))}
-          disabled={previewPage >= previewPages}
-          className="vidro grid size-11 place-items-center rounded-full disabled:opacity-40"
-          aria-label="Próxima página"
-        >
-          <ChevronRight className="size-5" />
-        </button>
-      </div>
       {(tamanhoLogo || step <= P_TEXTOS) && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-[var(--ink-2)]">Ajustes rápidos</p>
