@@ -1111,7 +1111,7 @@ export function EncarteBuilder({
             <p className="text-sm leading-relaxed text-[var(--ink-2)]">Escolha a campanha. O logo dela vira o título da arte e pinta o fundo e as etiquetas com as cores dele.</p>
           </div>
         </div>
-        <div className="rolagem -mx-1 flex gap-2.5 overflow-x-auto px-1 py-1.5">
+        <div className="flex flex-wrap gap-2.5 py-1.5">
           {gruposEmblema.map((g, i) => (
             <Chip key={g} on={grupoEmblema === g} cor={corDoGrupo(g, i)} onClick={() => setGrupoEmblema(g)}>
               {g}
