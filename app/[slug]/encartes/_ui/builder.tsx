@@ -110,8 +110,8 @@ export type BuilderInitial = {
 };
 
 const PASSOS = [
-  { key: "objetivo", nome: "Objetivo", curto: "Objetivo", pergunta: "Escolha o ponto de partida", agora: "Uma combinação pronta ou só o logo da campanha. Tudo pode ser trocado depois." },
-  { key: "visual", nome: "Visual", curto: "Visual", pergunta: "Escolha o visual", agora: "O fundo e as caixas onde os produtos vão aparecer. A prévia muda na hora." },
+  { key: "objetivo", nome: "Começar", curto: "Começar", pergunta: "Como você quer começar?", agora: "Monte sozinho, escolha um modelo pronto ou só o logo da campanha. Tudo pode ser trocado depois." },
+  { key: "visual", nome: "Visual", curto: "Visual", pergunta: "Escolha o visual", agora: "O fundo e os quadros onde os produtos vão aparecer. A prévia muda na hora." },
   { key: "produtos", nome: "Produtos", curto: "Produtos", pergunta: "Escolha os produtos", agora: "Adicione os produtos da oferta e confira os preços. Precisa de pelo menos 1." },
   { key: "textos", nome: "Título e datas", curto: "Textos", pergunta: "Título e validade", agora: "Escreva o título (se quiser, o logo já serve) e a validade da oferta." },
   { key: "revisar", nome: "Revisar", curto: "Revisar", pergunta: "Confira e salve", agora: "Veja a arte final. Se estiver certa, salve: depois você baixa em PNG ou PDF." },
@@ -1054,8 +1054,8 @@ export function EncarteBuilder({
           <Sparkles className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 space-y-1">
-          <h3 className="text-lg font-bold leading-tight">Combinações prontas</h3>
-          <p className="text-sm leading-relaxed text-[var(--ink-2)]">Tema, logo, fundo e caixas já combinados. Escolha uma e troque o que quiser depois.</p>
+          <h3 className="text-lg font-bold leading-tight">Ou escolha um modelo pronto</h3>
+          <p className="text-sm leading-relaxed text-[var(--ink-2)]">Logo, fundo e quadros já combinados. Escolha um e troque o que quiser depois.</p>
         </div>
       </div>
 
@@ -1189,7 +1189,7 @@ export function EncarteBuilder({
           >
             <div className="flex items-start gap-2">
               <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[var(--folha)] text-white"><Check className="size-3.5" strokeWidth={3.5} /></span>
-              <p className="min-w-0 flex-1 text-sm"><span className="font-semibold">{avisoPronto}</span> escolhida. Fundo, caixas e logo já vieram prontos. O que você quer fazer agora?</p>
+              <p className="min-w-0 flex-1 text-sm"><span className="font-semibold">{avisoPronto}</span> escolhido. Fundo, quadros e logo já vieram prontos. O que você quer fazer agora?</p>
               <button type="button" onClick={() => setAvisoPronto(null)} aria-label="Fechar aviso" className="grid size-8 shrink-0 place-items-center rounded-lg text-[var(--ink-3)] hover:bg-[var(--line)]"><X className="size-4" /></button>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1200,7 +1200,7 @@ export function EncarteBuilder({
                 Trocar o logo <ArrowDown className="size-4 motion-safe:animate-bounce" aria-hidden />
               </Button>
               <Button variant="fantasma" onClick={avancar}>
-                Ajustar fundo e caixas
+                Ajustar fundo e quadros
               </Button>
             </div>
           </motion.div>
@@ -1212,20 +1212,18 @@ export function EncarteBuilder({
   const objetivoPanel = (
     <div className="space-y-5">
       {rascunho && (
-        <Glass className="flex flex-wrap items-center gap-3 p-4">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--folha-soft)] text-[var(--folha)]" aria-hidden>
-            <Undo2 className="size-5" />
-          </span>
-          <p className="min-w-0 flex-1 text-sm">
-            <span className="font-semibold">Você tem um rascunho não salvo</span> de {new Date(rascunho.at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}, com {plural(rascunho.inst.items.length, "produto", "produtos")}.
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl px-1 text-sm">
+          <Undo2 className="size-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+          <p className="min-w-0 flex-1 text-[var(--ink-2)]">
+            Você parou no meio de um encarte em {new Date(rascunho.at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} ({plural(rascunho.inst.items.length, "produto", "produtos")}).
           </p>
-          <Button size="sm" onClick={retomarRascunho}>Retomar</Button>
-          <Button size="sm" variant="vidro" onClick={descartarRascunho}>Descartar</Button>
-        </Glass>
+          <button type="button" onClick={retomarRascunho} className="font-semibold text-[var(--folha)] underline-offset-2 hover:underline">Continuar de onde parei</button>
+          <button type="button" onClick={descartarRascunho} className="text-[var(--ink-3)] underline-offset-2 hover:underline">Começar do zero</button>
+        </div>
       )}
       {items.length === 0 && (initial.autoProdutos?.length ?? 0) > 0 && (
         <Glass className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--uva)] text-white" aria-hidden>
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--folha)] text-white" aria-hidden>
             <Sparkles className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -1234,7 +1232,7 @@ export function EncarteBuilder({
               {sugeridas.data ? `Combinação de ${sugeridas.data}` : "Combinação de ofertas"} com os {plural(initial.autoProdutos?.length ?? 0, "produto mais vendido", "produtos mais vendidos")} do seu mercado. Você confere e ajusta no fim.
             </p>
           </div>
-          <Button variant="ia" size="lg" onClick={montarAutomatico} icon={<Sparkles className="size-5" />}>
+          <Button size="lg" onClick={montarAutomatico} icon={<Sparkles className="size-5" />}>
             Montar automático
           </Button>
         </Glass>
@@ -1313,7 +1311,7 @@ export function EncarteBuilder({
 
   const fundoPanel = (
     <div className="space-y-5">
-      <p className="text-sm text-[var(--ink-2)]">A prévia mostra onde cada uma das 12 caixas vai ficar. Os produtos entram nos próximos passos.</p>
+      <p className="text-sm text-[var(--ink-2)]">A prévia mostra onde cada um dos 12 quadros vai ficar. Os produtos entram nos próximos passos.</p>
         <Glass className="p-4 sm:p-5">
           <details open>
           <summary className="cursor-pointer font-bold">Fundo <span className="text-sm font-normal text-[var(--ink-3)]">({fundo ? (ehFundoProprio(fundo) ? "imagem sua" : FUNDO_LABELS[fundo].replace(/^\w{2}\d{2} /, "")) : "segue as cores do logo"})</span></summary>
@@ -1463,22 +1461,22 @@ export function EncarteBuilder({
         {modelo ? (
           <div className="space-y-2 rounded-2xl bg-[var(--glass-strong)] p-3.5 ring-1 ring-[var(--line)]">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold">Tamanho das caixas</span>
+              <span className="text-sm font-semibold">Tamanho dos quadros</span>
               <button type="button" onClick={() => setCaixasEscala(1)} disabled={caixasEscala === 1} className="text-xs font-semibold text-[var(--folha)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline">
                 Voltar ao padrão
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" aria-label="Diminuir as caixas" onClick={() => setCaixasEscala((v) => clampCaixas(v - CAIXAS_ESCALA_PASSO))} disabled={caixasEscala <= CAIXAS_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+              <button type="button" aria-label="Diminuir os quadros" onClick={() => setCaixasEscala((v) => clampCaixas(v - CAIXAS_ESCALA_PASSO))} disabled={caixasEscala <= CAIXAS_ESCALA_MIN} className="grid size-11 shrink-0 place-items-center rounded-xl transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
                 <Minus className="size-4" aria-hidden />
               </button>
-              <input type="range" aria-label="Tamanho das caixas" min={CAIXAS_ESCALA_MIN} max={CAIXAS_ESCALA_MAX} step={CAIXAS_ESCALA_PASSO} value={caixasEscala} onChange={(e) => setCaixasEscala(clampCaixas(Number(e.target.value)))} aria-valuetext={`${Math.round(caixasEscala * 100)}%`} className="h-11 min-w-0 flex-1 accent-[var(--ink)]" />
-              <button type="button" aria-label="Aumentar as caixas" onClick={() => setCaixasEscala((v) => clampCaixas(v + CAIXAS_ESCALA_PASSO))} disabled={caixasEscala >= CAIXAS_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
+              <input type="range" aria-label="Tamanho dos quadros" min={CAIXAS_ESCALA_MIN} max={CAIXAS_ESCALA_MAX} step={CAIXAS_ESCALA_PASSO} value={caixasEscala} onChange={(e) => setCaixasEscala(clampCaixas(Number(e.target.value)))} aria-valuetext={`${Math.round(caixasEscala * 100)}%`} className="h-11 min-w-0 flex-1 accent-[var(--ink)]" />
+              <button type="button" aria-label="Aumentar os quadros" onClick={() => setCaixasEscala((v) => clampCaixas(v + CAIXAS_ESCALA_PASSO))} disabled={caixasEscala >= CAIXAS_ESCALA_MAX} className="grid size-11 shrink-0 place-items-center rounded-xl transition hover:bg-[var(--line)] active:scale-95 disabled:opacity-40">
                 <Plus className="size-4" aria-hidden />
               </button>
               <span className="w-12 shrink-0 text-right text-sm font-semibold tabular-nums">{Math.round(caixasEscala * 100)}%</span>
             </div>
-            <p className="text-xs text-[var(--ink-3)]">Aumenta até o limite em que as caixas ainda cabem na página. Com muitos produtos, quase não muda; com poucos, as caixas crescem.</p>
+            <p className="text-xs text-[var(--ink-3)]">Aumenta até o limite em que os quadros ainda cabem na página. Com muitos produtos, quase não muda; com poucos, os quadros crescem.</p>
           </div>
         ) : null}
         <div className={cn("flex flex-wrap items-center gap-3", modelo && "hidden")}>
@@ -1545,7 +1543,7 @@ export function EncarteBuilder({
   const resumo: [string, string, number][] = [
     ["Produtos", plural(items.length, "produto", "produtos"), P_PRODUTOS],
     ["Formato", `${FORMATO_NOME[format]}, ${plural(previewPages, "página", "páginas")}`, 0],
-    ["Estilo das caixas", estiloNome, 1],
+    ["Estilo dos quadros", estiloNome, 1],
     ["Título", headline.trim() || (emblema ? "Do emblema" : "Sem título"), P_TEXTOS],
     ["Validade", validFrom && validUntil ? `${validFrom.split("-").reverse().join("/")} a ${validUntil.split("-").reverse().join("/")}` : "Sem data", P_TEXTOS],
   ];
@@ -1665,8 +1663,10 @@ export function EncarteBuilder({
         <p className="text-center text-xs text-[var(--ink-3)]">
           {usandoSugestao
             ? "Prévia com os produtos mais vendidos do seu mercado. Você escolhe os da oferta no passo Produtos."
+            : step === 0 && sugeridas.data && !avisoPronto
+              ? `Esta é a prévia padrão. Escolha um modelo de ${sugeridas.data} ao lado para ver como fica.`
             : step === 0
-              ? "As 12 caixas tracejadas são onde os produtos vão ficar."
+              ? "Os 12 quadros tracejados são onde os produtos vão ficar."
               : "Exemplo com produtos de mentira. Você escolhe os seus no passo Produtos."}
         </p>
       )}
@@ -1691,8 +1691,13 @@ export function EncarteBuilder({
           <ChevronRight className="size-5" />
         </button>
       </div>
-      {tamanhoLogo}
-      {step <= P_TEXTOS ? validadeControles : null}
+      {(tamanhoLogo || step <= P_TEXTOS) && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-[var(--ink-2)]">Ajustes rápidos</p>
+          {tamanhoLogo}
+          {step <= P_TEXTOS ? validadeControles : null}
+        </div>
+      )}
     </div>
   );
 
