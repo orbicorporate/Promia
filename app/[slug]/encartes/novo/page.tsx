@@ -49,7 +49,11 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     if (sugeridos.length >= 12) break;
     if (comPreco.has(p.id) && (p.image_url || p.image_candidates?.length) && !sugeridos.includes(p.id)) sugeridos.push(p.id);
   }
-  const proximaData = upcomingOccasions(todayInSaoPaulo(), [], 21).find((o) => o.kind === "data" && prontoDaOcasiao(o.title));
+  const hojeSP = todayInSaoPaulo();
+  const proximaData = upcomingOccasions(hojeSP, [], 21).find((o) => o.kind === "data" && prontoDaOcasiao(o.title));
+  const tituloOcasiao = pronto ? one(sp.ocasiao)?.slice(0, 80) : proximaData?.title;
+  const dataOcasiao = tituloOcasiao ? upcomingOccasions(hojeSP, [], 60).find((o) => o.kind === "data" && o.title === tituloOcasiao) : undefined;
+  const diasDaOcasiao = dataOcasiao ? Math.round((Date.parse(dataOcasiao.date) - Date.parse(hojeSP)) / 86400000) : undefined;
 
   let initial: BuilderInitial = {
     name: titulo ? `${titulo}` : `Ofertas ${validFrom.slice(8, 10)}/${validFrom.slice(5, 7)}`,
@@ -64,6 +68,7 @@ export default async function NovoEncartePage({ params, searchParams }: PageProp
     fundo: pronto ? pronto.fundo : null,
     temaPronto: pronto?.tema,
     autoProdutos: sugeridos.slice(0, 12),
+    ocasiaoDias: diasDaOcasiao,
     ocasiaoTitulo: pronto ? (one(sp.ocasiao)?.slice(0, 80) ?? undefined) : proximaData?.title,
     themeKey,
     validFrom,
