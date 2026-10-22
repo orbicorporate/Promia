@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { Sparkles, ChevronRight, RotateCw, LayoutGrid } from "lucide-react";
+import { Sparkles, ChevronRight, RotateCw, LayoutGrid, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Glass, Button, ButtonLink, SecaoTitulo, cn } from "@/components/ui";
 
@@ -177,6 +177,11 @@ export function GerenteCard({
             {running ? "Analisando o catálogo, cerca de um minuto" : "Analisar de novo"}
           </button>
         </>
+      )}
+      {hasProducts && (
+        <Link href={`/${slug}/gerente`} className="mt-3 inline-flex h-11 items-center gap-2 self-start rounded-full bg-[var(--glass-strong)] px-4 text-sm font-semibold ring-1 ring-[var(--line)] transition hover:bg-[var(--line)] active:scale-[0.97]">
+          <MessageCircle className="size-4" aria-hidden /> Conversar com o gerente
+        </Link>
       )}
     </Glass>
   );
