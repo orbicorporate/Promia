@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Home, LayoutGrid, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned, Library, Sparkles } from "lucide-react";
+import { Home, LayoutGrid, Store, Plus, LogOut, ChevronLeft, CalendarDays, Ellipsis, ChartColumn, Crosshair, MapPinned, Library, Sparkles, ListChecks } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { MarketMark } from "./market-mark";
 import { PromiaLogo } from "./logo";
@@ -18,6 +18,7 @@ const NAV = [
   { key: "encartes", label: "Encartes", icon: LayoutGrid, href: (s: string) => `/${s}/encartes`, mobile: true, hint: "" },
   { key: "pautas", label: "Pautas", icon: CalendarDays, href: (s: string) => `/${s}/pautas`, mobile: false, hint: "O que postar em cada dia" },
   { key: "gerente", label: "Gerente", icon: Sparkles, href: (s: string) => `/${s}/gerente`, mobile: false, hint: "Converse e receba ideias com os seus dados" },
+  { key: "plano", label: "Plano de marketing", icon: ListChecks, href: (s: string) => `/${s}/plano`, mobile: false, hint: "4 semanas passo a passo para o seu público" },
   { key: "vendas", label: "Vendas", icon: ChartColumn, href: (s: string) => `/${s}/vendas`, mobile: false, hint: "Curva ABC, alta e queda, efeito dos encartes" },
   { key: "concorrencia", label: "Concorrência", icon: Crosshair, href: (s: string) => `/${s}/concorrencia`, mobile: false, hint: "Preços dos concorrentes e mercados por perto" },
   { key: "bairro", label: "Bairro e público", icon: MapPinned, href: (s: string) => `/${s}/bairro`, mobile: false, hint: "Públicos, setores para implantar e gôndolas" },

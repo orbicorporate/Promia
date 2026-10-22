@@ -33,3 +33,22 @@ describe("chat do gerente", () => {
     expect(hrefDaAcao("m", "montar_encarte", "Dia das Mães & filhos")).toBe("/m/encartes/novo?ocasiao=Dia%20das%20M%C3%A3es%20%26%20filhos");
   });
 });
+
+import { normalizarPlano } from "@/lib/ai/plano";
+
+describe("plano de marketing", () => {
+  it("monta semanas e botões permitidos", () => {
+    const p = normalizarPlano(
+      { resumo: "Foco em famílias", semanas: [{ titulo: "Aquecer", foco: "Divulgar", passos: [{ acao: "Postar o encarte", canal: "Instagram", quando: "sexta", tipo: "montar_encarte", rotulo: "Montar", ocasiao: "Halloween" }, { acao: "Avisar clientes", canal: "WhatsApp", quando: "sábado", tipo: "x" }, { acao: "" }] }, { titulo: "vazia", passos: [] }], metricas: ["Mensagens"] },
+      "m"
+    );
+    expect(p?.semanas).toHaveLength(1);
+    expect(p?.semanas[0].passos).toHaveLength(2);
+    expect(p?.semanas[0].passos[0].botao?.href).toBe("/m/encartes/novo?ocasiao=Halloween");
+    expect(p?.semanas[0].passos[1].botao).toBeNull();
+  });
+  it("sem semanas, devolve nulo", () => {
+    expect(normalizarPlano({ semanas: [] }, "m")).toBeNull();
+    expect(normalizarPlano("x", "m")).toBeNull();
+  });
+});
