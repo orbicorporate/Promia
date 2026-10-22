@@ -92,6 +92,7 @@ export type EncarteData = {
   emblema?: string | null; // slug do emblema da campanha (lib/emblemas/catalog.ts)
   rodape?: Partial<RodapeOpcoes>; // estilo, cor e frase do rodapé (lib/encarte/rodape.ts)
   validade?: Partial<ValidadeOpcoes>; // posição, alinhamento, estilo e cor da validade (lib/encarte/validade.ts)
+  caixasEscala?: number; // 0,8 a 1,35: aumenta ou diminui as caixas dos produtos, até o limite que cabe na página
   emblemaEscala?: number; // 0,6 a 1,6: aumenta ou diminui o logo mantendo a proporção (lib/encarte/emblema-escala.ts)
   emblemaImg?: EncarteEmblemaImg | null; // resolvido no servidor (lib/encarte/images.ts)
   fotoExtra?: string | null; // caminho do arquivo do mercado usado como foto extra

@@ -40,6 +40,7 @@ export default async function EditarEncartePage({ params }: PageProps<"/[slug]/e
     modelo: isEncarteModelo(t.modelo) ? t.modelo : null,
     emblema: lerEmblema(t.emblema).slug,
     emblemaEscala: lerEmblema(t.emblema).escala,
+    caixasEscala: lerEmblema(t.emblema).caixas,
     validade: lerEmblema(t.emblema).validade,
     rodape: lerEmblema(t.emblema).rodape,
     fotoExtra: lerEmblema(t.emblema).fotoExtra ? `${market.id}/arquivos/${lerEmblema(t.emblema).fotoExtra}` : null,

@@ -11,6 +11,16 @@ export const EMBLEMA_ESCALA_MIN = 0.6;
 export const EMBLEMA_ESCALA_MAX = 1.6;
 export const EMBLEMA_ESCALA_PASSO = 0.05;
 
+// Tamanho das caixas dos produtos: de um pouco menor a um pouco maior. O desenho
+// ainda limita o aumento ao que cabe na página, então nunca estoura.
+export const CAIXAS_ESCALA_MIN = 0.8;
+export const CAIXAS_ESCALA_MAX = 1.35;
+export const CAIXAS_ESCALA_PASSO = 0.05;
+export function clampCaixas(v: unknown): number {
+  const n = typeof v === "number" && Number.isFinite(v) ? v : 1;
+  return Math.round(Math.min(CAIXAS_ESCALA_MAX, Math.max(CAIXAS_ESCALA_MIN, n)) * 100) / 100;
+}
+
 export function clampEscala(v: unknown): number {
   const n = typeof v === "number" && Number.isFinite(v) ? v : 1;
   return Math.round(Math.min(EMBLEMA_ESCALA_MAX, Math.max(EMBLEMA_ESCALA_MIN, n)) * 100) / 100;
@@ -19,10 +29,10 @@ export function clampEscala(v: unknown): number {
 // Foto extra do encarte: arquivo de "Meus arquivos" (só o nome do arquivo é gravado).
 export const FOTO_EXTRA_ARQUIVO = /^envio-[a-f0-9]{8}\.(png|jpe?g|gif)$/i;
 
-export type OpcoesEmblema = { slug: string | null; escala: number; validade: ValidadeOpcoes; rodape: RodapeOpcoes; fotoExtra: string | null };
+export type OpcoesEmblema = { slug: string | null; escala: number; caixas: number; validade: ValidadeOpcoes; rodape: RodapeOpcoes; fotoExtra: string | null };
 
 export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
-  const out: OpcoesEmblema = { slug: null, escala: 1, validade: { ...VALIDADE_PADRAO }, rodape: { ...RODAPE_PADRAO }, fotoExtra: null };
+  const out: OpcoesEmblema = { slug: null, escala: 1, caixas: 1, validade: { ...VALIDADE_PADRAO }, rodape: { ...RODAPE_PADRAO }, fotoExtra: null };
   if (!raw) return out;
   const [slug, ...resto] = raw.split("~");
   out.slug = slug || null;
@@ -30,6 +40,7 @@ export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
     const v = t.slice(1);
     if (/^\d+$/.test(t)) out.escala = clampEscala(Number(t) / 100);
     else if (t[0] === "f" && FOTO_EXTRA_ARQUIVO.test(v)) out.fotoExtra = v;
+    else if (t[0] === "b" && /^\d+$/.test(v)) out.caixas = clampCaixas(Number(v) / 100);
     else if (t[0] === "v" && isValidadeEstilo(v)) out.validade.estilo = v;
     else if (t[0] === "p" && isValidadePosicao(v)) out.validade.posicao = v;
     else if (t[0] === "a" && isValidadeAlinhamento(v)) out.validade.alinhamento = v;
@@ -63,7 +74,7 @@ export function lerEmblema(raw: string | null | undefined): OpcoesEmblema {
 }
 
 // Sem slug (encarte só com título) as opções continuam valendo: o texto fica "~vcontorno...".
-export function juntarEmblema(slug: string | null, escala: number, validade: Partial<ValidadeOpcoes> = {}, rodape: Partial<RodapeOpcoes> = {}, fotoExtra: string | null = null): string | null {
+export function juntarEmblema(slug: string | null, escala: number, validade: Partial<ValidadeOpcoes> = {}, rodape: Partial<RodapeOpcoes> = {}, fotoExtra: string | null = null, caixas = 1): string | null {
   const e = slug ? clampEscala(escala) : 1;
   const val = { ...VALIDADE_PADRAO, ...validade };
   const rod = { ...RODAPE_PADRAO, ...rodape };
@@ -86,6 +97,8 @@ export function juntarEmblema(slug: string | null, escala: number, validade: Par
   const ocultas = RODAPE_PARTES.filter((p) => rod.ocultar?.includes(p));
   if (ocultas.length) partes.push(`m${ocultas.map((p) => RODAPE_PARTE_LETRA[p]).join("")}`);
   if (fotoExtra && FOTO_EXTRA_ARQUIVO.test(fotoExtra)) partes.push(`f${fotoExtra}`);
+  const cx = clampCaixas(caixas);
+  if (cx !== 1) partes.push(`b${Math.round(cx * 100)}`);
   if (!slug && partes.length === 0) return null;
   return [slug ?? "", ...partes].join("~");
 }

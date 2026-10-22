@@ -1,7 +1,7 @@
 import { isISODate } from "@/lib/dates";
 import { normalizeUnit } from "@/lib/products";
 import { emblemaPorSlug } from "@/lib/emblemas/catalog";
-import { clampEscala } from "./emblema-escala";
+import { clampEscala, clampCaixas } from "./emblema-escala";
 import { limparRodape } from "./rodape";
 import { limparValidade } from "./validade";
 import { isThemeKey } from "./themes";
@@ -89,6 +89,7 @@ export function sanitizePreviewInput(raw: unknown): SanitizeResult {
       fotoExtra: ehFotoExtra(r.fotoExtra) ? r.fotoExtra : null,
       emblema: typeof r.emblema === "string" && emblemaPorSlug(r.emblema) ? r.emblema : null,
       emblemaEscala: clampEscala(r.emblemaEscala),
+      caixasEscala: clampCaixas(r.caixasEscala),
       validade: limparValidade(r.validade),
       rodape: limparRodape(r.rodape),
       themeKey: r.themeKey,
