@@ -68,6 +68,8 @@ export default function LoginPage() {
   const [ver, setVer] = useState(false);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [recuperar, setRecuperar] = useState(false);
+  const [enviado, setEnviado] = useState(false);
   // a cada ciclo os preços caem de novo, para a vitrine nunca ficar parada
   const [ciclo, setCiclo] = useState(0);
   useEffect(() => {
@@ -96,6 +98,24 @@ export default function LoginPage() {
     router.refresh();
   }
 
+  async function enviarLink(e: React.FormEvent) {
+    e.preventDefault();
+    setErro("");
+    setCarregando(true);
+    try {
+      const { error } = await createClient().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/redefinir-senha` });
+      if (error) {
+        setErro(error.status === 429 ? "Muitos pedidos seguidos. Espere alguns minutos e tente de novo." : "Não consegui enviar o link agora. Tente de novo em instantes.");
+        return;
+      }
+      setEnviado(true);
+    } catch {
+      setErro("Sem conexão agora. Confira a internet e tente de novo.");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   return (
     <main className="grid min-h-dvh lg:grid-cols-[1fr_1.1fr]">
       <section className="flex flex-col justify-between gap-10 px-5 py-8 sm:px-10 lg:py-12">
@@ -103,6 +123,36 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-sm">
           <h1 className="font-display text-4xl font-extrabold leading-[1.02] sm:text-5xl">A inteligência artificial do seu mercado.</h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--ink-2)] sm:text-lg">Crie tabloides estratégicos, organize promoções, gerencie preços e ofertas com a IA que conhece sua região e sua prateleira.</p>
+          {recuperar ? (
+            <form onSubmit={enviarLink} className="vidro mt-8 space-y-4 rounded-[26px] p-6">
+              <div>
+                <h2 className="text-lg font-bold">Criar uma senha nova</h2>
+                <p className="mt-1 text-sm text-[var(--ink-2)]">Digite o e-mail da conta. Enviamos um link para você escolher a senha nova.</p>
+              </div>
+              {enviado ? (
+                <p className="rounded-2xl bg-[var(--folha-soft)] p-4 text-sm" role="status">
+                  Se esse e-mail tem conta no Promia, o link já está a caminho. Olhe também o spam. Ele vale por pouco tempo.
+                </p>
+              ) : (
+                <>
+                  <Field label="Email" htmlFor="email-recuperar">
+                    <Input id="email-recuperar" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </Field>
+                  {erro && (
+                    <p className="text-sm text-[var(--perigo)]" role="alert">
+                      {erro}
+                    </p>
+                  )}
+                  <Button type="submit" size="lg" className="w-full" loading={carregando}>
+                    Enviar link
+                  </Button>
+                </>
+              )}
+              <button type="button" onClick={() => { setRecuperar(false); setEnviado(false); setErro(""); }} className="h-11 w-full text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--ink)]">
+                Voltar para o login
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="vidro mt-8 space-y-4 rounded-[26px] p-6">
             <Field label="Email" htmlFor="email">
               <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -115,6 +165,9 @@ export default function LoginPage() {
                 </button>
               </div>
             </Field>
+            <button type="button" onClick={() => { setRecuperar(true); setEnviado(false); setErro(""); }} className="-mt-1 h-9 text-sm font-semibold text-[var(--folha)] underline-offset-2 hover:underline">
+              Esqueci a senha
+            </button>
             {erro && (
               <motion.p initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: [0, -6, 6, -3, 0] }} className="text-sm text-[var(--perigo)]" role="alert">
                 {erro}
@@ -124,8 +177,9 @@ export default function LoginPage() {
               Entrar
             </Button>
           </form>
+          )}
         </div>
-        <p className="text-xs text-[var(--ink-3)]">Esqueceu a senha? Fale com o time Promia pelo WhatsApp.</p>
+        <p className="text-xs text-[var(--ink-3)]">Não consegue entrar? Fale com o time Promia pelo WhatsApp.</p>
       </section>
 
       <section className="relative hidden overflow-hidden lg:block" aria-hidden>
