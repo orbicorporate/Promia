@@ -1790,7 +1790,7 @@ export function EncarteBuilder({
           <div className="hidden xl:block">{navegacao}</div>
         </div>
         <aside className="hidden xl:block">
-          <div className="sticky top-24 space-y-4">{previewPanel}</div>
+          <div className="sticky top-36 -mx-2 max-h-[calc(100vh-10rem)] space-y-4 overflow-y-auto px-2 pb-4">{previewPanel}</div>
         </aside>
       </div>
 
